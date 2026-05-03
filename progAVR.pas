@@ -100,9 +100,15 @@ const
     // 32K
     (id: $950F; device: 'ATmega328P'),
     (id: $9511; device: 'ATmega324PA'),
-    (id: $9514; device: 'ATmega328')
-    // (id: $9515; device: 'ATmega324A'),  // 배열 크기 조정 시 추가
-    // (id: $9602; device: 'ATmega64'), ...
+    (id: $9514; device: 'ATmega328'),
+  	(ud: $9515, device: 'ATmega324A'),
+	  //64K
+	  (id: $9602, device: 'ATmega64'),
+	  (id: $9609, device: 'ATmega644A'),
+	  (id: $960A, device: 'ATmega644PA'),
+	  //128K
+	  (id: $9705, device: 'ATmega1284P'),
+	  (id: $9706, device: 'ATmega1284')
   );
 
 // ── 내부 헬퍼: 버퍼 패딩 후 PacketIO ─────────────────────────────────────
