@@ -1,0 +1,1058 @@
+{ opgui.lfm
+  Lazarus Form Resource
+  GTK/Glade(opgui.glade) → Lazarus LFM 변환
+  원본: Glade 3.40.0 / GTK+ 3.12
+  변환 규칙:
+    GtkWindow        → TForm
+    GtkBox(vertical) → TPanel (alTop/alClient)
+    GtkBox(horiz)    → TPanel (alLeft + 자식 배치)
+    GtkNotebook      → TPageControl + TTabSheet
+    GtkToolbar       → TToolBar
+    GtkToolButton    → TToolButton
+    GtkStatusbar     → TStatusBar
+    GtkTextView      → TMemo
+    GtkEntry         → TEdit
+    GtkLabel         → TLabel
+    GtkCheckButton   → TCheckBox
+    GtkRadioButton   → TRadioButton (그룹: TRadioGroup 또는 같은 Parent)
+    GtkComboBoxText  → TComboBox
+    GtkSpinButton    → TSpinEdit
+    GtkTreeView      → TListView
+    GtkScrolledWindow→ (자식에 ScrollBars 속성 적용)
+    GtkFrame         → TGroupBox
+    GtkSeparator(Tool)→ TToolButton(tbsDivider)
+    GtkButton        → TButton
+    GtkMenuBar/MenuItem→ TMainMenu / TMenuItem
+    GtkAdjustment    → Min/Max/Value 속성으로 인라인 처리
+    icon-name        → 주석으로 보존 (런타임 아이콘 로딩 필요)
+}
+
+object window: TForm
+  Left = 0
+  Top = 0
+  Caption = 'OPGUI'
+  ClientWidth = 850
+  ClientHeight = 250
+  Position = poScreenCenter
+  OnDestroy = FormDestroy
+  object MainToolBar: TToolBar
+    Left = 0
+    Top = 0
+    Width = 850
+    Height = 32
+    Align = alTop
+    ButtonWidth = 32
+    ButtonHeight = 32
+    { icon: document-open-symbolic }
+    object OPEN_T: TToolButton
+      Name = 'OPEN_T'
+      Caption = 'Open'
+      Hint = 'Open file'
+    end
+    { icon: document-save-symbolic }
+    object SAVE_T: TToolButton
+      Name = 'SAVE_T'
+      Caption = 'Save'
+      Hint = 'Save file'
+    end
+    object ToolButton_Sep1: TToolButton
+      Style = tbsDivider
+    end
+    { icon: read.png (custom resource) }
+    object READ_T: TToolButton
+      Name = 'READ_T'
+      Caption = 'Read'
+      Hint = 'Read device'
+    end
+    { icon: write.png (custom resource) }
+    object WRITE_T: TToolButton
+      Name = 'WRITE_T'
+      Caption = 'Write'
+      Hint = 'Write device'
+    end
+    object ToolButton_Sep2: TToolButton
+      Style = tbsDivider
+    end
+    { icon: media-playback-stop-symbolic }
+    object STOP_T: TToolButton
+      Name = 'STOP_T'
+      Caption = 'stop'
+      Enabled = False
+      Hint = 'Stop'
+    end
+    { icon: gtk-connect }
+    object CONNECT_T: TToolButton
+      Name = 'CONNECT_T'
+      Caption = 'reconn'
+      Hint = 'Reconnect'
+    end
+    { icon: help-browser-symbolic }
+    object INFO_T: TToolButton
+      Name = 'INFO_T'
+      Caption = 'info'
+      Hint = 'Info'
+    end
+  end
+
+  { ── 메인 Notebook (탭 7개) ── }
+  object NOTEBOOK: TPageControl
+    Left = 0
+    Top = 32
+    Width = 850
+    Height = 185
+    Align = alClient
+    TabPosition = tpTop
+
+    { ── 탭 0: dati (DATA TextView) ── }
+    object TabSheet_dati: TTabSheet
+      Caption = 'dati'
+      object DATA: TMemo
+        Left = 5
+        Top = 5
+        Width = 820
+        Height = 155
+        Align = alClient
+        ReadOnly = True
+        ScrollBars = ssBoth
+        Font.Name = 'Monospace'
+        WordWrap = False
+      end
+    end
+
+    { ── 탭 1: Device ── }
+    object TabSheet_dev: TTabSheet
+      Caption = '_dev'
+      object DEVICE_TAB: TPanel
+        Left = 0
+        Top = 0
+        Width = 840
+        Height = 170
+        Align = alClient
+        BevelOuter = bvNone
+
+        { 좌측: 타입/소스 콤보 + DevTree }
+        object Panel_DevLeft: TPanel
+          Left = 5
+          Top = 5
+          Width = 250
+          Height = 160
+          BevelOuter = bvNone
+
+          object Panel_TypeRow: TPanel
+            Left = 0
+            Top = 0
+            Width = 250
+            Height = 24
+            BevelOuter = bvNone
+            object TYPE_L: TLabel
+              Left = 5
+              Top = 4
+              Caption = '_tipo'
+            end
+            object TYPE_C: TComboBox
+              Left = 45
+              Top = 1
+              Width = 120
+              Height = 22
+              Style = csDropDownList
+            end
+          end
+
+          object Panel_SrcRow: TPanel
+            Left = 0
+            Top = 26
+            Width = 250
+            Height = 24
+            BevelOuter = bvNone
+            object DEV_SRC_L: TLabel
+              Left = 5
+              Top = 4
+              Caption = 'label'
+            end
+            object DEV_SRC_E: TEdit
+              Left = 45
+              Top = 1
+              Width = 120
+              Height = 22
+            end
+          end
+
+          object DEV_TREE: TListView
+            Left = 0
+            Top = 52
+            Width = 250
+            Height = 108
+            Align = alBottom
+            ViewStyle = vsReport
+            RowSelect = True
+          end
+        end
+
+        { 우측: DevInfo Frame }
+        object GroupBox_DevInfo: TGroupBox
+          Left = 263
+          Top = 5
+          Width = 570
+          Height = 160
+          Caption = ''
+
+          object DEV_INFO: TLabel
+            Left = 6
+            Top = 3
+            Width = 200
+            Height = 16
+          end
+
+          object EE_RW: TCheckBox
+            Left = 10
+            Top = 22
+            Caption = 'ee'
+            Checked = True
+          end
+
+          { PIC options panel }
+          object PIC_OPT: TPanel
+            Left = 5
+            Top = 45
+            Width = 560
+            Height = 110
+            BevelOuter = bvNone
+            Visible = False
+
+            object Panel_PicChk: TPanel
+              Left = 0
+              Top = 0
+              Width = 160
+              Height = 110
+              BevelOuter = bvNone
+
+              object RES_READ: TCheckBox
+                Left = 0
+                Top = 0
+                Caption = '_reserved'
+              end
+              object PROG_ID: TCheckBox
+                Left = 0
+                Top = 20
+                Caption = '_progID'
+              end
+              object PROG_CAL12: TCheckBox
+                Left = 0
+                Top = 40
+                Caption = '_progCal'
+              end
+              object USE_SAFLOCK: TCheckBox
+                Left = 0
+                Top = 60
+                Caption = '_useSaflock'
+              end
+
+              { OSCCAL GroupBox (RadioButtons) }
+              object OSC_OPT: TGroupBox
+                Left = 0
+                Top = 82
+                Width = 155
+                Height = 70
+                object OSCCAL_L: TLabel
+                  Left = 0
+                  Top = 0
+                  Caption = '__osccal'
+                end
+                object OSCCAL: TRadioButton
+                  Left = 5
+                  Top = 15
+                  Caption = '_osccal'
+                end
+                object BKOSCCAL: TRadioButton
+                  Left = 5
+                  Top = 33
+                  Caption = '_bkosccal'
+                end
+                object FILECAL: TRadioButton
+                  Left = 5
+                  Top = 51
+                  Caption = '_file'
+                end
+              end
+            end
+
+            { Config Word GroupBox }
+            object CW_OPT: TGroupBox
+              Left = 165
+              Top = 0
+              Width = 390
+              Height = 110
+              Caption = 'Config Word'
+
+              object FORCE_CW: TCheckBox
+                Left = 5
+                Top = 15
+                Caption = '_forcecw'
+              end
+
+              { CW行 1: CW1 CW2 CW3 CW4 }
+              object Panel_CWRow1: TPanel
+                Left = 5
+                Top = 35
+                Width = 380
+                Height = 22
+                BevelOuter = bvNone
+                object CW1_OPT: TPanel
+                  Left = 0   Top = 0   Width = 90   Height = 22   BevelOuter = bvNone
+                  object Label_CW1: TLabel  Left=0  Top=4  Caption='CW1'  end
+                  object CW1: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+                object CW2_OPT: TPanel
+                  Left = 94  Top = 0  Width = 90  Height = 22  BevelOuter = bvNone
+                  object Label_CW2: TLabel  Left=0  Top=4  Caption='CW2'  end
+                  object CW2: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+                object CW3_OPT: TPanel
+                  Left = 188  Top = 0  Width = 90  Height = 22  BevelOuter = bvNone
+                  object Label_CW3: TLabel  Left=0  Top=4  Caption='CW3'  end
+                  object CW3: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+                object CW4_OPT: TPanel
+                  Left = 282  Top = 0  Width = 90  Height = 22  BevelOuter = bvNone
+                  object Label_CW4: TLabel  Left=0  Top=4  Caption='CW4'  end
+                  object CW4: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+              end
+
+              { CW行 2: CW5 CW6 CW7 CW8 }
+              object Panel_CWRow2: TPanel
+                Left = 5
+                Top = 60
+                Width = 380
+                Height = 22
+                BevelOuter = bvNone
+                object CW5_OPT: TPanel
+                  Left = 0   Top = 0   Width = 90   Height = 22   BevelOuter = bvNone
+                  object Label_CW5: TLabel  Left=0  Top=4  Caption='CW5'  end
+                  object CW5: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+                object CW6_OPT: TPanel
+                  Left = 94  Top = 0  Width = 90  Height = 22  BevelOuter = bvNone
+                  object Label_CW6: TLabel  Left=0  Top=4  Caption='CW6'  end
+                  object CW6: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+                object CW7_OPT: TPanel
+                  Left = 188  Top = 0  Width = 90  Height = 22  BevelOuter = bvNone
+                  object Label_CW7: TLabel  Left=0  Top=4  Caption='CW7'  end
+                  object CW7: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+                object CW8_OPT: TPanel
+                  Left = 282  Top = 0  Width = 90  Height = 22  BevelOuter = bvNone
+                  object Label_CW8: TLabel  Left=0  Top=4  Caption='CW8'  end
+                  object CW8: TEdit  Left=28  Top=0  Width=40  Height=22  MaxLength=4  end
+                end
+              end
+            end
+          end
+
+          { ICD GroupBox }
+          object ICD_OPT: TGroupBox
+            Left = 5
+            Top = 158
+            Width = 250
+            Height = 52
+            Caption = 'ICD'
+            object ICD: TCheckBox
+              Left = 5
+              Top = 16
+              Caption = '_icd'
+            end
+            object Panel_IcdAddr: TPanel
+              Left = 55
+              Top = 12
+              Width = 160
+              Height = 22
+              BevelOuter = bvNone
+              object ICD_ADDR_L: TLabel
+                Left = 0
+                Top = 4
+                Caption = '_address'
+              end
+              object ICD_ADDR: TEdit
+                Left = 55
+                Top = 0
+                Width = 60
+                Height = 22
+                MaxLength = 5
+              end
+            end
+          end
+
+          { AVR options panel }
+          object AVR_OPT: TPanel
+            Left = 5
+            Top = 212
+            Width = 300
+            Height = 100
+            BevelOuter = bvNone
+            Visible = False
+
+            object Panel_FuseL: TPanel
+              Left=0  Top=0  Width=290  Height=22  BevelOuter=bvNone
+              object FUSEL: TEdit   Left=0   Top=0  Width=30  Height=22  MaxLength=2  end
+              object FUSEL_C: TCheckBox  Left=35  Top=2  Caption='_fuselow'  end
+            end
+            object Panel_FuseH: TPanel
+              Left=0  Top=24  Width=290  Height=22  BevelOuter=bvNone
+              object FUSEH: TEdit   Left=0   Top=0  Width=30  Height=22  MaxLength=2  end
+              object FUSEH_C: TCheckBox  Left=35  Top=2  Caption='_fusehigh'  end
+            end
+            object Panel_FuseX: TPanel
+              Left=0  Top=48  Width=290  Height=22  BevelOuter=bvNone
+              object FUSEX: TEdit   Left=0   Top=0  Width=30  Height=22  MaxLength=2  end
+              object FUSEX_C: TCheckBox  Left=35  Top=2  Caption='_fuseext'  end
+            end
+            object Panel_FuseLck: TPanel
+              Left=0  Top=72  Width=290  Height=22  BevelOuter=bvNone
+              object FUSELCK: TEdit  Left=0   Top=0  Width=30  Height=22  MaxLength=2  end
+              object FUSELCK_C: TCheckBox  Left=35  Top=2  Caption='_fuselock'  end
+            end
+            object FUSEL_W3K: TButton
+              Left = 0
+              Top = 96
+              Caption = '_writefuselow3k'
+            end
+          end
+
+          { Device name label (frame title) }
+          object DEVICE_NAME: TLabel
+            Left = 5
+            Top = 0
+            Caption = '_dev'
+          end
+        end
+      end
+    end
+
+    { ── 탭 2: Options ── }
+    object TabSheet_options: TTabSheet
+      Caption = '_options'
+      object OPTIONS_TAB: TPanel
+        Left = 0
+        Top = 0
+        Width = 840
+        Height = 170
+        Align = alClient
+        BevelOuter = bvNone
+
+        object CONNECT: TButton
+          Left = 5
+          Top = 5
+          Caption = '_connect'
+        end
+
+        object Panel_VidPid: TPanel
+          Left = 5
+          Top = 30
+          Width = 300
+          Height = 24
+          BevelOuter = bvNone
+          object Panel_VID: TPanel
+            Left=0  Top=0  Width=100  Height=24  BevelOuter=bvNone
+            object Label_VID: TLabel  Left=0  Top=4  Caption='VID'  end
+            object VID: TEdit  Left=30  Top=0  Width=50  Height=22  MaxLength=4  end
+          end
+          object Panel_PID: TPanel
+            Left=110  Top=0  Width=100  Height=24  BevelOuter=bvNone
+            object Label_PID: TLabel  Left=0  Top=4  Caption='PID'  end
+            object PID: TEdit  Left=30  Top=0  Width=50  Height=22  MaxLength=4  end
+          end
+        end
+
+        object TEST: TButton
+          Left = 5
+          Top = 58
+          Caption = '_test'
+        end
+
+        object LOG: TCheckBox
+          Left = 5
+          Top = 82
+          Caption = '_log'
+        end
+
+        object CheckBox_3VCHECK: TCheckBox
+          Name = '3VCHECK'
+          Left = 5
+          Top = 100
+          Caption = '3v3nocheck'
+        end
+
+        object S1: TCheckBox
+          Left = 5
+          Top = 118
+          Caption = '_s1'
+        end
+
+        object Panel_MaxErr: TPanel
+          Left = 5
+          Top = 140
+          Width = 200
+          Height = 24
+          BevelOuter = bvNone
+          object MAXERR_L: TLabel  Left=0  Top=4  Caption='_maxerr'  end
+          object MAXERR: TEdit  Left=55  Top=0  Width=50  Height=22  MaxLength=4  end
+        end
+      end
+    end
+
+    { ── 탭 3: I2C/SPI ── }
+    object TabSheet_i2cspi: TTabSheet
+      Caption = 'I2C/SPI'
+      object I2CSPI_TAB: TPanel
+        Left = 0
+        Top = 0
+        Width = 840
+        Height = 170
+        Align = alClient
+        BevelOuter = bvNone
+
+        { 좌측: 모드 선택 GroupBox }
+        object GroupBox_I2CMode: TGroupBox
+          Left = 10
+          Top = 5
+          Width = 140
+          Height = 155
+          Caption = '_mode'
+          object I2CMODE: TLabel
+            Left = 5
+            Top = 2
+            Caption = '_mode'
+          end
+          { RadioButton 그룹: I2C8BIT / I2C16BIT / SPI00..11 }
+          object I2C8BIT: TRadioButton
+            Left = 5
+            Top = 18
+            Caption = 'I2C 8 Bit'
+            Checked = True
+          end
+          object I2C16BIT: TRadioButton
+            Left = 5
+            Top = 36
+            Caption = 'I2C 16 Bit'
+          end
+          object Bevel_I2cSep: TBevel
+            Left = 5
+            Top = 56
+            Width = 120
+            Height = 2
+            Shape = bsTopLine
+          end
+          object SPI00: TRadioButton
+            Left = 5
+            Top = 62
+            Caption = 'SPI(00)'
+          end
+          object SPI01: TRadioButton
+            Left = 5
+            Top = 80
+            Caption = 'SPI(01)'
+          end
+          object SPI10: TRadioButton
+            Left = 5
+            Top = 98
+            Caption = 'SPI(10)'
+          end
+          object SPI11: TRadioButton
+            Left = 5
+            Top = 116
+            Caption = 'SPI(11)'
+          end
+        end
+
+        { 우측: byte/speed/send/receive 패널 }
+        object Panel_I2cRight: TPanel
+          Left = 160
+          Top = 5
+          Width = 340
+          Height = 155
+          BevelOuter = bvNone
+
+          object Panel_NbyteRow: TPanel
+            Left=0  Top=0  Width=330  Height=24  BevelOuter=bvNone
+            object NBYTE_L: TLabel  Left=0  Top=4  Caption='_byte'  end
+            { I2C_adj: min=0, max=100, step=1, page=10, value=1 }
+            object NBYTE_S: TSpinEdit
+              Left = 45
+              Top = 0
+              Width = 70
+              Height = 22
+              MaxLength = 3
+              MinValue = 0
+              MaxValue = 100
+              Increment = 1
+              Value = 1
+            end
+          end
+
+          object Panel_SpeedRow: TPanel
+            Left=0  Top=28  Width=330  Height=24  BevelOuter=bvNone
+            object SPEED_L: TLabel  Left=0  Top=4  Caption='_speed'  end
+            object SPEED_C: TComboBox
+              Left = 50
+              Top = 0
+              Width = 150
+              Height = 22
+              Style = csDropDownList
+              ItemIndex = 0
+              Items.Strings = (
+                '100 kbps'
+                '200 kbps'
+                '300/400 kbps'
+                '500/800 kbps'
+              )
+            end
+          end
+
+          object Panel_SendRecvRow: TPanel
+            Left=0  Top=56  Width=200  Height=24  BevelOuter=bvNone
+            object SEND_B: TButton
+              Left=0  Top=0  Width=90  Height=22  Caption='_send'
+            end
+            object RECEIVE_B: TButton
+              Left=100  Top=0  Width=90  Height=22  Caption='_receive'
+            end
+          end
+
+          object DATASEND_L: TLabel
+            Left = 0
+            Top = 84
+            Caption = '_datasend'
+          end
+          object DATASEND: TEdit
+            Left = 0
+            Top = 100
+            Width = 330
+            Height = 22
+          end
+          object DATATR_L: TLabel
+            Left = 0
+            Top = 126
+            Caption = '_datatransferred'
+          end
+          object DATATR: TMemo
+            Left = 0
+            Top = 144
+            Width = 250
+            Height = 60
+            ReadOnly = True
+            ScrollBars = ssBoth
+          end
+        end
+      end
+    end
+
+    { ── 탭 4: ICD ── }
+    object TabSheet_icd: TTabSheet
+      Caption = 'ICD'
+      object ICD_TAB: TPanel
+        Left = 0
+        Top = 0
+        Width = 840
+        Height = 170
+        Align = alClient
+        BevelOuter = bvNone
+
+        { ICD 툴바 }
+        object ICD_ToolBar: TToolBar
+          Left = 0
+          Top = 0
+          Width = 840
+          Height = 32
+          Align = alTop
+          { icon: go-next-symbolic }
+          object ICD_RUN: TToolButton
+            Name = 'ICD_RUN'
+            Caption = 'Run'
+          end
+          { icon: media-playback-pause-symbolic }
+          object ICD_HALT: TToolButton
+            Name = 'ICD_HALT'
+            Caption = 'Halt'
+          end
+          { icon: go-last-symbolic }
+          object ICD_STEP: TToolButton
+            Name = 'ICD_STEP'
+            Caption = 'Step'
+          end
+          { icon: media-seek-forward-symbolic }
+          object ICD_STEPOVER: TToolButton
+            Name = 'ICD_STEPOVER'
+            Caption = 'StepOver'
+          end
+          object ICD_ToolSep1: TToolButton
+            Style = tbsDivider
+          end
+          { icon: media-playback-stop-symbolic }
+          object ICD_STOP: TToolButton
+            Name = 'ICD_STOP'
+            Caption = 'Stop'
+          end
+          object ICD_ToolSep2: TToolButton
+            Style = tbsDivider
+          end
+          { icon: media-playlist-repeat-symbolic }
+          object ICD_REFRESH: TToolButton
+            Name = 'ICD_REFRESH'
+            Caption = 'Refresh'
+          end
+          object ICD_ToolSep3: TToolButton
+            Style = tbsDivider
+          end
+          object LOADCOFF_B: TToolButton
+            Name = 'LOADCOFF_B'
+            Caption = '_loadcoff'
+          end
+          object ICD_ToolSep4: TToolButton
+            Style = tbsDivider
+          end
+          object ICD_CMD_E: TEdit
+            { TToolBar 안 embedded TEdit: 런타임에 Controls로 삽입 권장 }
+            Left = 0
+            Top = 0
+            Width = 80
+            Height = 22
+          end
+          object ICD_ToolSep5: TToolButton
+            Style = tbsDivider
+          end
+          { icon: help-browser-symbolic }
+          object ICD_HELP: TToolButton
+            Name = 'ICD_HELP'
+            Caption = 'help'
+          end
+        end
+
+        { ICD 콘텐츠 패널 }
+        object Panel_IcdContent: TPanel
+          Left = 0
+          Top = 32
+          Width = 840
+          Height = 138
+          Align = alClient
+          BevelOuter = bvNone
+
+          { 좌: 소스 뷰 }
+          object Panel_IcdLeft: TPanel
+            Left = 0
+            Top = 0
+            Width = 415
+            Height = 138
+            BevelOuter = bvNone
+            object ICD_SOURCE_L: TLabel
+              Left = 0
+              Top = 7
+              Caption = '_source'
+            end
+            object ICD_SOURCE: TMemo
+              Left = 0
+              Top = 21
+              Width = 415
+              Height = 117
+              ReadOnly = True
+              ScrollBars = ssBoth
+            end
+          end
+
+          { 우: 상태/뱅크 메뉴 + 레지스터 뷰 }
+          object Panel_IcdRight: TPanel
+            Left = 420
+            Top = 0
+            Width = 420
+            Height = 138
+            BevelOuter = bvNone
+
+            object Panel_IcdStatRow: TPanel
+              Left=0  Top=0  Width=420  Height=22  BevelOuter=bvNone
+              object ICD_STAT_L: TLabel  Left=0  Top=3  Caption='_status'  end
+              { 뱅크 선택 메뉴 → Lazarus에서는 TMainMenu + TMenuItem 사용 }
+              object ICD_BankMenu: TMainMenu
+                object MenuItem_Bank: TMenuItem
+                  Caption = '_bank'
+                  object BANK0_M: TMenuItem
+                    Caption = '_b0'
+                  end
+                  object BANK1_M: TMenuItem
+                    Caption = '_b1'
+                  end
+                  object BANK2_M: TMenuItem
+                    Caption = '_b2'
+                  end
+                  object BANK3_M: TMenuItem
+                    Caption = '_b3'
+                  end
+                  object EE_M: TMenuItem
+                    Caption = '_ee'
+                  end
+                end
+              end
+            end
+
+            object ICD_STATUS: TMemo
+              Left = 0
+              Top = 24
+              Width = 420
+              Height = 114
+              ReadOnly = True
+              ScrollBars = ssBoth
+            end
+          end
+        end
+      end
+    end
+
+    { ── 탭 5: I/O ── }
+    object TabSheet_io: TTabSheet
+      Caption = 'I/O'
+      object IO_TAB: TPanel
+        Left = 0
+        Top = 0
+        Width = 840
+        Height = 170
+        Align = alClient
+        BevelOuter = bvNone
+
+        { I/O GroupBox }
+        object GroupBox_IO: TGroupBox
+          Left = 5
+          Top = 5
+          Width = 600
+          Height = 130
+          Caption = 'I/O'
+          object IOEN: TCheckBox
+            Left = 5
+            Top = 15
+            Caption = '_io'
+          end
+
+          { PORTB 핀 패널 (RB7..RB0) }
+          object Panel_PortB: TPanel
+            Left = 5
+            Top = 35
+            Width = 290
+            Height = 90
+            BevelOuter = bvNone
+
+            { RB6 }
+            object Panel_RB6: TPanel
+              Left=0  Top=0  Width=285  Height=15  BevelOuter=bvNone
+              object Label_RB6: TLabel  Left=0  Top=0  Caption='RB6'  end
+              object RB6_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RB6_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RB6_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  end
+              object RB6_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RB5 }
+            object Panel_RB5: TPanel
+              Left=0  Top=18  Width=285  Height=15  BevelOuter=bvNone
+              object Label_RB5: TLabel  Left=0  Top=0  Caption='RB5'  end
+              object RB5_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RB5_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RB5_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RB5_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RB4 }
+            object Panel_RB4: TPanel
+              Left=0  Top=36  Width=285  Height=15  BevelOuter=bvNone
+              object Label_RB4: TLabel  Left=0  Top=0  Caption='RB4'  end
+              object RB4_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RB4_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RB4_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RB4_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RB3 }
+            object Panel_RB3: TPanel
+              Left=0  Top=54  Width=285  Height=15  BevelOuter=bvNone
+              object Label_RB3: TLabel  Left=0  Top=0  Caption='RB3'  end
+              object RB3_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RB3_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RB3_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RB3_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RB2 }
+            object Panel_RB2: TPanel
+              Left=0  Top=72  Width=285  Height=15  BevelOuter=bvNone
+              object Label_RB2: TLabel  Left=0  Top=0  Caption='RB2'  end
+              object RB2_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RB2_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RB2_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RB2_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RB1 }
+            object Panel_RB1: TPanel
+              Left=0  Top=90  Width=285  Height=15  BevelOuter=bvNone
+              object Label_RB1: TLabel  Left=0  Top=0  Caption='RB1'  end
+              object RB1_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RB1_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RB1_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RB1_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+          end
+
+          { PORTA 핀 패널 (RA5..RA3) }
+          object Panel_PortA: TPanel
+            Left = 300
+            Top = 35
+            Width = 285
+            Height = 75
+            BevelOuter = bvNone
+
+            { RA5 }
+            object Panel_RA5: TPanel
+              Left=0  Top=0  Width=280  Height=15  BevelOuter=bvNone
+              object Label_RA5: TLabel  Left=0  Top=0  Caption='RA5'  end
+              object RA5_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RA5_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RA5_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RA5_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RA4 }
+            object Panel_RA4: TPanel
+              Left=0  Top=18  Width=280  Height=15  BevelOuter=bvNone
+              object Label_RA4: TLabel  Left=0  Top=0  Caption='RA4'  end
+              object RA4_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RA4_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RA4_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RA4_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+            { RA3 }
+            object Panel_RA3: TPanel
+              Left=0  Top=36  Width=280  Height=15  BevelOuter=bvNone
+              object Label_RA3: TLabel  Left=0  Top=0  Caption='RA3'  end
+              object RA3_0: TRadioButton  Left=28  Top=0  Caption='0'  Checked=True  end
+              object RA3_1: TRadioButton  Left=55  Top=0  Caption='1'  end
+              object RA3_I: TRadioButton  Left=75  Top=0  Caption='INPUT:'  Checked=True  end
+              object RA3_L: TLabel  Left=155  Top=0  Width=20  Caption=''  end
+            end
+          end
+        end
+
+        { VDD/VPP/DCDC 체크박스 + VPP SpinEdit 행 }
+        object Panel_PwrRow: TPanel
+          Left = 5
+          Top = 140
+          Width = 600
+          Height = 24
+          BevelOuter = bvNone
+          object VDDUEN: TCheckBox
+            Left = 0   Top = 2   Caption = 'VDDU'
+          end
+          object VPPUEN: TCheckBox
+            Left = 60  Top = 2   Caption = 'VPPU'
+          end
+          object DCDCEN: TCheckBox
+            Left = 120 Top = 2   Caption = 'DCDC'
+          end
+          { VPP_adj: min=5, max=15, step=1, page=10, value=5 }
+          object Label_VPP: TLabel
+            Left = 185  Top = 4  Caption = 'VPP'
+          end
+          object VPP_SpinEdit: TSpinEdit
+            Left = 210
+            Top = 0
+            Width = 60
+            Height = 22
+            MinValue = 5
+            MaxValue = 15
+            Increment = 1
+            Value = 5
+          end
+        end
+
+        { CMD GroupBox }
+        object GroupBox_CMD: TGroupBox
+          Left = 610
+          Top = 5
+          Width = 220
+          Height = 130
+          object CMD_L: TLabel
+            Left = 5
+            Top = 0
+            Caption = '_cmd'
+          end
+        end
+      end
+    end
+
+    { ── 탭 6: Utility ── }
+    object TabSheet_utility: TTabSheet
+      Caption = 'Utility'
+      object UTILITY_TAB: TPanel
+        Left = 0
+        Top = 0
+        Width = 840
+        Height = 170
+        Align = alClient
+        BevelOuter = bvNone
+
+        { HEX → DATA GroupBox }
+        object GroupBox_HexToData: TGroupBox
+          Left = 5
+          Top = 5
+          Width = 400
+          Height = 60
+          Caption = 'HEX -> DATA'
+          object Panel_HexInRow: TPanel
+            Left=5  Top=15  Width=385  Height=22  BevelOuter=bvNone
+            object Label_HexIn: TLabel  Left=0  Top=4  Caption='Hex'  end
+            object HEXIN: TEdit  Left=30  Top=0  Width=350  Height=22  end
+          end
+          object DATAOUT: TEdit
+            Left = 5
+            Top = 40
+            Width = 385
+            Height = 22
+            ReadOnly = True
+          end
+        end
+
+        { DATA → HEX GroupBox }
+        object GroupBox_DataToHex: TGroupBox
+          Left = 5
+          Top = 70
+          Width = 400
+          Height = 95
+          Caption = 'DATA -> HEX'
+
+          object Panel_AddrRow: TPanel
+            Left=5  Top=15  Width=385  Height=22  BevelOuter=bvNone
+            object Label_Addr: TLabel  Left=0  Top=4  Caption='_addr'  end
+            object ADDRIN: TEdit  Left=38  Top=0  Width=200  Height=22  end
+          end
+          object Panel_DataRow: TPanel
+            Left=5  Top=40  Width=385  Height=22  BevelOuter=bvNone
+            object Label_DataIn: TLabel  Left=0  Top=4  Caption='_data'  end
+            object DATAIN: TEdit  Left=38  Top=0  Width=342  Height=22  end
+          end
+          object Panel_HexOutRow: TPanel
+            Left=5  Top=65  Width=385  Height=22  BevelOuter=bvNone
+            object Label_HexOut: TLabel  Left=0  Top=4  Caption='Hex'  end
+            object HEXOUT: TEdit  Left=30  Top=0  Width=310  Height=22  ReadOnly=True  end
+          end
+          object HEXSAVE: TButton
+            Left = 5
+            Top = 90
+            Caption = '_save'
+          end
+        end
+      end
+    end
+
+  end { NOTEBOOK }
+
+  { 하단 StatusBar }
+  object STATUS_B: TStatusBar
+    Left = 0
+    Top = 217
+    Width = 850
+    Height = 23
+    Align = alBottom
+    SimplePanel = True
+  end
+
+end
