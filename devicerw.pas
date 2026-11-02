@@ -24,7 +24,8 @@ uses
   progp18,
   progp24,
   progeeprom,
-  progavr;
+  progavr,
+  mainform;
 
 const
   NL = #10;

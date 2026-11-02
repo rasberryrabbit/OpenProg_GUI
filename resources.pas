@@ -17,7 +17,8 @@ uses
   Buttons,
   Spin,
   Menus,
-  LCLType;
+  LCLType,
+  mainform;
 
 const
   NL = #10;
@@ -40,17 +41,15 @@ var
 // --- function declarations ---
 procedure _func(void: Tvoid); \
   extern int ( _array ## _func)(void);              \
+  int _func ## _ructor(void);              \
   int _func ## _ructor();
-procedure _func(void: Tvoid); \
-  static int _func ## _wrapper();
-procedure _func(void: Tvoid); \
-  static int _func ## _ructor();
 procedure _func(void: Tvoid);
 
 
   fini(_func)
 
   static void _func(void);
+
 
 
 
@@ -82,6 +81,7 @@ implementation
 
 procedure _func(void: Tvoid); \
   extern int ( _array ## _func)(void);              \
+  int _func ## _ructor(void);              \
   int _func ## _ructor();
 var
   // (no local variables detected)
@@ -91,30 +91,13 @@ begin
   Exit;
 end;
 
-procedure _func(void: Tvoid); \
-  static int _func ## _wrapper();
-var
-  // (no local variables detected)
-begin
-  _func();
-  Exit;
-end;
-
-procedure _func(void: Tvoid); \
-  static int _func ## _ructor();
-var
-  // (no local variables detected)
-begin
-  atexit(_func);
-  Exit;
-end;
-
 procedure _func(void: Tvoid);
 
 
   fini(_func)
 
   static void _func(void);
+
 
 
 

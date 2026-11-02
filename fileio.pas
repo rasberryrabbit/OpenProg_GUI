@@ -24,7 +24,8 @@ uses
   progp18,
   progp24,
   progavr,
-  devicerw;
+  devicerw,
+  mainform;
 
 const
   NL = #10;

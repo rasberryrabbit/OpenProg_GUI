@@ -19,7 +19,8 @@ uses
   Menus,
   LCLType,
   common,
-  coff;
+  coff,
+  mainform;
 
 const
   NL = #10;

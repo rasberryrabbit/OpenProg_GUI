@@ -18,7 +18,8 @@ uses
   Spin,
   Menus,
   LCLType,
-  common;
+  common,
+  mainform;
 
 const
   NL = #10;

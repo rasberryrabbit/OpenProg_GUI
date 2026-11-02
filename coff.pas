@@ -17,7 +17,8 @@ uses
   Buttons,
   Spin,
   Menus,
-  LCLType;
+  LCLType,
+  mainform;
 
 const
   NL = #10;
