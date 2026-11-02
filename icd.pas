@@ -1541,7 +1541,7 @@ begin
       Halt();
      data := ReadProgMem(addr);
      // return value of sprintf() ignored
-     sprintf(str, '0x%04X: %s (0x%04X)' + LineEnding + '', addr, decodeCmd(data, var, $1000), data);
+     sprintf(str, '0x%04X: %s (0x%04X)' + LineEnding + '', addr, decodeCmd(data, var_, $1000), data);
      // return value of AppendMessageICD() ignored
      AppendMessageICD(str);
     end;
@@ -1621,28 +1621,28 @@ begin
     // return value of AppendMessageICD() ignored
     AppendMessageICD(str);
    end
-   else if (sscanf(command,"print  mod s",var)=1) or (sscanf(command,"p  mod s",var)=1) then
+   else if (sscanf(command,"print  mod s",var_)=1) or (sscanf(command,"p  mod s",var_)=1) then
    begin
     str[0] := 0;
     if (running) <> 0 then
      // return value of Halt() ignored
      Halt();
-    if (not strcmp("W",var)) or (not strcmp("w",var)) then
+    if (not strcmp("W",var_)) or (not strcmp("w",var_)) then
      // return value of sprintf() ignored
      sprintf(str, 'W = 0x%02X' + LineEnding + '', ReadRegister(w_temp))
-    else if  not strcmp("STATUS",var) then
+    else if  not strcmp("STATUS",var_) then
      // return value of sprintf() ignored
      sprintf(str, '0x003: STATUS = 0x%02X' + LineEnding + '', ReadRegister(status_temp))
-    else if  not strcmp("FSR",var) then
+    else if  not strcmp("FSR",var_) then
      // return value of sprintf() ignored
      sprintf(str, '0x004: FSR = 0x%02X' + LineEnding + '', ReadRegister(fsr_temp))
-    else if  not strcmp("PCLATH",var) then
+    else if  not strcmp("PCLATH",var_) then
      // return value of sprintf() ignored
      sprintf(str, '0x00A: PCLATH = 0x%02X' + LineEnding + '', ReadRegister(pclath_temp))
     else
     begin
      i := 0;
-     while (i<nsym) and (AnsiCompareStr(var, sym[i].name)) do
+     while (i<nsym) and (AnsiCompareStr(var_, sym[i].name)) do
      begin
       Inc(i);
      end;
@@ -1655,7 +1655,7 @@ begin
      begin
       for i := 0 to ($200) - 1 do
       begin
-       if (variables[i].name) and (not strcmp(var,variables[i].name)) then
+       if (variables[i].name) and (not strcmp(var_,variables[i].name)) then
        begin
         // return value of sprintf() ignored
         sprintf(str, '0x%03X: %s = 0x%02X' + LineEnding + '', i, variables[i].name, ReadRegister(i));
@@ -1733,8 +1733,8 @@ begin
    if sscanf(command, 'watch 0x%x', @( var_addr ) ) or sscanf(command, 'w 0x%x', @( var_addr )) then
    begin
     // return value of sprintf() ignored
-    sprintf(var, '[0x%X]', var_addr);
-    s.name := strdup(var);
+    sprintf(var_, '[0x%X]', var_addr);
+    s.name := strdup(var_);
     s.value := var_addr;
     // return value of addWatch() ignored
     addWatch(s);
@@ -1742,10 +1742,10 @@ begin
      // return value of ShowContext() ignored
      ShowContext();
    end
-   else if sscanf(command, 'watch %s', var) or sscanf(command, 'w %s', var) then
+   else if sscanf(command, 'watch %s', var_) or sscanf(command, 'w %s', var_) then
    begin
     i := 0;
-    while (i<nsym) and (AnsiCompareStr(var, sym[i].name)) do
+    while (i<nsym) and (AnsiCompareStr(var_, sym[i].name)) do
     begin
      Inc(i);
     end;
@@ -1761,7 +1761,7 @@ begin
     begin
      for i := 0 to ($200) - 1 do
      begin
-      if (variables[i].name) and (not strcmp(var,variables[i].name)) then
+      if (variables[i].name) and (not strcmp(var_,variables[i].name)) then
       begin
        s.name := variables[i].name;
        s.value := i;
@@ -1796,10 +1796,10 @@ begin
      // return value of AppendMessageICD() ignored
      AppendMessageICD(str);
     end
-    else if sscanf(command, '%s', var) and sscanf(p+1, '%x', @( data )) then
+    else if sscanf(command, '%s', var_) and sscanf(p+1, '%x', @( data )) then
     begin
      i := 0;
-     while (i<nsym) and (AnsiCompareStr(var, sym[i].name)) do
+     while (i<nsym) and (AnsiCompareStr(var_, sym[i].name)) do
      begin
       Inc(i);
      end;
@@ -1811,7 +1811,7 @@ begin
      begin
       for i := 0 to ($200) - 1 do
       begin
-       if (variables[i].name) and (not strcmp(var,variables[i].name)) then
+       if (variables[i].name) and (not strcmp(var_,variables[i].name)) then
        begin
         addr := i;
         i := $200;
@@ -1828,7 +1828,7 @@ begin
       // return value of ShowContext() ignored
       ShowContext();
       // return value of sprintf() ignored
-      sprintf(str, '%s=0x%02X' + LineEnding + '', var, data);
+      sprintf(str, '%s=0x%02X' + LineEnding + '', var_, data);
       // return value of AppendMessageICD() ignored
       AppendMessageICD(str);
      end;
