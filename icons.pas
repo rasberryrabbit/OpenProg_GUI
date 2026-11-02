@@ -5,8 +5,19 @@ unit icons;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  StdCtrls,
+  ComCtrls,
+  ExtCtrls,
+  Buttons,
+  Spin,
+  Menus,
+  LCLType,
   mainform;
 
 type
@@ -15,6 +26,8 @@ type
   BYTE  = Byte;
 
 var
+  write_icon: array of Byte;
+  read_icon: array of Byte;
   system_icon: array of Byte;
   go_icon: array of Byte;
   halt_icon: array of Byte;

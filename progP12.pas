@@ -5,10 +5,21 @@ unit progp12;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
-  mainform,
-  common;
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  StdCtrls,
+  ComCtrls,
+  ExtCtrls,
+  Buttons,
+  Spin,
+  Menus,
+  LCLType,
+  common,
+  mainform;
 
 type
   DWORD = Cardinal;
@@ -16,13 +27,13 @@ type
   BYTE  = Byte;
 
 // --- function declarations ---
-procedure Read12F5xx(dim: Integer; dim2: Integer);
-procedure Write12F5xx(dim: Integer; OscAddr: Integer);
-procedure Write12C5xx(dim: Integer; dummy: Integer);
+function Read12F5xx(dim: Integer; dim2: Integer): Pointer;
+function Write12F5xx(dim: Integer; OscAddr: Integer): Pointer;
+function Write12C5xx(dim: Integer; dummy: Integer): Pointer;
 
 implementation
 
-procedure Read12F5xx(dim: Integer; dim2: Integer);
+function Read12F5xx(dim: Integer; dim2: Integer): Pointer;
 var
   k: Integer;
   z: Integer;
@@ -74,11 +85,23 @@ begin
   bufferU[Inc(j)] := READ_DATA_PROG;
   bufferU[Inc(j)] := INC_ADDR;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/progP12.c:63
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/progP12.c:1
+     Original C:
+       /**
+        * \file progP12.c - algorithms to program the PIC12 (12 bit word) family of microcontrollers
+        * Copyright (C) 2009-2016 Alberto Maccioni
+        *
+        * This program is free software; you can redistribute it and/or modify
+   *)
   end;
   PacketIO(2);
   for z := 0 to (DIMBUF-2 and bufferI[z] not =READ_DATA_PROG) - 1 do
@@ -123,11 +146,23 @@ begin
    if j>DIMBUF*2/4-3 or i = dim+dim2-1 then
    begin
     bufferU[Inc(j)] := FLUSH;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+      Source: /tmp/opgui-0.12.4/progP12.c:63
+      Original C:
+        	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+    *)
     // init: 
     while j<DIMBUF do
     begin
-     (* TODO gtk2laz: unrecognised statement: j++; *)
+     (* TODO gtk2laz: unrecognised statement
+       Source: /tmp/opgui-0.12.4/progP12.c:1
+       Original C:
+         /**
+          * \file progP12.c - algorithms to program the PIC12 (12 bit word) family of microcontrollers
+          * Copyright (C) 2009-2016 Alberto Maccioni
+          *
+          * This program is free software; you can redistribute it and/or modify
+     *)
     end;
     PacketIO(5);
     for z := 0 to (DIMBUF-2) - 1 do
@@ -153,11 +188,23 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $0;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/progP12.c:63
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/progP12.c:1
+     Original C:
+       /**
+        * \file progP12.c - algorithms to program the PIC12 (12 bit word) family of microcontrollers
+        * Copyright (C) 2009-2016 Alberto Maccioni
+        *
+        * This program is free software; you can redistribute it and/or modify
+   *)
   end;
   PacketIO(1);
   stop := GetTickCount();
@@ -223,7 +270,7 @@ begin
   end;
 end;
 
-procedure Write12F5xx(dim: Integer; OscAddr: Integer);
+function Write12F5xx(dim: Integer; OscAddr: Integer): Pointer;
 var
   k: Integer;
   z: Integer;
@@ -231,299 +278,401 @@ var
   j: Integer;
   w: Integer;
   err: Integer;
-  osccal: Word;
-  BKosccal: Word;
+  osccal: TWORD;
+  BKosccal: TWORD;
   start: Cardinal;
   dim1: Integer;
-  if(use_osccal) memCODE_W[OscAddr]=osccal: Telse;
-  if(bufferI[z]==LOAD_DATA_PROG&&bufferI[z+5]==READ_DATA_PROG){ 					if (memCODE_W[k]!=(bufferI[z+6]<<8)+bufferI[z+7]){ 						PrintMessage("\r\n"); 						PrintMessage3(strings[S_CodeWError],k,memCODE_W[k],(bufferI[z+6]<<8)+bufferI[z+7]);	 						err++; 						if(max_err&&err>max_err){ 							PrintMessage1(strings[S_MaxErr],err);	 							PrintMessage(strings[S_IntW]);	 							i=dim1; 							z=DIMBUF; 						} 					} 					k++; 					z+=8; 				}: Telse;
   err_c: Integer;
   stop: Cardinal;
 begin
   k := 0;
   z := 0;
   err := 0;
-  osccal := -1;
-  BKosccal := -1;
-  if OscAddr>dim then
-   OscAddr := dim-1;
-  if OscAddr = -1 then
-   use_BKosccal := use_osccal=0;
-  if sizeW<0x1000 then
+  osccal := -(1);
+  BKosccal := -(1);
+  if (OscAddr) > (dim) then
+   OscAddr := (dim) - (1);
+  if (OscAddr) = (-(1)) then
+   use_BKosccal := (use_osccal := 0);
+  if (sizeW) < ($1000) then
   begin
    PrintMessage(strings[S_NoConfigW2]);
    Exit;
   end;
+  if saveLog then
+  begin
+   OpenLogFile();
+   fprintf(logfile, "Write12F5xx(%d,%d)\n", dim, OscAddr);
+  end;
+  for i := 0 to (sizeW) - 1 do
+  begin
+   memCODE_W[i] := memCODE_W[i] and $FFF;
+  end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T1T2;
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 0;
   bufferU[Inc(j)] := 1;
   bufferU[Inc(j)] := 100;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  bufferU[Inc(j)] := NOP;
-  if OscAddr not =-1 then
+  bufferU[Inc(j)] := $00;
+  if (OscAddr) <> (-(1)) then
   begin
-   for i := -1 to (OscAddr-0xff) - 1 do
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/progP12.c:236
+     Original C:
+       for (i = -1; i < (OscAddr - 0xff); i += 0xff)
+       {
+         bufferU[j++] = 0x17;
+         bufferU[j++] = 0xff;
+       }
+   *)
+   // init: i = -1
+   while (i) < ((OscAddr) - ($ff)) do
    begin
-    bufferU[Inc(j)] := INC_ADDR_N;
+    bufferU[Inc(j)] := $17;
     bufferU[Inc(j)] := $ff;
-    i := i + $ff;
+     // step: i += 0xff
    end;
-   bufferU[Inc(j)] := OscAddr-i;
-   bufferU[Inc(j)] := READ_DATA_PROG;
-   if OscAddr<dim then
+   bufferU[Inc(j)] := $17;
+   bufferU[Inc(j)] := (OscAddr) - (i);
+   bufferU[Inc(j)] := $14;
+   if (OscAddr) < (dim) then
    begin
-    bufferU[Inc(j)] := INC_ADDR_N;
-    bufferU[Inc(j)] := dim-OscAddr;
+    bufferU[Inc(j)] := $17;
+    bufferU[Inc(j)] := (dim) - (OscAddr);
    end;
+   bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := $4;
-   bufferU[Inc(j)] := READ_DATA_PROG;
+   bufferU[Inc(j)] := $14;
   end;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T3;
-  bufferU[Inc(j)] := 10000 shr 8;
-  bufferU[Inc(j)] := 10000&0xff;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := (10000) shr (8);
+  bufferU[Inc(j)] := (10000) and ($ff);
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(15);
-  if OscAddr not =-1 then
+  if (OscAddr) <> (-(1)) then
   begin
-   for z := 4 to (DIMBUF-2 and bufferI[z] not =READ_DATA_PROG) - 1 do
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/progP12.c:267
+     Original C:
+       for (z = 4; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
+         ;
+   *)
+   // init: z = 4
+   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
+     // step: z++
    end;
-   if z<DIMBUF-2 then
-    osccal := (bufferI[z+1] shl 8)+bufferI[z+2];
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z+=3;z<DIMBUF-2&&bufferI[z]!=READ_DATA_PROG;z++) *)
-   // init: z+=3
-   while z<DIMBUF-2 and bufferI[z] not =READ_DATA_PROG do
+   if (z) < ((64) - (2)) then
+    osccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/progP12.c:269
+     Original C:
+       for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
+         ;
+   *)
+   // init: z += 3
+   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-    (* TODO gtk2laz: unrecognised statement: z++; *)
+     // step: z++
    end;
-   if z<DIMBUF-2 then
-    BKosccal := (bufferI[z+1] shl 8)+bufferI[z+2];
-   if osccal = -1 or BKosccal = -1 then
+   if (z) < ((64) - (2)) then
+    BKosccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
+   if ((osccal) = (-(1))) or ((BKosccal) = (-(1))) then
    begin
     PrintMessage(strings[S_ErrOsccal]);
-    PrintMessage('\r' + LineEnding + '');
+    PrintMessage("\r\n");
     Exit;
    end;
-   PrintMessage1(strings[S_BKOsccal], BKosccal);
+   sprintf(str, strings[S_Osccal], osccal);
+   PrintMessage(str);
+   sprintf(str, strings[S_BKOsccal], BKosccal);
+   PrintMessage(str);
   end;
+  PrintMessage(strings[S_StartErase]);
   j := 0;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  if dim>OscAddr+1 then
+  if (dim) > ((OscAddr) + (1)) then
   begin
-   bufferU[Inc(j)] := BULK_ERASE_PROG;
-   bufferU[Inc(j)] := WAIT_T3;
-   for i := -1 to (dim-0xff) - 1 do
+   bufferU[Inc(j)] := $19;
+   bufferU[Inc(j)] := $0A;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/progP12.c:290
+     Original C:
+       for (i = -1; i < (dim - 0xff); i += 0xff)
+       {
+         bufferU[j++] = 0x17;
+         bufferU[j++] = 0xff;
+       }
+   *)
+   // init: i = -1
+   while (i) < ((dim) - ($ff)) do
    begin
-    bufferU[Inc(j)] := INC_ADDR_N;
+    bufferU[Inc(j)] := $17;
     bufferU[Inc(j)] := $ff;
-    i := i + $ff;
+     // step: i += 0xff
    end;
-   bufferU[Inc(j)] := dim-i-1;
-   bufferU[Inc(j)] := BULK_ERASE_PROG;
-   bufferU[Inc(j)] := WAIT_T3;
+   bufferU[Inc(j)] := $17;
+   bufferU[Inc(j)] := ((dim) - (i)) - (1);
+   bufferU[Inc(j)] := $19;
+   bufferU[Inc(j)] := $0A;
    if programID then
    begin
-    bufferU[Inc(j)] := INC_ADDR;
-    bufferU[Inc(j)] := BULK_ERASE_PROG;
-    bufferU[Inc(j)] := WAIT_T3;
+    bufferU[Inc(j)] := $16;
+    bufferU[Inc(j)] := $19;
+    bufferU[Inc(j)] := $0A;
    end;
   end
   else
   begin
    if programID then
    begin
-    for i := -1 to (dim-0xff) - 1 do
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+      Source: /tmp/opgui-0.12.4/progP12.c:306
+      Original C:
+        for (i = -1; i < (dim - 0xff); i += 0xff)
+        {
+          bufferU[j++] = 0x17;
+          bufferU[j++] = 0xff;
+        }
+    *)
+    // init: i = -1
+    while (i) < ((dim) - ($ff)) do
     begin
-     bufferU[Inc(j)] := INC_ADDR_N;
+     bufferU[Inc(j)] := $17;
      bufferU[Inc(j)] := $ff;
-     i := i + $ff;
+      // step: i += 0xff
     end;
-    bufferU[Inc(j)] := dim-i;
-    bufferU[Inc(j)] := BULK_ERASE_PROG;
-    bufferU[Inc(j)] := WAIT_T3;
+    bufferU[Inc(j)] := $17;
+    bufferU[Inc(j)] := (dim) - (i);
+    bufferU[Inc(j)] := $19;
+    bufferU[Inc(j)] := $0A;
    end
    else
    begin
-    bufferU[Inc(j)] := BULK_ERASE_PROG;
-    bufferU[Inc(j)] := WAIT_T3;
+    bufferU[Inc(j)] := $19;
+    bufferU[Inc(j)] := $0A;
    end;
   end;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  bufferU[Inc(j)] := INC_ADDR;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T3;
-  bufferU[Inc(j)] := 2000 shr 8;
-  bufferU[Inc(j)] := 2000&0xff;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $16;
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := (2000) shr (8);
+  bufferU[Inc(j)] := (2000) and ($ff);
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
-  PacketIO(IfThen((dim>OscAddr+1), 50, 30));
+  PacketIO(IfThen((dim) > ((OscAddr) + (1)), 50, 30));
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_StartCodeProg]);
-  PrintStatusSetup();
   dim1 := dim;
   if programID then
-   dim1 := dim+5;
-  if memCODE_W[dim+4]>=0xFFF then
-   memCODE_W[dim+4] := BKosccal;
+   dim1 := (dim) + (5);
+  if (memCODE_W[(dim) + (4)]) >= ($FFF) then
+   memCODE_W[(dim) + (4)] := BKosccal;
   if use_BKosccal then
    memCODE_W[OscAddr] := BKosccal;
-  for i := k=w=0,j=0 to (dim1) - 1 do
+  else
+   if use_osccal then
+    memCODE_W[OscAddr] := osccal;
+  while (i) < (dim1) do
   begin
-   if memCODE_W[i]<0xfff then
+   if (memCODE_W[i]) < ($fff) then
    begin
-    bufferU[Inc(j)] := LOAD_DATA_PROG;
-    bufferU[Inc(j)] := memCODE_W[i] shr 8;
-    bufferU[Inc(j)] := memCODE_W[i]&0xff;
-    bufferU[Inc(j)] := BEGIN_PROG;
-    bufferU[Inc(j)] := WAIT_T3;
-    bufferU[Inc(j)] := END_PROG2;
-    bufferU[Inc(j)] := WAIT_T2;
-    bufferU[Inc(j)] := READ_DATA_PROG;
-    (* TODO gtk2laz: unrecognised statement: w++ *)
+    bufferU[Inc(j)] := $12;
+    bufferU[Inc(j)] := (memCODE_W[i]) shr (8);
+    bufferU[Inc(j)] := (memCODE_W[i]) and ($ff);
+    bufferU[Inc(j)] := $18;
+    bufferU[Inc(j)] := $0A;
+    bufferU[Inc(j)] := $1C;
+    bufferU[Inc(j)] := $09;
+    bufferU[Inc(j)] := $14;
+    Inc(w);
    end;
-   if j>DIMBUF-10 or i = dim1-1 then
+   bufferU[Inc(j)] := $16;
+   if ((j) > ((64) - (10))) or ((i) = ((dim1) - (1))) then
    begin
-    PrintStatus(strings[S_CodeWriting], i*100/dim, i);
-    bufferU[Inc(j)] := FLUSH;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-    // init: 
-    while j<DIMBUF do
+    sprintf(str, strings[S_CodeWriting], ((i) * (100)) div (dim), i);
+    gtk_statusbar_push(status_bar, statusID, str);
+    while gtk_events_pending() do
     begin
-     (* TODO gtk2laz: unrecognised statement: j++; *)
+     gtk_main_iteration();
     end;
-    PacketIO(w*3+3);
+    bufferU[Inc(j)] := $04;
+    while (j) < (64) do
+    begin
+     bufferU[j] := $0;
+     Inc(j);
+    end;
+    PacketIO(((w) * (3)) + (3));
     w := 0;
-    for z := 0 to (DIMBUF-7) - 1 do
+    for z := 0 to ((64) - (7)) - 1 do
     begin
-     if bufferI[z] = INC_ADDR and memCODE_W[k]>=0xfff then
-      (* TODO gtk2laz: unrecognised statement: k++ *)
+     if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($fff)) then
+      Inc(k);
+     else
+      if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (5)]) = ($14)) then
+      begin
+       if (memCODE_W[k]) <> (((bufferI[(z) + (6)]) shl (8)) + (bufferI[(z) + (7)])) then
+       begin
+        PrintMessage("\r\n");
+        sprintf(str, strings[S_CodeWError], k, memCODE_W[k], ((bufferI[(z) + (6)]) shl (8)) + (bufferI[(z) + (7)]));
+        PrintMessage(str);
+        Inc(err);
+        if (max_err) and ((err) > (max_err)) then
+        begin
+         sprintf(str, strings[S_MaxErr], err);
+         PrintMessage(str);
+         PrintMessage(strings[S_IntW]);
+         i := dim1;
+         z := 64;
+        end;
+       end;
+       Inc(k);
+       z := z + 8;
+      end;
     end;
+    j := 0;
     if saveLog then
     begin
      fprintf(logfile, strings[S_Log8], i, i, k, k, err);
     end;
    end;
+   Inc(i);
   end;
-  err := err + i-k;
-  PrintMessage1(strings[S_ComplErr], err);
+  err := err + (i) - (k);
+  sprintf(str, strings[S_ComplErr], err);
+  PrintMessage(str);
   PrintMessage(strings[S_ConfigW]);
   err_c := 0;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  bufferU[Inc(j)] := LOAD_DATA_PROG;
-  bufferU[Inc(j)] := memCODE_W[0xfff] shr 8;
-  bufferU[Inc(j)] := memCODE_W[0xfff]&0xff;
-  bufferU[Inc(j)] := BEGIN_PROG;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := END_PROG2;
-  bufferU[Inc(j)] := WAIT_T2;
-  bufferU[Inc(j)] := READ_DATA_PROG;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $12;
+  bufferU[Inc(j)] := (memCODE_W[$fff]) shr (8);
+  bufferU[Inc(j)] := (memCODE_W[$fff]) and ($ff);
+  bufferU[Inc(j)] := $18;
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $1C;
+  bufferU[Inc(j)] := $09;
+  bufferU[Inc(j)] := $14;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(20);
   stop := GetTickCount();
-  for z := 0 to (DIMBUF-2 and bufferI[z] not =READ_DATA_PROG) - 1 do
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/progP12.c:432
+    Original C:
+      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
+        ;
+  *)
+  // init: z = 0
+  while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
+    // step: z++
   end;
-  if ~memCODE_W[0xfff]&((bufferI[z+1] shl 8)+bufferI[z+2]) then
+  if (not (memCODE_W[$fff])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
   begin
-   PrintMessage('\r' + LineEnding + '');
-   PrintMessage2(strings[S_ConfigWErr], memCODE_W[0xfff], (bufferI[z+1] shl 8)+bufferI[z+2]);
-   (* TODO gtk2laz: unrecognised statement: err_c++ *)
+   PrintMessage("\r\n");
+   sprintf(str, strings[S_ConfigWErr], memCODE_W[$fff], ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+   PrintMessage(str);
+   Inc(err_c);
   end;
-  if z>DIMBUF-2 then
+  err := err + err_c;
+  if (z) > ((64) - (2)) then
   begin
-   PrintMessage('\r' + LineEnding + '');
+   PrintMessage("\r\n");
    PrintMessage(strings[S_ConfigWErr2]);
   end;
+  sprintf(str, strings[S_ComplErr], err_c);
+  PrintMessage(str);
   if saveLog then
   begin
    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
   end;
+  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
+  gtk_statusbar_push(status_bar, statusID, "");
 end;
 
-procedure Write12C5xx(dim: Integer; dummy: Integer);
+function Write12C5xx(dim: Integer; dummy: Integer): Pointer;
 var
   k: Integer;
   z: Integer;
   i: Integer;
   j: Integer;
   err: Integer;
-  osccal: Word;
+  osccal: TWORD;
   OscAddr: Integer;
   start: Cardinal;
   N: Integer;
@@ -538,220 +687,285 @@ begin
   k := 0;
   z := 0;
   err := 0;
-  osccal := -1;
-  OscAddr := dim-1;
-  if FWVersion<0x800 then
+  osccal := -(1);
+  OscAddr := (dim) - (1);
+  if (FWVersion) < ($800) then
   begin
-   PrintMessage1(strings[S_FWver2old], '0.8.0');
+   sprintf(str, strings[S_FWver2old], "0.8.0");
+   PrintMessage(str);
    Exit;
+  end;
+  if (sizeW) < ($1000) then
+  begin
+   PrintMessage(strings[S_NoConfigW2]);
+   Exit;
+  end;
+  if saveLog then
+  begin
+   OpenLogFile();
+   fprintf(logfile, "Write12C5xx(%d)\n", dim);
+  end;
+  for i := 0 to (sizeW) - 1 do
+  begin
+   memCODE_W[i] := memCODE_W[i] and $FFF;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T1T2;
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 0;
   bufferU[Inc(j)] := 1;
   bufferU[Inc(j)] := 100;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_MN;
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 3;
   bufferU[Inc(j)] := 8;
   bufferU[Inc(j)] := 11;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  bufferU[Inc(j)] := NOP;
-  for i := -1 to (OscAddr-0xff) - 1 do
+  bufferU[Inc(j)] := $00;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/progP12.c:501
+    Original C:
+      for (i = -1; i < (OscAddr - 0xff); i += 0xff)
+      {
+        bufferU[j++] = 0x17;
+        bufferU[j++] = 0xff;
+      }
+  *)
+  // init: i = -1
+  while (i) < ((OscAddr) - ($ff)) do
   begin
-   bufferU[Inc(j)] := INC_ADDR_N;
+   bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := $ff;
-   i := i + $ff;
+    // step: i += 0xff
   end;
-  bufferU[Inc(j)] := OscAddr-i;
-  bufferU[Inc(j)] := READ_DATA_PROG;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $17;
+  bufferU[Inc(j)] := (OscAddr) - (i);
+  bufferU[Inc(j)] := $14;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T3;
-  bufferU[Inc(j)] := 10000 shr 8;
-  bufferU[Inc(j)] := 10000&0xff;
-  bufferU[Inc(j)] := WAIT_T3;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := (10000) shr (8);
+  bufferU[Inc(j)] := (10000) and ($ff);
+  bufferU[Inc(j)] := $0A;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(15);
   j := 0;
-  for z := 4 to (DIMBUF-2 and bufferI[z] not =READ_DATA_PROG) - 1 do
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/progP12.c:524
+    Original C:
+      for (z = 4; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
+        ;
+  *)
+  // init: z = 4
+  while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
+    // step: z++
   end;
-  if z<DIMBUF-2 then
-   osccal := (bufferI[z+1] shl 8)+bufferI[z+2];
-  if osccal = -1 then
+  if (z) < ((64) - (2)) then
+   osccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
+  if (osccal) = (-(1)) then
   begin
    PrintMessage(strings[S_ErrOsccal]);
-   PrintMessage('\r' + LineEnding + '');
+   PrintMessage("\r\n");
    Exit;
   end;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  sprintf(str, strings[S_Osccal], osccal);
+  PrintMessage(str);
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  bufferU[Inc(j)] := INC_ADDR;
-  bufferU[Inc(j)] := READ_ADC;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $16;
+  bufferU[Inc(j)] := $0C;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(2);
   j := 0;
   PrintMessage(strings[S_StartCodeProg]);
-  PrintStatusSetup();
   Nt := 0;
   Nmin := 255;
   Nmax := 0;
   xN := 0;
   dim1 := dim;
   if programID then
-   dim1 := dim+5;
+   dim1 := (dim) + (5);
   if use_osccal then
    memCODE_W[OscAddr] := osccal;
-  for i := k=0,j=0 to (dim1) - 1 do
+  while (i) < (dim1) do
   begin
-   if memCODE_W[i]<0xfff then
+   if (memCODE_W[i]) < ($fff) then
    begin
-    bufferU[Inc(j)] := PROG_C;
-    bufferU[Inc(j)] := memCODE_W[i] shr 8;
-    bufferU[Inc(j)] := memCODE_W[i]&0xff;
-    bufferU[Inc(j)] := READ_DATA_PROG;
-    bufferU[Inc(j)] := READ_ADC;
-    bufferU[Inc(j)] := INC_ADDR;
+    bufferU[Inc(j)] := $20;
+    bufferU[Inc(j)] := (memCODE_W[i]) shr (8);
+    bufferU[Inc(j)] := (memCODE_W[i]) and ($ff);
+    bufferU[Inc(j)] := $14;
+    bufferU[Inc(j)] := $0C;
+    bufferU[Inc(j)] := $16;
    end
    else
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;memCODE_W[i]>=0xfff&&j<DIMBUF-1&&i<dim1;i++) bufferU[j++]=INC_ADDR *)
-    // init: 
-    while memCODE_W[i]>=0xfff and j<DIMBUF-1 and i<dim1 do
+    while (((memCODE_W[i]) >= ($fff)) and ((j) < ((64) - (1)))) and ((i) < (dim1)) do
     begin
-     (* TODO gtk2laz: unrecognised statement: i++; *)
+     bufferU[Inc(j)] := $16;
+     Inc(i);
     end;
-    (* TODO gtk2laz: unrecognised statement: i-- *)
+    Dec(i);
    end;
-   bufferU[Inc(j)] := FLUSH;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-   // init: 
-   while j<DIMBUF do
+   sprintf(str, strings[S_CodeWriting], ((i) * (100)) div (dim), i);
+   gtk_statusbar_push(status_bar, statusID, str);
+   while gtk_events_pending() do
    begin
-    (* TODO gtk2laz: unrecognised statement: j++; *)
+    gtk_main_iteration();
    end;
-   PacketIO(10+3);
+   bufferU[Inc(j)] := $04;
+   while (j) < (64) do
+   begin
+    bufferU[j] := $0;
+    Inc(j);
+   end;
+   PacketIO((10) + (3));
    j := 0;
-   if bufferI[1] = PROG_C and bufferI[3] = READ_DATA_PROG then
+   if ((bufferI[1]) = ($20)) and ((bufferI[3]) = ($14)) then
    begin
     N := bufferI[2];
-    if N<0xF0 then
+    if (N) < ($F0) then
     begin
      Nt := Nt + N;
-     (* TODO gtk2laz: unrecognised statement: xN++ *)
-     if N<Nmin then
+     Inc(xN);
+     if (N) < (Nmin) then
       Nmin := N;
-     if N>Nmax then
+     if (N) > (Nmax) then
       Nmax := N;
     end;
+    if (memCODE_W[k]) <> (((bufferI[4]) shl (8)) + (bufferI[5])) then
+    begin
+     PrintMessage("\r\n");
+     sprintf(str, strings[S_CodeWError], k, memCODE_W[k], ((bufferI[4]) shl (8)) + (bufferI[5]));
+     PrintMessage(str);
+     Inc(err);
+     if (max_err) and ((err) > (max_err)) then
+     begin
+      sprintf(str, strings[S_MaxErr], err);
+      PrintMessage(str);
+      PrintMessage(strings[S_IntW]);
+      i := dim1;
+      z := 64;
+     end;
+    end;
+    Inc(k);
    end
    else
-    (* TODO gtk2laz: complex for loop: for(z=0 *)
+    for z := 0 to (64) - 1 do
+    begin
+     if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($fff)) then
+      Inc(k);
+    end;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
+   end;
+   Inc(i);
   end;
-  err := err + i-k;
-  PrintMessage1(strings[S_ComplErr], err);
-  if saveLog  and  xN then
-   fprintf(logfile, "Programming pulses: avg %.1f, min %d, max %d\r\n", Nt/xN, Nmin, Nmax);
-  if memCODE_W[0xfff]<0xfff then
+  err := err + (i) - (k);
+  sprintf(str, strings[S_ComplErr], err);
+  PrintMessage(str);
+  if (saveLog) and (xN) then
+   fprintf(logfile, "Programming pulses: avg %.1f, min %d, max %d\r\n", (Nt) div (xN), Nmin, Nmax);
+  if (memCODE_W[$fff]) < ($fff) then
   begin
    PrintMessage(strings[S_ConfigW]);
    err_c := 0;
-   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0E;
    bufferU[Inc(j)] := $1;
-   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0E;
    bufferU[Inc(j)] := $0;
-   bufferU[Inc(j)] := WAIT_T3;
-   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0A;
+   bufferU[Inc(j)] := $0E;
    bufferU[Inc(j)] := $1;
-   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0E;
    bufferU[Inc(j)] := $5;
-   bufferU[Inc(j)] := LOAD_DATA_PROG;
-   bufferU[Inc(j)] := memCODE_W[0xfff] shr 8;
-   bufferU[Inc(j)] := memCODE_W[0xfff]&0xff;
-   bufferU[Inc(j)] := FLUSH;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-   // init: 
-   while j<DIMBUF do
+   bufferU[Inc(j)] := $12;
+   bufferU[Inc(j)] := (memCODE_W[$fff]) shr (8);
+   bufferU[Inc(j)] := (memCODE_W[$fff]) and ($ff);
+   bufferU[Inc(j)] := $04;
+   while (j) < (64) do
    begin
-    (* TODO gtk2laz: unrecognised statement: j++; *)
+    bufferU[j] := $0;
+    Inc(j);
    end;
    PacketIO(12);
    j := 0;
    for i := 0 to (20) - 1 do
    begin
-    bufferU[Inc(j)] := BEGIN_PROG;
-    bufferU[Inc(j)] := WAIT_T2;
-    bufferU[Inc(j)] := END_PROG2;
+    bufferU[Inc(j)] := $18;
+    bufferU[Inc(j)] := $09;
+    bufferU[Inc(j)] := $1C;
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-   // init: 
-   while j<DIMBUF do
+   bufferU[Inc(j)] := $04;
+   while (j) < (64) do
    begin
-    (* TODO gtk2laz: unrecognised statement: j++; *)
+    bufferU[j] := $0;
+    Inc(j);
    end;
    j := 0;
    for i := 0 to (5) - 1 do
    begin
     PacketIO(3);
    end;
-   bufferU[Inc(j)] := FLUSH;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-   // init: 
-   while j<DIMBUF do
+   bufferU[Inc(j)] := $14;
+   bufferU[Inc(j)] := $04;
+   while (j) < (64) do
    begin
-    (* TODO gtk2laz: unrecognised statement: j++; *)
+    bufferU[j] := $0;
+    Inc(j);
    end;
    PacketIO(2);
    j := 0;
-   if ~memCODE_W[0xfff]&((bufferI[2] shl 8)+bufferI[3]) then
+   if (not (memCODE_W[$fff])) and (((bufferI[2]) shl (8)) + (bufferI[3])) then
    begin
-    PrintMessage('\r' + LineEnding + '');
-    PrintMessage2(strings[S_ConfigWErr], memCODE_W[0xfff], (bufferI[2] shl 8)+bufferI[3]);
-    (* TODO gtk2laz: unrecognised statement: err_c++ *)
+    PrintMessage("\r\n");
+    sprintf(str, strings[S_ConfigWErr], memCODE_W[$fff], ((bufferI[2]) shl (8)) + (bufferI[3]));
+    PrintMessage(str);
+    Inc(err_c);
    end;
+   err := err + err_c;
   end;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  sprintf(str, strings[S_ComplErr], err);
+  PrintMessage(str);
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(2);
   j := 0;
@@ -760,12 +974,14 @@ begin
   begin
    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
   end;
+  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
+  gtk_statusbar_push(status_bar, statusID, "");
 end;
 
 end.

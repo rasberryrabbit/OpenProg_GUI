@@ -5,10 +5,21 @@ unit i2cspi;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
-  mainform,
-  common;
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  StdCtrls,
+  ComCtrls,
+  ExtCtrls,
+  Buttons,
+  Spin,
+  Menus,
+  LCLType,
+  common,
+  mainform;
 
 const
   CS = 8;
@@ -27,92 +38,271 @@ var
   n: Integer;
 
 // --- function declarations ---
-procedure I2CReceive(mode: Integer; speed: Integer; N: Integer; buffer: PByte);
+function I2CReceive(mode: Integer; speed: Integer; N: Integer; buffer: ^TBYTE): Pointer;
+function I2CSend(mode: Integer; speed: Integer; N: Integer; buffer: ^TBYTE): Pointer;
 
 implementation
 
-procedure I2CReceive(mode: Integer; speed: Integer; N: Integer; buffer: PByte);
+function I2CReceive(mode: Integer; speed: Integer; N: Integer; buffer: ^TBYTE): Pointer;
 var
   j: Integer;
+  str: array[0..1024-1] of Char;
+  t: array[0..16-1] of Char;
+  i: Integer;
 begin
   j := 0;
-  if N<0 then
+  if (N) < (0) then
    N := 0;
-  if N>60 then
+  if (N) > (60) then
    N := 60;
-  if mode<0 then
+  if (mode) < (0) then
    mode := 0;
-  if mode>5 then
+  if (mode) > (5) then
    mode := 5;
-  if speed<0 then
+  if (speed) < (0) then
    speed := 0;
-  if speed>3 then
+  if (speed) > (3) then
    speed := 3;
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, 'I2C-SPI receive' + #9 + 'mode=%d' + #9 + 'speed=%d' + LineEnding + '', mode, speed);
+   fprintf(logfile, "I2C-SPI receive\tmode=%d\tspeed=%d\n", mode, speed);
   end;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $06;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  if mode<2 then
+  if (mode) < (2) then
   begin
-   bufferU[Inc(j)] := I2C_INIT;
-   bufferU[Inc(j)] := IfThen((speed shl 3)+(speed>0, $40, 0));
+   bufferU[Inc(j)] := $2B;
+   bufferU[Inc(j)] := ((speed) shl (3)) + (IfThen((speed) > (0), $40, 0));
   end
   else
   begin
-   bufferU[Inc(j)] := EXT_PORT;
-   bufferU[Inc(j)] := CS;
+   bufferU[Inc(j)] := $32;
+   bufferU[Inc(j)] := 8;
    bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := $32;
    bufferU[Inc(j)] := 0;
    bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := SPI_INIT;
-   bufferU[Inc(j)] := speed+((mode-2) shl 2);
+   bufferU[Inc(j)] := $2F;
+   bufferU[Inc(j)] := (speed) + (((mode) - (2)) shl (2));
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(2);
   j := 0;
-  if mode = 0 then
+  if (mode) = (0) then
   begin
-   bufferU[Inc(j)] := I2C_READ;
-   bufferU[Inc(j)] := IfThen(N>(DIMBUF-4), DIMBUF-4, N);
+   bufferU[Inc(j)] := $2C;
+   bufferU[Inc(j)] := IfThen((N) > ((64) - (4)), (64) - (4), N);
    bufferU[Inc(j)] := buffer[0];
    bufferU[Inc(j)] := buffer[1];
   end
-  else if mode = 1 then
+  else
+   if (mode) = (1) then
+   begin
+    bufferU[Inc(j)] := $2E;
+    bufferU[Inc(j)] := IfThen((N) > ((64) - (4)), (64) - (4), N);
+    bufferU[Inc(j)] := buffer[0];
+    bufferU[Inc(j)] := buffer[1];
+    bufferU[Inc(j)] := buffer[2];
+   end
+   else
+    if (mode) >= (2) then
+    begin
+     bufferU[Inc(j)] := $30;
+     bufferU[Inc(j)] := IfThen((N) > ((64) - (5)), (64) - (5), N);
+     bufferU[Inc(j)] := $32;
+     bufferU[Inc(j)] := 8;
+     bufferU[Inc(j)] := 0;
+    end;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   bufferU[Inc(j)] := I2C_READ2;
-   bufferU[Inc(j)] := IfThen(N>(DIMBUF-4), DIMBUF-4, N);
-   bufferU[Inc(j)] := buffer[0];
-   bufferU[Inc(j)] := buffer[1];
-   bufferU[Inc(j)] := buffer[2];
-  end
-  else if mode>=2 then
-  begin
-   bufferU[Inc(j)] := SPI_READ;
-   bufferU[Inc(j)] := IfThen(N>(DIMBUF-5), DIMBUF-5, N);
-   bufferU[Inc(j)] := EXT_PORT;
-   bufferU[Inc(j)] := CS;
-   bufferU[Inc(j)] := 0;
-  end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
-  // init: 
-  while j<DIMBUF do
-  begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(10);
   if saveLog then
   begin
    CloseLogFile();
   end;
+  if (((bufferI[0]) = ($2C)) or ((bufferI[0]) = ($2E))) or ((bufferI[0]) = ($30)) then
+  begin
+   if (bufferI[1]) = ($FD) then
+   begin
+    PrintMessageI2C(strings[S_I2CAckErr]);
+   end
+   else
+    if (bufferI[1]) > ($FA) then
+    begin
+     PrintMessageI2C(strings[S_InsErr]);
+    end
+    else
+    begin
+     str := "";
+     t := "";
+     if (mode) = (0) then
+      sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3]);
+     else
+      if (mode) = (1) then
+       sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3]);
+     strcat(str, "< ");
+     for i := 0 to (bufferI[1]) - 1 do
+     begin
+      sprintf(t, "%02X ", bufferI[(i) + (2)]);
+      strcat(str, t);
+      if (i) and (((i) mod (16)) = (15)) then
+      begin
+       strcat(str, "\r\n");
+      end;
+     end;
+     strcat(str, "\r\n");
+     PrintMessageI2C(str);
+     fflush(stdout);
+    end;
+  end
+  else
+   PrintMessageI2C(strings[S_ComErr]);
+end;
+
+function I2CSend(mode: Integer; speed: Integer; N: Integer; buffer: ^TBYTE): Pointer;
+var
+  i: Integer;
+  j: Integer;
+  str: array[0..1024-1] of Char;
+  t: array[0..16-1] of Char;
+  n: Integer;
+  i: Integer;
+begin
+  j := 0;
+  if (N) < (0) then
+   N := 0;
+  if (N) > (57) then
+   N := 57;
+  if (mode) < (0) then
+   mode := 0;
+  if (mode) > (5) then
+   mode := 5;
+  if (speed) < (0) then
+   speed := 0;
+  if (speed) > (3) then
+   speed := 3;
+  if saveLog then
+  begin
+   OpenLogFile();
+   fprintf(logfile, "I2C-SPI send\tmode=%d\tspeed=%d\n", mode, speed);
+  end;
+  bufferU[Inc(j)] := $06;
+  bufferU[Inc(j)] := $0E;
+  bufferU[Inc(j)] := $1;
+  if (mode) < (2) then
+  begin
+   bufferU[Inc(j)] := $2B;
+   bufferU[Inc(j)] := ((speed) shl (3)) + (IfThen((speed) > (0), $40, 0));
+  end
+  else
+  begin
+   bufferU[Inc(j)] := $32;
+   bufferU[Inc(j)] := 8;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := $32;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := $2F;
+   bufferU[Inc(j)] := (speed) + (((mode) - (2)) shl (2));
+  end;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
+  begin
+   bufferU[j] := $0;
+   Inc(j);
+  end;
+  PacketIO(2);
+  j := 0;
+  if (mode) = (0) then
+  begin
+   bufferU[Inc(j)] := $2D;
+   bufferU[Inc(j)] := IfThen((N) > ((64) - (5)), (64) - (5), N);
+   bufferU[Inc(j)] := buffer[0];
+   bufferU[Inc(j)] := buffer[1];
+   for i := 0 to (bufferU[1]) - 1 do
+   begin
+    bufferU[Inc(j)] := buffer[(i) + (2)];
+   end;
+  end
+  else
+   if (mode) = (1) then
+   begin
+    bufferU[Inc(j)] := $2D;
+    bufferU[Inc(j)] := IfThen(((N) + (1)) > ((64) - (5)), (64) - (5), (N) + (1));
+    bufferU[Inc(j)] := buffer[0];
+    bufferU[Inc(j)] := buffer[1];
+    bufferU[Inc(j)] := buffer[2];
+    for i := 0 to ((bufferU[1]) - (1)) - 1 do
+    begin
+     bufferU[Inc(j)] := buffer[(i) + (3)];
+    end;
+   end;
+  if (mode) >= (2) then
+  begin
+   bufferU[Inc(j)] := $31;
+   bufferU[Inc(j)] := IfThen((N) > ((64) - (5)), (64) - (5), N);
+   for i := 0 to (bufferU[1]) - 1 do
+   begin
+    bufferU[Inc(j)] := buffer[i];
+   end;
+   bufferU[Inc(j)] := $32;
+   bufferU[Inc(j)] := 8;
+   bufferU[Inc(j)] := 0;
+  end;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
+  begin
+   bufferU[j] := $0;
+   Inc(j);
+  end;
+  PacketIO(20);
+  if saveLog then
+  begin
+   CloseLogFile();
+  end;
+  if ((bufferI[0]) = ($2D)) or ((bufferI[0]) = ($31)) then
+  begin
+   if (bufferI[1]) = ($FD) then
+   begin
+    PrintMessageI2C(strings[S_I2CAckErr]);
+   end
+   else
+    if (bufferI[1]) > ($FA) then
+    begin
+     PrintMessageI2C(strings[S_InsErr]);
+    end
+    else
+    begin
+     n := 2;
+     sprintf(str, "> ");
+     if (mode) < (2) then
+      n := 4;
+     for i := 0 to (bufferU[1]) - 1 do
+     begin
+      sprintf(t, "%02X ", bufferU[(i) + (n)]);
+      strcat(str, t);
+      if (i) and (((i) mod (16)) = (15)) then
+      begin
+       strcat(str, "\r\n");
+      end;
+     end;
+     strcat(str, "\r\n");
+     PrintMessageI2C(str);
+    end;
+  end
+  else
+   PrintMessageI2C(strings[S_ComErr]);
 end;
 
 end.

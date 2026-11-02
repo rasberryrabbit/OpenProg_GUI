@@ -5,35 +5,51 @@ unit devicerw;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
-  mainform,
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  StdCtrls,
+  ComCtrls,
+  ExtCtrls,
+  Buttons,
+  Spin,
+  Menus,
+  LCLType,
   common,
   progp12,
   progp16,
   progp18,
   progp24,
   progeeprom,
-  progavr;
+  progavr,
+  mainform;
 
 type
   DWORD = Cardinal;
   WORD  = Word;
   BYTE  = Byte;
 
+type
+  Tfp = ^TProcedure;
+
 var
   devices: array of PChar;
-  i: Integer;
-  last: array[0..8-1] of Tstatic char;
+  Ndevices: Integer;
+  DEVLIST: array of TDEVICES;
+  NDEVLIST: Integer;
 
 // --- function declarations ---
 function ListDevices: PChar;
-procedure Read(dev: PChar; ee: Integer; r: Integer);
-procedure Write(dev: PChar; ee: Integer);
+procedure CheckDevices;
+function Read(dev: PChar; ee: Integer; r: Integer): Pointer;
+function Write(dev: PChar; ee: Integer): Pointer;
 function GetDevType(dev: PChar): Integer;
-function nameToGroup(devName: PChar): Tenum group_t;
-procedure populateDevInfo(info: ^Tstruct DevInfo; devlistEntry: ^Tstruct DEVICES);
-function GetDevInfo(dev: PChar): Tstruct DevInfo;
+function nameToGroup(devName: PChar): Tgroup_t;
+function populateDevInfo(info: ^TDevInfo; devlistEntry: ^TDEVICES): Pointer;
+function GetDevInfo(dev: PChar): TDevInfo;
 
 implementation
 
@@ -42,39 +58,55 @@ var
   i: Integer;
   len: Integer;
   l: Integer;
-  last: array[0..8-1] of Tstatic char;
+  last: array[0..8-1] of Char;
   list: PChar;
-  strcpy(list+len,", "): Telse;
 begin
   len := 0;
-  (* TODO gtk2laz: array initializer: last[8]=""; *)
+  last := "";
   list := 0;
   for i := 0 to (Ndevices) - 1 do
   begin
-   l := Length(devices[i]);
-   if  not last[0] then
+   l := strlen(devices[i]);
+   if not (last[0]) then
    begin
-    list := realloc(list, len+l+1);
-    // return value of strcpy() ignored
-    strcpy(list+len, devices[i]);
+    list := realloc(list, ((len) + (l)) + (1));
+    strcpy((list) + (len), devices[i]);
     len := len + l;
    end
    else
    begin
-    list := realloc(list, len+l+3);
-    if AnsiCompareStr(Copy(devices[i],1,2), Copy(last,1,2)) then
-     // return value of strcpy() ignored
-     strcpy(list+len, '', \n");
-    // return value of strcpy() ignored
-    strcpy(list+len+2, devices[i]);
-    len := len + l+2;
+    list := realloc(list, ((len) + (l)) + (3));
+    if strncmp(devices[i], last, 2) then
+     strcpy((list) + (len), ",\n");
+    else
+     strcpy((list) + (len), ", ");
+    strcpy(((list) + (len)) + (2), devices[i]);
+    len := len + (l) + (2);
    end;
+   last[0] := devices[i][0];
    last[1] := devices[i][1];
    last[2] := 0;
   end;
+  Exit(list);
 end;
 
-procedure Read(dev: PChar; ee: Integer; r: Integer);
+procedure CheckDevices;
+var
+  i: Integer;
+begin
+  for i := 0 to (Ndevices) - 1 do
+  begin
+   if (GetDevType(devices[i])) < (0) then
+   begin
+    printf("Can't find %s\n", devices[i]);
+    fflush(stdout);
+   end;
+  end;
+  printf("OK %d devices\n", Ndevices);
+  fflush(stdout);
+end;
+
+function Read(dev: PChar; ee: Integer; r: Integer): Pointer;
 var
   i: Integer;
   j: Integer;
@@ -89,7 +121,41 @@ begin
     FreeMem(str);
    str := malloc(strlen(DEVLIST[i].device)+1);
    strcpy(str, DEVLIST[i].device);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		 			if(!strcmp(dev,tok)){	 				for(j=0;j<4;j++) params[j]=DEVLIST[i].ReadParam[j]; 				if(DEVLIST[i].V33>0){	 					if(!CheckV33Regulator()){ 						P *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/deviceRW.c:969
+     Original C:
+       		for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		//compare every device name
+       			if(!strcmp(dev,tok)){	//proceed if found
+       				for(j=0;j<4;j++) params[j]=DEVLIST[i].ReadParam[j];
+       				if(DEVLIST[i].V33>0){	//3.3V required
+       					if(!CheckV33Regulator()){
+       						PrintMessage(strings[S_noV33reg]);	//Can't find 3.3V expansion board
+       						return;
+       					}
+       				}
+       				if(hvreg!=DEVLIST[i].HV) hvreg=StartHVReg(DEVLIST[i].HV)>0?DEVLIST[i].HV:0;
+       				if(DEVLIST[i].ReadPtr==0){
+       					PrintMessage(strings[S_nodev_r]); //"Device not supported for reading\r\n");
+       					return;
+       				}
+       				//call read function with the right number of arguments (better ways to do it???)
+       				//need to cast to a function with the right number of parameters
+       				switch(DEVLIST[i].family){
+       					case PIC12:
+       						if(r) params[1]=DEVLIST[i].ResArea;	//modify reserved area parameter
+       						((void (* )(int,int))(DEVLIST[i].ReadPtr))(params[0],params[1]);
+       					break;
+       					case PIC16:
+       						if(r) params[2]=DEVLIST[i].ResArea;	//modify reserved area parameter
+       						if(!ee) params[1]=0;					//clear eeprom parameter
+       						((void (* )(int,int,int,int))(DEVLIST[i].ReadPtr))(params[0],params[1],params[2],params[3]);
+       					break;
+       					case PIC18:
+       						if(!ee) params[1]=0;					//clear eeprom parameter
+       						((void (* )(int,int,int))(DEVLIST[i].ReadPtr))(params[0],params[1],params[2]);
+       					break;
+       					case PIC24:
+   *)
    // init: tok=strtok(str,",")
    while tok do
    begin
@@ -117,7 +183,7 @@ begin
   end;
 end;
 
-procedure Write(dev: PChar; ee: Integer);
+function Write(dev: PChar; ee: Integer): Pointer;
 var
   i: Integer;
   j: Integer;
@@ -131,7 +197,41 @@ begin
     FreeMem(str);
    str := malloc(strlen(DEVLIST[i].device)+1);
    strcpy(str, DEVLIST[i].device);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		 			if(!strcmp(dev,tok)){		 				for(j=0;j<6;j++) params[j]=DEVLIST[i].WriteParam[j]; 				if(DEVLIST[i].V33>0){	 					if(!CheckV33Regulator()){ 					 *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/deviceRW.c:1049
+     Original C:
+       		for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		//compare every device name
+       			if(!strcmp(dev,tok)){		//proceed if found
+       				for(j=0;j<6;j++) params[j]=DEVLIST[i].WriteParam[j];
+       				if(DEVLIST[i].V33>0){	//3.3V required
+       					if(!CheckV33Regulator()){
+       						PrintMessage(strings[S_noV33reg]);	//Can't find 3.3V expansion board
+       						return;
+       					}
+       				}
+       				if(hvreg!=DEVLIST[i].HV) hvreg=StartHVReg(DEVLIST[i].HV)>0?DEVLIST[i].HV:0;
+       				if(DEVLIST[i].WritePtr==0){
+       					PrintMessage(strings[S_nodev_w]); //"Device not supported for writing\r\n");
+       					return;
+       				}
+       				//call write function with the right number of arguments (better ways to do it???)
+       				//need to cast to a function with the right number of parameters
+       				switch(DEVLIST[i].family){
+       					case PIC12:
+       						((void (* )(int,int))(DEVLIST[i].WritePtr))(params[0],params[1]);
+       					break;
+       					case PIC16:
+       						if(!ee) params[1]=0;					//clear eeprom parameter
+       						if(params[2]==-10) ((void (* )(int,int))(DEVLIST[i].WritePtr))(params[0],params[1]);
+       						else ((void (* )(int,int,int))(DEVLIST[i].WritePtr))(params[0],params[1],params[2]);
+       					break;
+       					case PIC18:
+       						if(!ee) params[1]=0;					//clear eeprom parameter
+       						((void (* )(int,int,int,int,int,int))(DEVLIST[i].WritePtr))(params[0],params[1],params[2],params[3],params[4],params[5]);
+       					break;
+       					case PIC24:
+       						if(!ee) params[1]=0;					//clear eeprom parameter
+   *)
    // init: tok=strtok(str,",")
    while tok do
    begin
@@ -174,7 +274,17 @@ begin
    str := malloc(strlen(DEVLIST[i].device)+1);
    // return value of strcpy() ignored
    strcpy(str, DEVLIST[i].device);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		 			if(!strcmp(dev,tok)){	 				type=DEVLIST[i].family; 				tok=0; 				i=sizeof(DEVLIST)/sizeof(DEVLIST[0]); 			} 		} *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/deviceRW.c:1121
+     Original C:
+       		for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		//compare every device name
+       			if(!strcmp(dev,tok)){	//proceed if found
+       				type=DEVLIST[i].family;
+       				tok=0;
+       				i=sizeof(DEVLIST)/sizeof(DEVLIST[0]);
+       			}
+       		}
+   *)
    // init: tok=strtok(str,",")
    while tok do
    begin
@@ -190,30 +300,30 @@ begin
   Exit(type);
 end;
 
-function nameToGroup(devName: PChar): Tenum group_t;
+function nameToGroup(devName: PChar): Tgroup_t;
 var
   // (no local variables detected)
 begin
-  if  not strncmp(devName,"10F",3) or  not strncmp(devName,"12F",3) or  not strncmp(devName,"12C",3) or  not strncmp(devName,"12LF",4) then
+  if (((not (strncmp(devName, "10F", 3))) or (not (strncmp(devName, "12F", 3)))) or (not (strncmp(devName, "12C", 3)))) or (not (strncmp(devName, "12LF", 4))) then
    Exit(G_PIC_10_12);
-  if  not strncmp(devName,"16F",3) or  not strncmp(devName,"16LF",4) or  not strncmp(devName,"16C",3) then
+  if ((not (strncmp(devName, "16F", 3))) or (not (strncmp(devName, "16LF", 4)))) or (not (strncmp(devName, "16C", 3))) then
    Exit(G_PIC_16);
-  if  not strncmp(devName,"18F",3) then
+  if not (strncmp(devName, "18F", 3)) then
    Exit(G_PIC_18);
-  if  not strncmp(devName,"24F",3) or  not strncmp(devName,"24H",3) or  not strncmp(devName,"24E",3) then
+  if ((not (strncmp(devName, "24F", 3))) or (not (strncmp(devName, "24H", 3)))) or (not (strncmp(devName, "24E", 3))) then
    Exit(G_PIC_24);
-  if  not strncmp(devName,"30F",3) or  not strncmp(devName,"33F",3) or  not strncmp(devName,"33E",3) then
+  if ((not (strncmp(devName, "30F", 3))) or (not (strncmp(devName, "33F", 3)))) or (not (strncmp(devName, "33E", 3))) then
    Exit(G_PIC_30_33);
-  if  not strncmp(devName,"AT",2) then
+  if not (strncmp(devName, "AT", 2)) then
    Exit(G_ATMEL);
-  if  not strncmp(devName,"24",2) or  not strncmp(devName,"25",2) or  not strncmp(devName,"93",2) or  \ 		 not strncmp(devName,"95",2) or  not strncmp(devName,"11",2) or  not strncmp(devName,"DS",2) then
+  if (((((not (strncmp(devName, "24", 2))) or (not (strncmp(devName, "25", 2)))) or (not (strncmp(devName, "93", 2)))) or (not (strncmp(devName, "95", 2)))) or (not (strncmp(devName, "11", 2)))) or (not (strncmp(devName, "DS", 2))) then
    Exit(G_EEPROM);
-  // return value of PrintMessage1() ignored
-  PrintMessage1('can't determine group of device '%s'' + LineEnding + '', devName);
-  Exit(-1);
+  sprintf(str, "can't determine group of device '%s'\n", devName);
+  PrintMessage(str);
+  Exit(-(1));
 end;
 
-procedure populateDevInfo(info: ^Tstruct DevInfo; devlistEntry: ^Tstruct DEVICES);
+function populateDevInfo(info: ^TDevInfo; devlistEntry: ^TDEVICES): Pointer;
 var
   str2: array[0..256-1] of Char;
   str3: array[0..64-1] of Char;
@@ -233,13 +343,37 @@ var
   sprintf(str2,"%s, %sKB",strings[I_OWMEM],strF): Telse;
   sprintf(str2,"%s, %sKB",strings[I_UNIOMEM],strF): Telse;
 begin
-  (* TODO gtk2laz: unrecognised statement: info->family=devlistEntry->family *)
-  (* TODO gtk2laz: unrecognised statement: info->HV=devlistEntry->HV *)
-  (* TODO gtk2laz: unrecognised statement: info->V33=devlistEntry->V33 *)
-  (* TODO gtk2laz: unrecognised statement: info->size=devlistEntry->ReadParam[0] *)
-  (* TODO gtk2laz: unrecognised statement: info->sizeEE=devlistEntry->WriteParam[1] *)
+  (* TODO gtk2laz: unrecognised statement
+    Source: /tmp/opgui-0.12.4/deviceRW.c:1158
+    Original C:
+      	info->family=devlistEntry->family;
+  *)
+  (* TODO gtk2laz: unrecognised statement
+    Source: /tmp/opgui-0.12.4/deviceRW.c:1159
+    Original C:
+      	info->HV=devlistEntry->HV;
+  *)
+  (* TODO gtk2laz: unrecognised statement
+    Source: /tmp/opgui-0.12.4/deviceRW.c:1160
+    Original C:
+      	info->V33=devlistEntry->V33;
+  *)
+  (* TODO gtk2laz: unrecognised statement
+    Source: /tmp/opgui-0.12.4/deviceRW.c:1161
+    Original C:
+      	info->size=devlistEntry->ReadParam[0];
+  *)
+  (* TODO gtk2laz: unrecognised statement
+    Source: /tmp/opgui-0.12.4/deviceRW.c:1162
+    Original C:
+      	info->sizeEE=devlistEntry->WriteParam[1];	//some devices implement auto EE size on read, but never on write
+  *)
   str2[0] := 0;
-  (* TODO gtk2laz: do-while without while: double x=info->size/1024.0 *)
+  (* TODO gtk2laz: do-while without while
+    Source: /tmp/opgui-0.12.4/deviceRW.c:1164
+    Original C:
+      	double x=info->size/1024.0;
+  *)
   if x-(int)x then
    sprintf(strF, '%.1f', x);
   case info->family of
@@ -337,7 +471,41 @@ begin
    begin
     if info->size<1024 then
      sprintf(str2, "%s, %dB", strings[I_UNIOMEM], info->size);
-    (* TODO gtk2laz: unrecognised statement: default: 			sprintf(str2,"!!unknown family!!"); *)
+    (* TODO gtk2laz: unrecognised statement
+      Source: /tmp/opgui-0.12.4/deviceRW.c:1153
+      Original C:
+        
+        /// Copies the device info from the passed devlist entry into the passed DevInfo
+        /// Does NOT populate fields 'device' and 'group' as these are device-specific
+        void populateDevInfo(struct DevInfo *info, const struct DEVICES *devlistEntry) {
+        	char str2[256],str3[64],strF[32];
+        	info->family=devlistEntry->family;
+        	info->HV=devlistEntry->HV;
+        	info->V33=devlistEntry->V33;
+        	info->size=devlistEntry->ReadParam[0];
+        	info->sizeEE=devlistEntry->WriteParam[1];	//some devices implement auto EE size on read, but never on write
+        	str2[0]=0;
+        	double x=info->size/1024.0;
+        	if(x-(int)x) sprintf(strF,"%.1f",x);
+        	else sprintf(strF,"%d",(int)x);
+        	switch(info->family){
+        		case PIC12:
+        			sprintf(str2,"PIC12, ");
+        			if(info->size<1024) sprintf(str3,"%dW FLASH",info->size);
+        			else sprintf(str3,"%sKW FLASH",strF);
+        			strcat(str2,str3);
+        			break;
+        		case PIC16:
+        			sprintf(str2,"PIC16, ");
+        			if(info->size<1024) sprintf(str3,"%dW FLASH",info->size);
+        			else sprintf(str3,"%sKW FLASH",strF);
+        			strcat(str2,str3);
+        			if(info->sizeEE){
+        				int ee=info->sizeEE;
+        				if(ee<0) ee=-ee;
+        				sprintf(str3," + %dB EEPROM",ee);
+        				strcat(str2,str3);
+    *)
    end;
    else
    begin
@@ -347,7 +515,7 @@ begin
   strcpy(info->features, str2);
 end;
 
-function GetDevInfo(dev: PChar): Tstruct DevInfo;
+function GetDevInfo(dev: PChar): TDevInfo;
 var
   i: Integer;
   str=0: Char;
@@ -366,7 +534,20 @@ begin
    str := malloc(strlen(DEVLIST[i].device)+1);
    // return value of strcpy() ignored
    strcpy(str, DEVLIST[i].device);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		 			if(!strcmp(dev,tok)){	 				info.device=malloc(strlen(tok)+1); 				strcpy(info.device,tok); 				info.group=nameToGroup(info.device); 				populate *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/deviceRW.c:1280
+     Original C:
+       		for(tok=strtok(str,",");tok;tok=strtok(NULL,",")){		//compare every device name
+       			if(!strcmp(dev,tok)){	//proceed if found
+       				info.device=malloc(strlen(tok)+1);
+       				strcpy(info.device,tok);
+       				info.group=nameToGroup(info.device);
+       				populateDevInfo(&info, &(DEVLIST[i]));
+       				free(str);
+       				return info;
+       			}
+       		}
+   *)
    // init: tok=strtok(str,",")
    while tok do
    begin

@@ -5,8 +5,19 @@ unit coff;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  StdCtrls,
+  ComCtrls,
+  ExtCtrls,
+  Buttons,
+  Spin,
+  Menus,
+  LCLType,
   mainform;
 
 type
@@ -15,12 +26,12 @@ type
   BYTE  = Byte;
 
 // --- function declarations ---
-function analyzeCOFF(filename: PChar; label: PChar; ulabel: PChar; source_info: Tstruct src_i; s_files_p: ^Tstruct srcfile; data: Word; sym_p: ^Tstruct symbol; nsym: ^Integer): Integer;
-function scanSourceFile(s_files_p: ^Tstruct srcfile): ^TextFile;
+function analyzeCOFF(filename: PChar; label: array[0..0x2200-1] of PChar; ulabel: array[0..0x400-1] of PChar; source_info: array[0..0x2200-1] of Tsrc_i; s_files_p: ^^Tsrcfile; data: array[0..0x2200-1] of Word; sym_p: ^^Tsymbol; nsym: ^Integer): Integer;
+function scanSourceFile(s_files_p: ^Tsrcfile): ^TextFile;
 
 implementation
 
-function analyzeCOFF(filename: PChar; label: PChar; ulabel: PChar; source_info: Tstruct src_i; s_files_p: ^Tstruct srcfile; data: Word; sym_p: ^Tstruct symbol; nsym: ^Integer): Integer;
+function analyzeCOFF(filename: PChar; label: array[0..0x2200-1] of PChar; ulabel: array[0..0x400-1] of PChar; source_info: array[0..0x2200-1] of Tsrc_i; s_files_p: ^^Tsrcfile; data: array[0..0x2200-1] of Word; sym_p: ^^Tsymbol; nsym: ^Integer): Integer;
 var
   i: Integer;
   j: Integer;
@@ -69,7 +80,41 @@ begin
    if strtable[i] = 0 then
    begin
     strings[j] := &strtable[i+1];
-    (* TODO gtk2laz: unrecognised statement: j++ *)
+    (* TODO gtk2laz: unrecognised statement
+      Source: /tmp/opgui-0.12.4/coff.c:1
+      Original C:
+        // COFF file parser
+        // COFF file structure:
+        // file header
+        // optional header
+        // sections(name, address, size, raw data pointer, reloc entry, ptr to first line, number of lines)
+        // relocation entries
+        // symbols (name, value, section, type, class) + optional info
+        // lines (source file symbol, line number, address of code)
+        // symbol table
+        // string table
+        
+        #include <stdlib.h>
+        #include <stdio.h>
+        #include <string.h>
+        #include "coff.h"
+        
+        // Analyze COFF file named filename, extract code labels in label[address], undefined labels in ulabel[address],
+        // info about each symbol (name, source line, source file index) in source_info,
+        // list of source files (index, name, file pointer) in s_files, raw data in data[0x2200]
+        int analyzeCOFF(char *filename,char* label[LMAX],char* ulabel[ULMAX],struct src_i source_info[LMAX],struct srcfile **s_files_p,unsigned short data[0x2200],struct symbol **sym_p, int* nsym)
+        {
+        	int i,j,k;
+        	FILE*f=fopen(filename,"rb");
+        	if(!f) return 0;
+        	scnhdr_t* sections;
+        	filehdr_t FileHeader;
+        	opthdr_t OptHeader;
+        	fread((char* )&FileHeader,sizeof(filehdr_t),1,f); //file header
+        /*	printf("File header:\nmagic %X, sections %d, time %d, symbol ptr %d, nsymbol %d, opt size %d, flags %X\n",\
+        	FileHeader.f_magic,FileHeader.f_nscns,FileHeader.f_timdat,FileHeader.f_symptr,FileHeader.f_nsyms,FileHeader.f_opthdr,FileHeader.f_flags);*/
+        	if(FileHeader.f_opthdr==18){	//optional header
+    *)
    end;
   end;
   for i := 0 to (FileHeader.f_nscns) - 1 do
@@ -110,11 +155,49 @@ begin
      printf('conflicting labels at address %X: %s vs. %s' + LineEnding + '', symbol.n_value, label[symbol.n_value], name);
     end;
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(j=symbol.n_numaux;j;j--)fread(&symbol,20,1,f) *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/coff.c:134
+     Original C:
+       		for(j=symbol.n_numaux;j;j--)fread(&symbol,20,1,f);
+   *)
    // init: j=symbol.n_numaux
    while j do
    begin
-    (* TODO gtk2laz: unrecognised statement: j--; *)
+    (* TODO gtk2laz: unrecognised statement
+      Source: /tmp/opgui-0.12.4/coff.c:1
+      Original C:
+        // COFF file parser
+        // COFF file structure:
+        // file header
+        // optional header
+        // sections(name, address, size, raw data pointer, reloc entry, ptr to first line, number of lines)
+        // relocation entries
+        // symbols (name, value, section, type, class) + optional info
+        // lines (source file symbol, line number, address of code)
+        // symbol table
+        // string table
+        
+        #include <stdlib.h>
+        #include <stdio.h>
+        #include <string.h>
+        #include "coff.h"
+        
+        // Analyze COFF file named filename, extract code labels in label[address], undefined labels in ulabel[address],
+        // info about each symbol (name, source line, source file index) in source_info,
+        // list of source files (index, name, file pointer) in s_files, raw data in data[0x2200]
+        int analyzeCOFF(char *filename,char* label[LMAX],char* ulabel[ULMAX],struct src_i source_info[LMAX],struct srcfile **s_files_p,unsigned short data[0x2200],struct symbol **sym_p, int* nsym)
+        {
+        	int i,j,k;
+        	FILE*f=fopen(filename,"rb");
+        	if(!f) return 0;
+        	scnhdr_t* sections;
+        	filehdr_t FileHeader;
+        	opthdr_t OptHeader;
+        	fread((char* )&FileHeader,sizeof(filehdr_t),1,f); //file header
+        /*	printf("File header:\nmagic %X, sections %d, time %d, symbol ptr %d, nsymbol %d, opt size %d, flags %X\n",\
+        	FileHeader.f_magic,FileHeader.f_nscns,FileHeader.f_timdat,FileHeader.f_symptr,FileHeader.f_nsyms,FileHeader.f_opthdr,FileHeader.f_flags);*/
+        	if(FileHeader.f_opthdr==18){	//optional header
+    *)
    end;
   end;
   for i := 0 to (LMAX) - 1 do
@@ -145,7 +228,7 @@ begin
   Exit(1);
 end;
 
-function scanSourceFile(s_files_p: ^Tstruct srcfile): ^TextFile;
+function scanSourceFile(s_files_p: ^Tsrcfile): ^TextFile;
 var
   f: ^TextFile;
   line: array[0..4096-1] of Char;
@@ -158,7 +241,18 @@ begin
    Exit(f);
   .nlines := 1;
   p := FilePos(f);
-  (* TODO gtk2laz: complex for loop: for(i=fgets(line,4096,f);i;){ 		(*s_files_p).lineptr=realloc((*s_files_p).lineptr,((*s_files_p).nlines+1)*sizeof(long int)); 		(*s_files_p).lineptr[(*s_files_p).nlines]=p; 		 		(*s_files_p).nlines++;  *)
+  (* TODO gtk2laz: complex for loop
+    Source: /tmp/opgui-0.12.4/coff.c:197
+    Original C:
+      	for(i=fgets(line,4096,f);i;){
+      		(*s_files_p).lineptr=realloc((*s_files_p).lineptr,((*s_files_p).nlines+1)*sizeof(long int));
+      		(*s_files_p).lineptr[(*s_files_p).nlines]=p;
+      		//printf("nlines%d ptr%d %s",(*s_files_p).nlines,p,line);
+      		(*s_files_p).nlines++;
+      		p=ftell(f);
+      		i=fgets(line,4096,f);
+      	}
+  *)
 end;
 
 end.

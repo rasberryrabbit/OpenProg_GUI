@@ -5,11 +5,22 @@ unit icd;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
-  mainform,
+  Classes,
+  SysUtils,
+  Forms,
+  Controls,
+  Graphics,
+  Dialogs,
+  StdCtrls,
+  ComCtrls,
+  ExtCtrls,
+  Buttons,
+  Spin,
+  Menus,
+  LCLType,
   common,
-  coff;
+  coff,
+  mainform;
 
 const
   Tck = 30;
@@ -192,11 +203,20 @@ begin
   bufferU[Inc(j)] := EN_VPP_VCC;
   bufferU[Inc(j)] := $1;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:88
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:42
+     Original C:
+       
+       void ShowContext();
+   *)
   end;
   PacketIO(3);
   if saveLog then
@@ -218,11 +238,39 @@ begin
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := READ_PINS;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:105
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:94
+     Original C:
+       
+       //Check whether the target is running or is executing the debug routine.
+       //This is signaled by RB7 (Data): D=1 -> debugger monitor running
+       int isRunning(){
+       	int z,j=0;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x0;		//D=0
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=READ_PINS;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(2);
+       	if(saveLog){
+       		fprintf(logfile,"isRunning()\n");
+       	}
+       	for(z=0;z<DIMBUF-1&&bufferI[z]!=READ_PINS;z++);
+       	if(bufferI[z+1]&1) running=0;
+       	else running=1;
+       	return running;
+       }
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(2);
@@ -262,11 +310,49 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:143
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:115
+     Original C:
+       
+       //Set the next breakpoint address, the freeze bit, 
+       //and continue execution.
+       //This is necessary because at every break 
+       //the ICD register is loaded with the last address.
+       void cont(int break_addr, int freeze){
+       	int j=0;
+       	//set breakpoint and freeze
+       	break_addr&=0x1FFF;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=(break_addr>>8)+(freeze?0x40:0);
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=0x8E;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=break_addr&0xFF;
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=0x8F;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=GO;		//GO
+       	bufferU[j++]=0;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+5*Tcom);
+       	if(saveLog){
+   *)
   end;
   PacketIO(1+5*Tcom);
   if saveLog then
@@ -287,11 +373,35 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:161
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:150
+     Original C:
+       
+       //Execute a single step
+       void step(){
+       	int j=0;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=STEP;		//single step
+       	bufferU[j++]=0;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+Tcom);
+       	if(saveLog){
+       		fprintf(logfile,"step()\n");
+       	}
+       }
+   *)
   end;
   PacketIO(1+Tcom);
   if saveLog then
@@ -310,11 +420,34 @@ begin
   bufferU[Inc(j)] := EN_VPP_VCC;
   bufferU[Inc(j)] := $5;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:176
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:167
+     Original C:
+       
+       //Remove reset so that the target can start executing its code.
+       void run(){
+       	int j=0;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;
+       	bufferU[j++]=EN_VPP_VCC;		//MCLR=H
+       	bufferU[j++]=0x5;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(2);
+       	if(saveLog){
+       		fprintf(logfile,"run()\n");
+       	}
+       	running=1;
+       }
+   *)
   end;
   PacketIO(2);
   if saveLog then
@@ -336,11 +469,37 @@ begin
   bufferU[Inc(j)] := RX16;
   bufferU[Inc(j)] := $1;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:194
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:183
+     Original C:
+       
+       //Get the debugger monitor version
+       int version(){
+       	int j=0,z;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=VER;		//version
+       	bufferU[j++]=0;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+2*Tcom);
+       	if(saveLog){
+       		fprintf(logfile,"version()\n");
+       	}
+       	for(z=0;z<DIMBUF-2&&bufferI[z]!=RX16;z++);
+       	return bufferI[z+3];
+       }
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(1+2*Tcom);
@@ -362,11 +521,35 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:211
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:202
+     Original C:
+       
+       //Halt execution by setting RB6 (Clock) low
+       void Halt(){
+       	int j=0;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x6;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(2);
+       	if(saveLog){
+       		fprintf(logfile,"halt()\n");
+       	}
+       	running=0;
+       	//printf("halted\n");
+       }
+   *)
   end;
   PacketIO(2);
   if saveLog then
@@ -392,11 +575,41 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:234
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:219
+     Original C:
+       
+       //Read register at address addr
+       int ReadRegister(int addr){
+       	int j=0,z;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=0x1;		//1 byte
+       	bufferU[j++]=(addr>>8)&0xFF;
+       	bufferU[j++]=addr&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=0x1;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+3*Tcom);
+       	if(saveLog){
+       		fprintf(logfile,"ReadRegister(0x%X)\n",addr);
+       	}
+       	for(z=0;z<DIMBUF-2&&bufferI[z]!=RX16;z++);
+       	return bufferI[z+3];	
+       }
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(1+3*Tcom);
@@ -428,11 +641,49 @@ begin
    bufferU[Inc(j)] := RX16;
    bufferU[Inc(j)] := w;
    bufferU[Inc(j)] := FLUSH;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/icd.c:257
+     Original C:
+       		for(;j<DIMBUF;j++) bufferU[j]=0x0;
+   *)
    // init: 
    while j<DIMBUF do
    begin
-    (* TODO gtk2laz: unrecognised statement: j++; *)
+    (* TODO gtk2laz: unrecognised statement
+      Source: /tmp/opgui-0.12.4/icd.c:242
+      Original C:
+        
+        //Read n registers starting at address addr
+        int ReadRegisterN(int addr,int n,int* buf){
+        	int i,j=0,z,w;
+        	for(i=0;i<n;i+=w){
+        		w=i+(DIMBUF-9)/2<n?(DIMBUF-9)/2:n-i;
+        		bufferU[j++]=TX16;
+        		bufferU[j++]=0x2;
+        		bufferU[j++]=RREG;				//Read register
+        		bufferU[j++]=w;
+        		bufferU[j++]=(addr+i)>>8;
+        		bufferU[j++]=(addr+i)&0xFF;
+        		bufferU[j++]=RX16;
+        		bufferU[j++]=w;
+        		bufferU[j++]=FLUSH;
+        		for(;j<DIMBUF;j++) bufferU[j]=0x0;
+        		PacketIO(1+(w+2)*Tcom);
+        		if(saveLog){
+        			fprintf(logfile,"ReadRegisterN(0x%X,%d)\n",addr,n);
+        		}
+        		for(z=0;z<DIMBUF-2&&bufferI[z]!=RX16;z++);
+        		for(j=0;j<w;j++) buf[i+j]=bufferI[z+3+j*2];
+        		j=0;
+        	}
+        	bufferU[j++]=SET_CK_D;
+        	bufferU[j++]=0x2;		//set D as input
+        	bufferU[j++]=FLUSH;
+        	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+        	PacketIO(2);
+        	return i==n?0:-1;
+        }
+    *)
    end;
    // return value of PacketIO() ignored
    PacketIO(1+(w+2)*Tcom);
@@ -449,11 +700,49 @@ begin
   end;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:257
+    Original C:
+      		for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:242
+     Original C:
+       
+       //Read n registers starting at address addr
+       int ReadRegisterN(int addr,int n,int* buf){
+       	int i,j=0,z,w;
+       	for(i=0;i<n;i+=w){
+       		w=i+(DIMBUF-9)/2<n?(DIMBUF-9)/2:n-i;
+       		bufferU[j++]=TX16;
+       		bufferU[j++]=0x2;
+       		bufferU[j++]=RREG;				//Read register
+       		bufferU[j++]=w;
+       		bufferU[j++]=(addr+i)>>8;
+       		bufferU[j++]=(addr+i)&0xFF;
+       		bufferU[j++]=RX16;
+       		bufferU[j++]=w;
+       		bufferU[j++]=FLUSH;
+       		for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       		PacketIO(1+(w+2)*Tcom);
+       		if(saveLog){
+       			fprintf(logfile,"ReadRegisterN(0x%X,%d)\n",addr,n);
+       		}
+       		for(z=0;z<DIMBUF-2&&bufferI[z]!=RX16;z++);
+       		for(j=0;j<w;j++) buf[i+j]=bufferI[z+3+j*2];
+       		j=0;
+       	}
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(2);
+       	return i==n?0:-1;
+       }
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(2);
@@ -474,11 +763,37 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:286
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:273
+     Original C:
+       
+       //Write data at address addr
+       void WriteRegister(int addr,int data){
+       	int j=0;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=0x2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=data&0xFF;
+       	bufferU[j++]=(addr>>8)&0xFF;
+       	bufferU[j++]=addr&0xFF;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;		//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+2*Tcom);
+       	if(saveLog){
+       		fprintf(logfile,"WriteRegister(0x%X,0x%X)\n",addr,data);
+       	}
+       }
+   *)
   end;
   PacketIO(1+2*Tcom);
   if saveLog then
@@ -557,11 +872,49 @@ begin
   bufferU[Inc(j)] := (EECON1 shr 8)&0xFF;
   bufferU[Inc(j)] := EECON1&0xFF;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:340
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:311
+     Original C:
+       
+       //Read program memory (n locations) starting at address addr
+       int ReadProgMemN(int addr,int n,int* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadProgMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=4;			//4 bytes: EEDATA,EEADR,EEDATH,EEADRH
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=4;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0x80;		//EEPGD=1
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(1+13*Tcom);
@@ -571,11 +924,49 @@ begin
   end;
   data_temp := bufferI[z+3]+(bufferI[z+7] shl 8);
   addr_temp := bufferI[z+5]+(bufferI[z+9] shl 8);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z+=10;z<DIMBUF-3&&bufferI[z]!=RX16;z++) *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:346
+    Original C:
+      	for(z+=10;z<DIMBUF-3&&bufferI[z]!=RX16;z++);
+  *)
   // init: z+=10
   while z<DIMBUF-3 and bufferI[z] not =RX16 do
   begin
-   (* TODO gtk2laz: unrecognised statement: z++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:311
+     Original C:
+       
+       //Read program memory (n locations) starting at address addr
+       int ReadProgMemN(int addr,int n,int* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadProgMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=4;			//4 bytes: EEDATA,EEADR,EEDATH,EEADRH
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=4;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0x80;		//EEPGD=1
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
   end;
   eecon_temp := bufferI[z+3];
   w := k=0;
@@ -601,15 +992,87 @@ begin
    bufferU[Inc(j)] := EEDATA&0xFF;
    bufferU[Inc(j)] := RX16;
    bufferU[Inc(j)] := 3;
-   (* TODO gtk2laz: unrecognised statement: w++ *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:311
+     Original C:
+       
+       //Read program memory (n locations) starting at address addr
+       int ReadProgMemN(int addr,int n,int* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadProgMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=4;			//4 bytes: EEDATA,EEADR,EEDATH,EEADRH
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=4;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0x80;		//EEPGD=1
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
    if j>DIMBUF-21 or i = n-1 then
    begin
     bufferU[Inc(j)] := FLUSH;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+      Source: /tmp/opgui-0.12.4/icd.c:340
+      Original C:
+        	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+    *)
     // init: 
     while j<DIMBUF do
     begin
-     (* TODO gtk2laz: unrecognised statement: j++; *)
+     (* TODO gtk2laz: unrecognised statement
+       Source: /tmp/opgui-0.12.4/icd.c:311
+       Original C:
+         
+         //Read program memory (n locations) starting at address addr
+         int ReadProgMemN(int addr,int n,int* buf){
+         	int addr_temp, data_temp, eecon_temp;
+         	if(saveLog) fprintf(logfile,"ReadProgMemN(0x%X,%d)\n",addr,n);
+         	int i,j=0,z,w,k;
+         	bufferU[j++]=TX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=RREG;		//Read register
+         	bufferU[j++]=4;			//4 bytes: EEDATA,EEADR,EEDATH,EEADRH
+         	bufferU[j++]=(EEDATA>>8)&0xFF;
+         	bufferU[j++]=EEDATA&0xFF;
+         	bufferU[j++]=RX16;
+         	bufferU[j++]=4;
+         	bufferU[j++]=TX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=RREG;		//Read register
+         	bufferU[j++]=1;			//1 byte
+         	bufferU[j++]=(EECON1>>8)&0xFF;
+         	bufferU[j++]=EECON1&0xFF;
+         	bufferU[j++]=RX16;
+         	bufferU[j++]=1;
+         	bufferU[j++]=TX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=WREG;		//write register
+         	bufferU[j++]=0x80;		//EEPGD=1
+         	bufferU[j++]=(EECON1>>8)&0xFF;
+         	bufferU[j++]=EECON1&0xFF;
+         	bufferU[j++]=FLUSH;
+         	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+         	PacketIO(1+13*Tcom);
+     *)
     end;
     // return value of PacketIO() ignored
     PacketIO(2+13*Tcom*w);
@@ -649,11 +1112,49 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:340
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:311
+     Original C:
+       
+       //Read program memory (n locations) starting at address addr
+       int ReadProgMemN(int addr,int n,int* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadProgMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=4;			//4 bytes: EEDATA,EEADR,EEDATH,EEADRH
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=4;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0x80;		//EEPGD=1
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(1+10*Tcom);
@@ -724,11 +1225,49 @@ begin
   bufferU[Inc(j)] := (EECON1 shr 8)&0xFF;
   bufferU[Inc(j)] := EECON1&0xFF;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:459
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:430
+     Original C:
+       
+       //Read n bytes from data memory starting at address addr
+       int ReadDataMemN(int addr,int n,unsigned char* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadDataMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=2;			//2 bytes: EEDATA,EEADR
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0;			//EEPGD=0
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(1+13*Tcom);
@@ -738,11 +1277,49 @@ begin
   end;
   data_temp := bufferI[z+3];
   addr_temp := bufferI[z+5];
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z+=6;z<DIMBUF-3&&bufferI[z]!=RX16;z++) *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:465
+    Original C:
+      	for(z+=6;z<DIMBUF-3&&bufferI[z]!=RX16;z++);
+  *)
   // init: z+=6
   while z<DIMBUF-3 and bufferI[z] not =RX16 do
   begin
-   (* TODO gtk2laz: unrecognised statement: z++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:430
+     Original C:
+       
+       //Read n bytes from data memory starting at address addr
+       int ReadDataMemN(int addr,int n,unsigned char* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadDataMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=2;			//2 bytes: EEDATA,EEADR
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0;			//EEPGD=0
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
   end;
   eecon_temp := bufferI[z+3];
   w := k=0;
@@ -764,15 +1341,87 @@ begin
    bufferU[Inc(j)] := EEDATA&0xFF;
    bufferU[Inc(j)] := RX16;
    bufferU[Inc(j)] := 1;
-   (* TODO gtk2laz: unrecognised statement: w++ *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:430
+     Original C:
+       
+       //Read n bytes from data memory starting at address addr
+       int ReadDataMemN(int addr,int n,unsigned char* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadDataMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=2;			//2 bytes: EEDATA,EEADR
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0;			//EEPGD=0
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
    if j>DIMBUF-17 or i = n-1 then
    begin
     bufferU[Inc(j)] := FLUSH;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+      Source: /tmp/opgui-0.12.4/icd.c:459
+      Original C:
+        	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+    *)
     // init: 
     while j<DIMBUF do
     begin
-     (* TODO gtk2laz: unrecognised statement: j++; *)
+     (* TODO gtk2laz: unrecognised statement
+       Source: /tmp/opgui-0.12.4/icd.c:430
+       Original C:
+         
+         //Read n bytes from data memory starting at address addr
+         int ReadDataMemN(int addr,int n,unsigned char* buf){
+         	int addr_temp, data_temp, eecon_temp;
+         	if(saveLog) fprintf(logfile,"ReadDataMemN(0x%X,%d)\n",addr,n);
+         	int i,j=0,z,w,k;
+         	bufferU[j++]=TX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=RREG;		//Read register
+         	bufferU[j++]=2;			//2 bytes: EEDATA,EEADR
+         	bufferU[j++]=(EEDATA>>8)&0xFF;
+         	bufferU[j++]=EEDATA&0xFF;
+         	bufferU[j++]=RX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=TX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=RREG;		//Read register
+         	bufferU[j++]=1;			//1 byte
+         	bufferU[j++]=(EECON1>>8)&0xFF;
+         	bufferU[j++]=EECON1&0xFF;
+         	bufferU[j++]=RX16;
+         	bufferU[j++]=1;
+         	bufferU[j++]=TX16;
+         	bufferU[j++]=2;
+         	bufferU[j++]=WREG;		//write register
+         	bufferU[j++]=0;			//EEPGD=0
+         	bufferU[j++]=(EECON1>>8)&0xFF;
+         	bufferU[j++]=EECON1&0xFF;
+         	bufferU[j++]=FLUSH;
+         	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+         	PacketIO(1+13*Tcom);
+     *)
     end;
     // return value of PacketIO() ignored
     PacketIO(2+10*Tcom*w);
@@ -804,11 +1453,49 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:459
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:430
+     Original C:
+       
+       //Read n bytes from data memory starting at address addr
+       int ReadDataMemN(int addr,int n,unsigned char* buf){
+       	int addr_temp, data_temp, eecon_temp;
+       	if(saveLog) fprintf(logfile,"ReadDataMemN(0x%X,%d)\n",addr,n);
+       	int i,j=0,z,w,k;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=2;			//2 bytes: EEDATA,EEADR
+       	bufferU[j++]=(EEDATA>>8)&0xFF;
+       	bufferU[j++]=EEDATA&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=RREG;		//Read register
+       	bufferU[j++]=1;			//1 byte
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=RX16;
+       	bufferU[j++]=1;
+       	bufferU[j++]=TX16;
+       	bufferU[j++]=2;
+       	bufferU[j++]=WREG;		//write register
+       	bufferU[j++]=0;			//EEPGD=0
+       	bufferU[j++]=(EECON1>>8)&0xFF;
+       	bufferU[j++]=EECON1&0xFF;
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(1+13*Tcom);
+   *)
   end;
   // return value of PacketIO() ignored
   PacketIO(1+10*Tcom);
@@ -1117,7 +1804,11 @@ begin
    g_source_remove(icdTimer);
    Halt();
   end;
-  (* TODO gtk2laz: unrecognised statement: addrDebug++ *)
+  (* TODO gtk2laz: unrecognised statement
+    Source: /tmp/opgui-0.12.4/icd.c:926
+    Original C:
+      	addrDebug++;
+  *)
   ShowContext();
 end;
 
@@ -1142,7 +1833,11 @@ begin
   else
   begin
    step();
-   (* TODO gtk2laz: unrecognised statement: addrDebug++ *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:951
+     Original C:
+       		addrDebug++;
+   *)
    ShowContext();
   end;
 end;
@@ -1164,11 +1859,44 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+    Source: /tmp/opgui-0.12.4/icd.c:975
+    Original C:
+      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+  *)
   // init: 
   while j<DIMBUF do
   begin
-   (* TODO gtk2laz: unrecognised statement: j++; *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:956
+     Original C:
+       ///
+       ///ICD: stop program
+       void icdStop(GtkWidget *widget,GtkWidget *window)
+       {
+       #ifndef DEBUG
+       	if(DeviceDetected!=1) return;
+       #endif
+       	if(running){
+       		g_source_remove(icdTimer);
+       		Halt();
+       	}
+       //	bufferU[0]=0;
+       	int j=0;
+       	bufferU[j++]=EN_VPP_VCC;		// reset target
+       	bufferU[j++]=0x0;
+       	bufferU[j++]=WAIT_T3;
+       	bufferU[j++]=SET_CK_D;
+       	bufferU[j++]=0x2;				//set D as input
+       	bufferU[j++]=FLUSH;
+       	for(;j<DIMBUF;j++) bufferU[j]=0x0;
+       	PacketIO(3);
+       	if(saveLog)WriteLogIO();
+       	icdConnected=0;
+       	PrintMessageICD("stopped");
+       	scrollToLine(source_info[0].src_line);
+       }
+   *)
   end;
   PacketIO(3);
   if saveLog then
@@ -1230,8 +1958,16 @@ var
   t: array[0..9-1] of Char;
   g: Char;
 begin
-  (* TODO gtk2laz: array initializer: cmd[32]=""; *)
-  (* TODO gtk2laz: array initializer: status[4096]=""; *)
+  (* TODO gtk2laz: array initializer
+    Source: /tmp/opgui-0.12.4/icd.c:1020
+    Original C:
+      	char cmd[32]="";
+  *)
+  (* TODO gtk2laz: array initializer
+    Source: /tmp/opgui-0.12.4/icd.c:1021
+    Original C:
+      	char status[4096]="",temp[128];
+  *)
   addr := ((ReadRegister(0x18E)&0x1F) shl 8)+ReadRegister(0x18F);
   data := ReadProgMem(addr);
   s := ReadRegister(status_temp);
@@ -1306,19 +2042,55 @@ begin
   end;
   if i<nwatch then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;i<nwatch-1;i++){ 			watch[i].name=watch[i+1].name; 			watch[i].value=watch[i+1].value; 		} 		nwatch-- *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/icd.c:1141
+     Original C:
+       		for(;i<nwatch-1;i++){
+       			watch[i].name=watch[i+1].name;
+       			watch[i].value=watch[i+1].value;
+       		}
+   *)
    // init: 
    while i<nwatch-1 do
    begin
     watch[i].name := watch[i+1].name;
     watch[i].value := watch[i+1].value;
-    (* TODO gtk2laz: unrecognised statement: i++; *)
+    (* TODO gtk2laz: unrecognised statement
+      Source: /tmp/opgui-0.12.4/icd.c:1135
+      Original C:
+        ///
+        ///Add symbol to the list of watched variables
+        int addWatch(struct symbol s){
+        	int i;
+        	for(i=0;i<nwatch&&strcmp(watch[i].name,s.name);i++);
+        	if(i<nwatch){	//remove watch
+        		for(;i<nwatch-1;i++){
+        			watch[i].name=watch[i+1].name;
+        			watch[i].value=watch[i+1].value;
+        		}
+        		nwatch--;
+        		watch=realloc(watch,nwatch*sizeof(struct symbol));
+        	}
+        	else{			//add watch
+        		nwatch++;
+        		watch=realloc(watch,nwatch*sizeof(struct symbol));
+        		watch[nwatch-1].name=s.name;
+        		watch[nwatch-1].value=s.value;
+        		return 1;
+        	}
+        	return 0;
+        }
+    *)
    end;
    watch := realloc(watch, nwatch*sizeof(struct symbol));
   end
   else
   begin
-   (* TODO gtk2laz: unrecognised statement: nwatch++ *)
+   (* TODO gtk2laz: unrecognised statement
+     Source: /tmp/opgui-0.12.4/icd.c:1149
+     Original C:
+       		nwatch++;
+   *)
    watch := realloc(watch, nwatch*sizeof(struct symbol));
    watch[nwatch-1].name := s.name;
    watch[nwatch-1].value := s.value;
@@ -1360,13 +2132,39 @@ begin
   end;
   if i<nwatch then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;i<nwatch-1;i++){ 			watch[i].name=watch[i+1].name; 			watch[i].value=watch[i+1].value; 		} 		nwatch-- *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/icd.c:1414
+     Original C:
+       		for(;i<nwatch-1;i++){
+       			watch[i].name=watch[i+1].name;
+       			watch[i].value=watch[i+1].value;
+       		}
+   *)
    // init: 
    while i<nwatch-1 do
    begin
     watch[i].name := watch[i+1].name;
     watch[i].value := watch[i+1].value;
-    (* TODO gtk2laz: unrecognised statement: i++; *)
+    (* TODO gtk2laz: unrecognised statement
+      Source: /tmp/opgui-0.12.4/icd.c:1408
+      Original C:
+        ///
+        ///Remove variable from watch list
+        int removeWatch(char* name){
+        	int i;
+        	for(i=0;i<nwatch&&strcmp(watch[i].name,name);i++);
+        	if(i<nwatch){	//remove watch
+        		for(;i<nwatch-1;i++){
+        			watch[i].name=watch[i+1].name;
+        			watch[i].value=watch[i+1].value;
+        		}
+        		nwatch--;
+        		watch=realloc(watch,nwatch*sizeof(struct symbol));
+        		return 1;
+        	}
+        	return 0;
+        }
+    *)
    end;
    watch := realloc(watch, nwatch*sizeof(struct symbol));
    Exit(1);
@@ -1392,7 +2190,14 @@ begin
    // return value of gtk_text_view_get_iter_at_location() ignored
    gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(widget), &iter, x, y);
    iter2 := iter;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(itx=iter2,c=gtk_text_iter_get_char(&itx);isalnum(c)||c=='_';iter2=itx){ 			gtk_text_iter_forward_char(&itx); 			c=gtk_text_iter_get_char(&itx); 		} 		for(itx=iter,c=gtk_text_iter_get_char(&itx);is *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/icd.c:1436
+     Original C:
+       		for(itx=iter2,c=gtk_text_iter_get_char(&itx);isalnum(c)||c=='_';iter2=itx){
+       			gtk_text_iter_forward_char(&itx);
+       			c=gtk_text_iter_get_char(&itx);
+       		}
+   *)
    // init: itx=iter2,c=gtk_text_iter_get_char(&itx)
    while isalnum(c) or c = '_' do
    begin
@@ -1438,7 +2243,14 @@ begin
    // return value of gtk_text_view_window_to_buffer_coords() ignored
    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(widget), GTK_TEXT_WINDOW_WIDGET, event->x, event->y, &x, &y);
    iter2 := iter;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(itx=iter2,c=gtk_text_iter_get_char(&itx);isalnum(c)||c=='_';iter2=itx){ 			gtk_text_iter_forward_char(&itx); 			c=gtk_text_iter_get_char(&itx); 		} 		for(itx=iter,c=gtk_text_iter_get_char(&itx);is *)
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
+     Source: /tmp/opgui-0.12.4/icd.c:1478
+     Original C:
+       		for(itx=iter2,c=gtk_text_iter_get_char(&itx);isalnum(c)||c=='_';iter2=itx){
+       			gtk_text_iter_forward_char(&itx);
+       			c=gtk_text_iter_get_char(&itx);
+       		}
+   *)
    // init: itx=iter2,c=gtk_text_iter_get_char(&itx)
    while isalnum(c) or c = '_' do
    begin
