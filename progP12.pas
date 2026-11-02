@@ -18,8 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
+
+const
+  NL = #10;
 
 type
   DWORD = Cardinal;
@@ -58,7 +60,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read12F5xx(%d,%d)\n", dim, dim2);
+   fprintf(logfile, 'Read12F5xx(%d,%d)' + NL + '', dim, dim2);
   end;
   start := GetTickCount();
   j := 0;
@@ -96,7 +98,7 @@ begin
   if (z) < ((64) - (2)) then
   begin
    memCODE_W[$fff] := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ConfigWord], memCODE_W[$fff]);
    PrintMessage(str);
    case (memCODE_W[$fff]) and ($03) of
@@ -189,7 +191,7 @@ begin
   end;
   if (k) <> ((dim) + (dim2)) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadErr], (dim) + (dim2), k);
    PrintMessage(str);
   end
@@ -220,7 +222,7 @@ begin
    j := i;
    while ((j) < ((i) + (16))) and ((j) < (dim)) do
    begin
-    sprintf(t, "%03X ", memCODE_W[j]);
+    sprintf(t, '%03X ', memCODE_W[j]);
     strcat(s, t);
     if (memCODE_W[j]) < ($fff) then
      valid := 1;
@@ -228,7 +230,7 @@ begin
    end;
    if valid then
    begin
-    sprintf(t, "%04X: %s\r\n", i, s);
+    sprintf(t, '%04X: %s' + #13 + '' + NL + '', i, s);
     empty := 0;
     strcat(aux, t);
    end;
@@ -254,7 +256,7 @@ begin
     j := i;
     while ((j) < ((i) + (16))) and ((j) < ((dim) + (64))) do
     begin
-     sprintf(t, "%03X ", memCODE_W[j]);
+     sprintf(t, '%03X ', memCODE_W[j]);
      strcat(s, t);
      if (memCODE_W[j]) < ($fff) then
       valid := 1;
@@ -262,7 +264,7 @@ begin
     end;
     if valid then
     begin
-     sprintf(t, "%04X: %s\r\n", i, s);
+     sprintf(t, '%04X: %s' + #13 + '' + NL + '', i, s);
      empty := 0;
      strcat(aux, t);
     end;
@@ -282,7 +284,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 function Write12F5xx(dim: Integer; OscAddr: Integer): Pointer;
@@ -317,7 +319,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write12F5xx(%d,%d)\n", dim, OscAddr);
+   fprintf(logfile, 'Write12F5xx(%d,%d)' + NL + '', dim, OscAddr);
   end;
   for i := 0 to (sizeW) - 1 do
   begin
@@ -398,7 +400,7 @@ begin
    if ((osccal) = (-(1))) or ((BKosccal) = (-(1))) then
    begin
     PrintMessage(strings[S_ErrOsccal]);
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     Exit;
    end;
    sprintf(str, strings[S_Osccal], osccal);
@@ -532,7 +534,7 @@ begin
       begin
        if (memCODE_W[k]) <> (((bufferI[(z) + (6)]) shl (8)) + (bufferI[(z) + (7)])) then
        begin
-        PrintMessage("\r\n");
+        PrintMessage('' + #13 + '' + NL + '');
         sprintf(str, strings[S_CodeWError], k, memCODE_W[k], ((bufferI[(z) + (6)]) shl (8)) + (bufferI[(z) + (7)]));
         PrintMessage(str);
         Inc(err);
@@ -608,7 +610,7 @@ begin
   end;
   if (not (memCODE_W[$fff])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ConfigWErr], memCODE_W[$fff], ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
    PrintMessage(str);
    Inc(err_c);
@@ -616,7 +618,7 @@ begin
   err := err + err_c;
   if (z) > ((64) - (2)) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    PrintMessage(strings[S_ConfigWErr2]);
   end;
   sprintf(str, strings[S_ComplErr], err_c);
@@ -632,7 +634,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 function Write12C5xx(dim: Integer; dummy: Integer): Pointer;
@@ -661,7 +663,7 @@ begin
   OscAddr := (dim) - (1);
   if (FWVersion) < ($800) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.8.0");
+   sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
@@ -673,7 +675,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write12C5xx(%d)\n", dim);
+   fprintf(logfile, 'Write12C5xx(%d)' + NL + '', dim);
   end;
   for i := 0 to (sizeW) - 1 do
   begin
@@ -739,7 +741,7 @@ begin
   if (osccal) = (-(1)) then
   begin
    PrintMessage(strings[S_ErrOsccal]);
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    Exit;
   end;
   sprintf(str, strings[S_Osccal], osccal);
@@ -818,7 +820,7 @@ begin
     end;
     if (memCODE_W[k]) <> (((bufferI[4]) shl (8)) + (bufferI[5])) then
     begin
-     PrintMessage("\r\n");
+     PrintMessage('' + #13 + '' + NL + '');
      sprintf(str, strings[S_CodeWError], k, memCODE_W[k], ((bufferI[4]) shl (8)) + (bufferI[5]));
      PrintMessage(str);
      Inc(err);
@@ -848,7 +850,7 @@ begin
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
   if (saveLog) and (xN) then
-   fprintf(logfile, "Programming pulses: avg %.1f, min %d, max %d\r\n", (Nt) div (xN), Nmin, Nmax);
+   fprintf(logfile, 'Programming pulses: avg %.1f, min %d, max %d' + #13 + '' + NL + '', (Nt) div (xN), Nmin, Nmax);
   if (memCODE_W[$fff]) < ($fff) then
   begin
    PrintMessage(strings[S_ConfigW]);
@@ -901,7 +903,7 @@ begin
    j := 0;
    if (not (memCODE_W[$fff])) and (((bufferI[2]) shl (8)) + (bufferI[3])) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ConfigWErr], memCODE_W[$fff], ((bufferI[2]) shl (8)) + (bufferI[3]));
     PrintMessage(str);
     Inc(err_c);
@@ -936,7 +938,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 end.

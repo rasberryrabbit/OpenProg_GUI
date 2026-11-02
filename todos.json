@@ -1,1 +1,290 @@
-[]
+[
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 1345,
+    "source_text": "\tfor(;(v<(vreg/10.0-1)*G||v>(vreg/10.0+1)*G)&&t<t0+1500;t=GetTickCount()){\n\t\tPacketIO(5);\n\t\tmsDelay(20);\n\t\tfor(z=0;z<DIMBUF-2&&bufferI[z]!=READ_ADC;z++);\n\t\tv=(bufferI[z+1]<<8)+bufferI[z+2];\n\t\tif(HwID==3) v>>=2;\t\t//if 12 bit ADC\n//\t\tPrintMessage2(\"v=%d=%fV\\n\",v,v/G);\n\t}",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 194,
+    "reason": "for loop with non-standard form; rewritten as while",
+    "function": "StartHVReg"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 1723,
+    "source_text": "\t\t\tfor(;fgets(line,256,f);){\n\t\t\t\tif(sscanf(line,\"device %s\",temp)>0) strcpy(dev,temp);\n\t\t\t\telse if(sscanf(line,\"vid %X\",&X)>0) vid=X;\n\t\t\t\telse if(sscanf(line,\"pid %X\",&X)>0) pid=X;\n\t\t\t\telse sscanf(line,\"maxerr %d\",&max_err);\n\t\t\t}",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 154,
+    "reason": "for loop with non-standard form; rewritten as while",
+    "function": "main"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2301,
+    "source_text": "\ttypedef struct _HIDD_ATTRIBUTES {\n\t    ULONG   Size;\n\t    USHORT  VendorID;\n\t    USHORT  ProductID;\n\t    USHORT  VersionNumber;\n\t} HIDD_ATTRIBUTES, *PHIDD_ATTRIBUTES;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 273,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2307,
+    "source_text": "\ttypedef void (__stdcall*GETHIDGUID) (OUT LPGUID HidGuid);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 283,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2308,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*GETATTRIBUTES)(IN HANDLE HidDeviceObject,OUT PHIDD_ATTRIBUTES Attributes);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 288,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2309,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*SETNUMINPUTBUFFERS)(IN  HANDLE HidDeviceObject,OUT ULONG  NumberBuffers);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 293,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2310,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*GETNUMINPUTBUFFERS)(IN  HANDLE HidDeviceObject,OUT PULONG  NumberBuffers);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 298,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2311,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*GETFEATURE) (IN  HANDLE HidDeviceObject, OUT PVOID ReportBuffer, IN ULONG ReportBufferLength);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 303,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2312,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*SETFEATURE) (IN  HANDLE HidDeviceObject, IN PVOID ReportBuffer, IN ULONG ReportBufferLength);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 308,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2313,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*GETREPORT) (IN  HANDLE HidDeviceObject, OUT PVOID ReportBuffer, IN ULONG ReportBufferLength);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 313,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2314,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*SETREPORT) (IN  HANDLE HidDeviceObject, IN PVOID ReportBuffer, IN ULONG ReportBufferLength);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 318,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2315,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*GETMANUFACTURERSTRING) (IN  HANDLE HidDeviceObject, OUT PVOID ReportBuffer, IN ULONG ReportBufferLength);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 323,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2316,
+    "source_text": "\ttypedef BOOLEAN (__stdcall*GETPRODUCTSTRING) (IN  HANDLE HidDeviceObject, OUT PVOID ReportBuffer, IN ULONG ReportBufferLength);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 328,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2327,
+    "source_text": "\tGETHIDGUID HidD_GetHidGuid=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 339,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2328,
+    "source_text": "\tGETATTRIBUTES HidD_GetAttributes=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 344,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2329,
+    "source_text": "\tSETNUMINPUTBUFFERS HidD_SetNumInputBuffers=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 349,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2330,
+    "source_text": "\tGETNUMINPUTBUFFERS HidD_GetNumInputBuffers=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 354,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2331,
+    "source_text": "\tGETFEATURE HidD_GetFeature=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 359,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2332,
+    "source_text": "\tSETFEATURE HidD_SetFeature=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 364,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2333,
+    "source_text": "\tGETREPORT HidD_GetInputReport=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 369,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2334,
+    "source_text": "\tSETREPORT HidD_SetOutputReport=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 374,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2335,
+    "source_text": "\tGETMANUFACTURERSTRING HidD_GetManufacturerString=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 379,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2336,
+    "source_text": "\tGETPRODUCTSTRING HidD_GetProductString=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 384,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2368,
+    "source_text": "\ttypedef HDEVINFO (WINAPI* SETUPDIGETCLASSDEVS) (CONST GUID*,PCSTR,HWND,DWORD);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 416,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2369,
+    "source_text": "\ttypedef BOOL (WINAPI* SETUPDIENUMDEVICEINTERFACES) (HDEVINFO,PSP_DEVINFO_DATA,CONST GUID*,DWORD,PSP_DEVICE_INTERFACE_DATA);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 421,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2370,
+    "source_text": "\ttypedef BOOL (WINAPI* SETUPDIGETDEVICEINTERFACEDETAIL) (HDEVINFO,PSP_DEVICE_INTERFACE_DATA,PSP_DEVICE_INTERFACE_DETAIL_DATA_A,DWORD,PDWORD,PSP_DEVINFO_DATA);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 426,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2371,
+    "source_text": "\ttypedef BOOL (WINAPI* SETUPDIDESTROYDEVICEINFOLIST) (HDEVINFO);",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 431,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2372,
+    "source_text": "\tSETUPDIGETCLASSDEVS SetupDiGetClassDevsA=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 436,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2373,
+    "source_text": "\tSETUPDIENUMDEVICEINTERFACES SetupDiEnumDeviceInterfaces=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 441,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2374,
+    "source_text": "\tSETUPDIGETDEVICEINTERFACEDETAIL SetupDiGetDeviceInterfaceDetailA=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 446,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2375,
+    "source_text": "\tSETUPDIDESTROYDEVICEINFOLIST SetupDiDestroyDeviceInfoList=0;",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 451,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  },
+  {
+    "source_file": "/home/z/my-project/opgui_src/opgui.c",
+    "source_line": 2185,
+    "source_text": "\t\t\t\tfprintf(f,\"vid %X\\n\",vid);\n\t\t\t\tfprintf(f,\"pid %X\\n\",pid);\n\t\t\t}\n\t\t\tfclose(f);\n\t\t}\n\t}\n\treturn 0;\n}\n\n///\n///Find the USB peripheral with proper vid&pid code\n/// return 0 if not found\nint FindDevice(int vid,int pid){\n\tint MyDeviceDetected = FALSE;\n#if !defined _WIN32 && !defined __CYGWIN__\t//Linux\n\t#ifndef hiddevIO\t//use raw USB device\n\tstruct hidraw_devinfo device_info;\n\tint i=-1;\n\tif(path[0]==0){\t//search all devices\n\t\tif((fd = open(\"/dev/openprogrammer\", O_RDWR|O_NONBLOCK))>0){ //try with this first\n\t\t\tsprintf(path,\"/dev/openprogrammer\");\n\t\t\tioctl(fd, HIDIOCGRAWINFO, &device_info);\n\t\t\tif(device_info.vendor==vid&&device_info.product==pid) i=0;\n\t\t\telse{\n\t\t\t\tclose(fd);\n\t\t\t\ti=-1;\n\t\t\t}\n\t\t}\n\t\tif(i){\n\t\t\tfor(i=0;i<16;i++){\n\t\t\t\tsprintf(path,\"/dev/hidraw%d\",i);\n\t\t\t\tif((fd = open(path, O_RDWR|O_NONBLOCK))>0){\n\t\t\t\t\tioctl(fd, HIDIOCGRAWINFO, &device_info);\n\t\t\t\t\tif(device_info.vendor==vid&&device_info.product==pid) break;\n\t\t\t\t\telse close(fd);\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tif(i==16){\n\t\t\tPrintMessage(strings[S_noprog]);\n\t\t\tpath[0]=0;\n\t\t\treturn 0;\n\t\t}\n\t}\n\telse{\t//user supplied path\n\t\tif((fd = open(path, O_RDWR|O_NONBLOCK)) < 0) {\n\t\t\tPrintMessage1(strings[S_DevPermission],path); //\"cannot open %s, make sure you have read permission on it\",path);\n\t\t\treturn 0;\n\t\t}\n\t\tioctl(fd, HIDIOCGRAWINFO, &device_info);\n\t\tif(device_info.vendor!=vid||device_info.product!=pid){\n\t\t\tPrintMessage(strings[S_noprog]);\n\t\t\treturn 0;\n\t\t}\n\t}\n\tprintf(strings[S_progDev],path);\n\treturn 1;\n\t#else\t\t//use hiddev device (old method)\n\tstruct hiddev_devinfo device_info;\n\tint i=-1;\n\tif(path[0]==0){\t//search all devices\n\t\tif((fd = open(\"/dev/openprogrammer\", O_RDONLY ))>0){ //try with this first\n\t\t\tioctl(fd, HIDIOCGDEVINFO, &device_info);\n\t\t\tif(device_info.vendor==vid&&device_info.product==pid) i=0;\n\t\t\telse{\n\t\t\t\tclose(fd);\n\t\t\t\ti=-1;\n\t\t\t}\n\t\t}\n\t\tif(i){\n\t\tfor(i=0;i<16;i++){\n\t\t\tsprintf(path,\"/dev/usb/hiddev%d\",i);\n\t\t\tif((fd = open(path, O_RDONLY ))>0){\n\t\t\t\tioctl(fd, HIDIOCGDEVINFO, &device_info);\n\t\t\t\tif(device_info.vendor==vid&&device_info.product==pid) break;\n\t\t\t\telse close(fd);\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tif(i==16){\n\t\t\tPrintMessage(strings[S_noprog]);\n\t\t\tpath[0]=0;\n\t\t\treturn 0;\n\t\t}\n\t}\n\telse{\t//user supplied path\n\t\tif ((fd = open(path, O_RDONLY )) < 0) {\n\t\t\tPrintMessage1(strings[S_DevPermission],path); //\"cannot open %s, make sure you have read permission on it\",path);\n\t\t\treturn 0;\n\t\t}\n\t\tioctl(fd, HIDIOCGDEVINFO, &device_info);\n\t\tif(device_info.vendor!=vid||device_info.product!=pid){\n\t\t\tPrintMessage(strings[S_noprog]);\n\t\t\treturn 0;\n\t\t}\n\t}\n\tMyDeviceDetected = TRUE;\n\trep_info_u.report_type=HID_REPORT_TYPE_OUTPUT;\n\trep_info_i.report_type=HID_REPORT_TYPE_INPUT;\n\trep_info_u.report_id=rep_info_i.report_id=HID_REPORT_ID_FIRST;\n\trep_info_u.num_fields=rep_info_i.num_fields=1;\n\tref_multi_u.uref.report_type=HID_REPORT_TYPE_OUTPUT;\n\tref_multi_i.uref.report_type=HID_REPORT_TYPE_INPUT;\n\tref_multi_u.uref.report_id=ref_multi_i.uref.report_id=HID_REPORT_ID_FIRST;\n\tref_multi_u.uref.field_index=ref_multi_i.uref.field_index=0;\n\tref_multi_u.uref.usage_index=ref_multi_i.uref.usage_index=0;\n\tref_multi_u.num_values=ref_multi_i.num_values=DIMBUF;\n\t#endif",
+    "output_file": "/tmp/after_convert/opgui.pas",
+    "output_line": 468,
+    "reason": "unrecognised statement",
+    "function": "FindDevice"
+  }
+]

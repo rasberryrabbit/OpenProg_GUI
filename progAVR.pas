@@ -18,10 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
 
 const
+  NL = #10;
   LOCK = 1;
   FUSE = 2;
   FUSE_H = 4;
@@ -66,7 +66,7 @@ var
   i: Integer;
   idw: Integer;
 begin
-  str := "";
+  str := '';
   idw := ((id[1]) shl (8)) + (id[2]);
   if (((id[0]) = (0)) and ((id[1]) = (1))) and ((id[2]) = (2)) then
   begin
@@ -74,7 +74,7 @@ begin
    Exit;
   end;
   if (id[0]) = ($1E) then
-   strcat(str, "Atmel ");
+   strcat(str, 'Atmel ');
   for i := 0 to ((SizeOf(AVRLIST)) div (SizeOf(AVRLIST[0]))) - 1 do
   begin
    if (idw) = (AVRLIST[i].id) then
@@ -86,41 +86,41 @@ begin
   case id[1] of
    $90:
    begin
-    strcat(str, " 1KB Flash");
+    strcat(str, ' 1KB Flash');
    end;
    $91:
    begin
-    strcat(str, " 2KB Flash");
+    strcat(str, ' 2KB Flash');
    end;
    $92:
    begin
-    strcat(str, " 4KB Flash");
+    strcat(str, ' 4KB Flash');
    end;
    $93:
    begin
-    strcat(str, " 8KB Flash");
+    strcat(str, ' 8KB Flash');
    end;
    $94:
    begin
-    strcat(str, " 16KB Flash");
+    strcat(str, ' 16KB Flash');
    end;
    $95:
    begin
-    strcat(str, " 32KB Flash");
+    strcat(str, ' 32KB Flash');
    end;
    $96:
    begin
-    strcat(str, " 64KB Flash");
+    strcat(str, ' 64KB Flash');
    end;
    $97:
    begin
-    strcat(str, " 128KB Flash");
+    strcat(str, ' 128KB Flash');
    end;
   end;
   if (i) <> (1001) then
    strcat(str, strings[S_nodev])
   else
-   strcat(str, "\r\n");
+   strcat(str, '' + #13 + '' + NL + '');
   PrintMessage(str);
 end;
 
@@ -135,8 +135,8 @@ var
   lines: Integer;
   aux: PChar;
 begin
-  s := "";
-  t := "";
+  s := '';
+  t := '';
   valid := 0;
   empty := 1;
   lines := 0;
@@ -150,7 +150,7 @@ begin
    j := i;
    while ((j) < ((i) + ((16) * (2)))) and ((j) < (dim)) do
    begin
-    sprintf(t, "%02X ", memCODE[j]);
+    sprintf(t, '%02X ', memCODE[j]);
     strcat(s, t);
     if (memCODE[j]) < ($ff) then
      valid := 1;
@@ -158,13 +158,13 @@ begin
    end;
    if valid then
    begin
-    sprintf(t, "%04X: %s\r\n", i, s);
+    sprintf(t, '%04X: %s' + #13 + '' + NL + '', i, s);
     strcat(aux, t);
     empty := 0;
     Inc(lines);
     if (lines) > (500) then
     begin
-     strcat(aux, "(...)\r\n");
+     strcat(aux, '(...)' + #13 + '' + NL + '');
      i := (IfThen((dim) < (size), dim, size)) - ((16) * (4));
      lines := 490;
     end;
@@ -189,7 +189,7 @@ begin
   din := 0;
   Tbit := ((1.0) div (speed)) * (1e6);
   if saveLog then
-   fprintf(logfile, "SWSPI(0x%X,%d)\n", data, speed);
+   fprintf(logfile, 'SWSPI(0x%X,%d)' + NL + '', data, speed);
   j := 0;
   bufferU[Inc(j)] := $07;
   bufferU[Inc(j)] := 1;
@@ -298,7 +298,7 @@ begin
   end;
   din := din + (bufferI[(j) + (1)]) and (1);
   if saveLog then
-   fprintf(logfile, "Read 0x%X\n", din);
+   fprintf(logfile, 'Read 0x%X' + NL + '', din);
   Exit(din);
 end;
 
@@ -310,14 +310,14 @@ begin
   fuse := fuse and $FF;
   if (FWVersion) < ($900) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.9.0");
+   sprintf(str, strings[S_FWver2old], '0.9.0');
    PrintMessage(str);
    Exit;
   end;
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "WriteATfuseSlow(0x%X)\n", fuse);
+   fprintf(logfile, 'WriteATfuseSlow(0x%X)' + NL + '', fuse);
   end;
   PrintMessage(strings[S_FuseAreaW]);
   j := 0;
@@ -378,7 +378,7 @@ begin
   d := SWSPI(0, 3000);
   if (d) <> (fuse) then
   begin
-   sprintf(str, strings[S_WErr1], "fuse", fuse, d);
+   sprintf(str, strings[S_WErr1], 'fuse', fuse, d);
    PrintMessage(str);
   end;
   j := 0;
@@ -651,7 +651,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "ReadAT(0x%X,0x%X,0x%X)\n", dim, dim2, options);
+   fprintf(logfile, 'ReadAT(0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options);
   end;
   size := dim;
   sizeEE := dim2;
@@ -779,7 +779,7 @@ begin
    Inc(z);
   end;
   signature[2] := bufferI[(z) + (2)];
-  sprintf(str, "CHIP ID:%02X%02X%02X\r\n", signature[0], signature[1], signature[2]);
+  sprintf(str, 'CHIP ID:%02X%02X%02X' + #13 + '' + NL + '', signature[0], signature[1], signature[2]);
   PrintMessage(str);
   AtmelID(signature);
   if (options) and (1) then
@@ -789,7 +789,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "LOCK bits:\t  0x%02X\r\n", bufferI[(z) + (2)]);
+   sprintf(str, 'LOCK bits:' + #9 + '  0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
    PrintMessage(str);
   end;
   if (options) and (2) then
@@ -799,7 +799,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "FUSE bits:\t  0x%02X\r\n", bufferI[(z) + (2)]);
+   sprintf(str, 'FUSE bits:' + #9 + '  0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
    PrintMessage(str);
   end;
   if (options) and (4) then
@@ -809,7 +809,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "FUSE HIGH bits:\t  0x%02X\r\n", bufferI[(z) + (2)]);
+   sprintf(str, 'FUSE HIGH bits:' + #9 + '  0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
    PrintMessage(str);
   end;
   if (options) and (8) then
@@ -819,7 +819,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "Extended FUSE bits: 0x%02X\r\n", bufferI[(z) + (2)]);
+   sprintf(str, 'Extended FUSE bits: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
    PrintMessage(str);
   end;
   if (options) and (16) then
@@ -865,33 +865,33 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "Calibration bits:\t  0x%02X", bufferI[(z) + (2)]);
+   sprintf(str, 'Calibration bits:' + #9 + '  0x%02X', bufferI[(z) + (2)]);
    PrintMessage(str);
    z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($30)) do
    begin
     Inc(z);
    end;
-   sprintf(str, ",0x%02X", bufferI[(z) + (2)]);
+   sprintf(str, ',0x%02X', bufferI[(z) + (2)]);
    PrintMessage(str);
    z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($30)) do
    begin
     Inc(z);
    end;
-   sprintf(str, ",0x%02X", bufferI[(z) + (2)]);
+   sprintf(str, ',0x%02X', bufferI[(z) + (2)]);
    PrintMessage(str);
    z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($30)) do
    begin
     Inc(z);
    end;
-   sprintf(str, ",0x%02X\r\n", bufferI[(z) + (2)]);
+   sprintf(str, ',0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
    PrintMessage(str);
   end;
   PrintMessage(strings[S_CodeReading1]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_CodeReading1]);
+   fprintf(logfile, '%s' + NL + '', strings[S_CodeReading1]);
   c := ((64) - (5)) div (2);
   j := 0;
   i := 0;
@@ -932,7 +932,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadCodeErr2], dim, k);
    PrintMessage(str);
   end
@@ -942,7 +942,7 @@ begin
   begin
    PrintMessage(strings[S_ReadEE]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_ReadEE]);
+    fprintf(logfile, '%s' + NL + '', strings[S_ReadEE]);
    n := 0;
    k2 := 0;
    i := 0;
@@ -993,7 +993,7 @@ begin
    end;
    if (k2) <> (dim2) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadEEErr], dim2, k2);
     PrintMessage(str);
    end
@@ -1015,7 +1015,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   PrintMessage(strings[S_CodeMem]);
   DisplayCODEAVR(dim);
   if dim2 then
@@ -1046,7 +1046,7 @@ begin
   signature := [0, 0, 0];
   if (FWVersion) < ($900) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.9.0");
+   sprintf(str, strings[S_FWver2old], '0.9.0');
    PrintMessage(str);
    Exit;
   end;
@@ -1063,7 +1063,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "ReadAT_HV(0x%X,0x%X,0x%X)\n", dim, dim2, options);
+   fprintf(logfile, 'ReadAT_HV(0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options);
   end;
   size := dim;
   sizeEE := dim2;
@@ -1236,7 +1236,7 @@ begin
    Inc(z);
   end;
   signature[2] := bufferI[(z) + (1)];
-  sprintf(str, "CHIP ID:%02X%02X%02X\r\n", signature[0], signature[1], signature[2]);
+  sprintf(str, 'CHIP ID:%02X%02X%02X' + #13 + '' + NL + '', signature[0], signature[1], signature[2]);
   PrintMessage(str);
   AtmelID(signature);
   if (options) and (1) then
@@ -1246,7 +1246,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "LOCK byte:\t  0x%02X\r\n", bufferI[(z) + (1)]);
+   sprintf(str, 'LOCK byte:' + #9 + '  0x%02X' + #13 + '' + NL + '', bufferI[(z) + (1)]);
    PrintMessage(str);
   end;
   if (options) and (2) then
@@ -1256,7 +1256,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "FUSE byte:\t  0x%02X\r\n", bufferI[(z) + (1)]);
+   sprintf(str, 'FUSE byte:' + #9 + '  0x%02X' + #13 + '' + NL + '', bufferI[(z) + (1)]);
    PrintMessage(str);
   end;
   if (options) and (4) then
@@ -1266,7 +1266,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "FUSE HIGH byte:\t  0x%02X\r\n", bufferI[(z) + (1)]);
+   sprintf(str, 'FUSE HIGH byte:' + #9 + '  0x%02X' + #13 + '' + NL + '', bufferI[(z) + (1)]);
    PrintMessage(str);
   end;
   if (options) and (8) then
@@ -1308,7 +1308,7 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "Extended FUSE byte: 0x%02X\r\n", bufferI[(z) + (1)]);
+   sprintf(str, 'Extended FUSE byte: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (1)]);
    PrintMessage(str);
    z := z + 2;
   end;
@@ -1318,11 +1318,11 @@ begin
    begin
     Inc(z);
    end;
-   sprintf(str, "Calibration byte: 0x%02X\r\n", bufferI[(z) + (1)]);
+   sprintf(str, 'Calibration byte: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (1)]);
    PrintMessage(str);
   end;
   if saveLog then
-   fprintf(logfile, "READ CODE\n");
+   fprintf(logfile, 'READ CODE' + NL + '');
   PrintMessage(strings[S_CodeReading1]);
   j := 0;
   bufferU[Inc(j)] := $48;
@@ -1402,7 +1402,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadCodeErr], dim, k);
    PrintMessage(str);
   end
@@ -1411,7 +1411,7 @@ begin
   if dim2 then
   begin
    if saveLog then
-    fprintf(logfile, "READ EEPROM\n");
+    fprintf(logfile, 'READ EEPROM' + NL + '');
    PrintMessage(strings[S_ReadEE]);
    j := 0;
    k := 0;
@@ -1484,7 +1484,7 @@ begin
    end;
    if (k) <> (dim2) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadEEErr], dim2, k);
     PrintMessage(str);
    end
@@ -1507,7 +1507,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   PrintMessage(strings[S_CodeMem]);
   DisplayCODEAVR(dim);
   if dim2 then
@@ -1553,7 +1553,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "WriteAT(0x%X,0x%X)\n", dim, dim2);
+   fprintf(logfile, 'WriteAT(0x%X,0x%X)' + NL + '', dim, dim2);
   end;
   if (dim) > (size) then
    dim := size;
@@ -1634,12 +1634,12 @@ begin
    Inc(z);
   end;
   signature[2] := bufferI[(z) + (2)];
-  sprintf(str, "CHIP ID:%02X%02X%02X\r\n", signature[0], signature[1], signature[2]);
+  sprintf(str, 'CHIP ID:%02X%02X%02X' + #13 + '' + NL + '', signature[0], signature[1], signature[2]);
   PrintMessage(str);
   AtmelID(signature);
   PrintMessage(strings[S_StartErase]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_StartErase]);
+   fprintf(logfile, '%s' + NL + '', strings[S_StartErase]);
   j := 0;
   bufferU[Inc(j)] := $31;
   bufferU[Inc(j)] := 4;
@@ -1662,7 +1662,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_StartCodeProg]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+   fprintf(logfile, '%s' + NL + '', strings[S_StartCodeProg]);
   j := 0;
   for i := 0 to (dim) - 1 do
   begin
@@ -1726,7 +1726,7 @@ begin
   begin
    PrintMessage(strings[S_EEAreaW]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_EEAreaW]);
+    fprintf(logfile, '%s' + NL + '', strings[S_EEAreaW]);
    errEE := 0;
    j := 0;
    for i := 0 to (dim2) - 1 do
@@ -1793,7 +1793,7 @@ begin
   begin
    PrintMessage(strings[S_FuseAreaW]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_FuseAreaW]);
+    fprintf(logfile, '%s' + NL + '', strings[S_FuseAreaW]);
    bufferU[Inc(j)] := $31;
    bufferU[Inc(j)] := 4;
    bufferU[Inc(j)] := $AC;
@@ -1831,7 +1831,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 function WriteATmega(dim: Integer; dim2: Integer; page: Integer; options: Integer): Pointer;
@@ -1872,7 +1872,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "WriteATmega(0x%X,0x%X,0x%X,0x%X)\n", dim, dim2, page, options);
+   fprintf(logfile, 'WriteATmega(0x%X,0x%X,0x%X,0x%X)' + NL + '', dim, dim2, page, options);
   end;
   if (dim) > (size) then
    dim := size
@@ -1971,12 +1971,12 @@ begin
    Inc(z);
   end;
   signature[2] := bufferI[(z) + (2)];
-  sprintf(str, "CHIP ID:%02X%02X%02X\r\n", signature[0], signature[1], signature[2]);
+  sprintf(str, 'CHIP ID:%02X%02X%02X' + #13 + '' + NL + '', signature[0], signature[1], signature[2]);
   PrintMessage(str);
   AtmelID(signature);
   PrintMessage(strings[S_StartErase]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_StartErase]);
+   fprintf(logfile, '%s' + NL + '', strings[S_StartErase]);
   j := 0;
   bufferU[Inc(j)] := $31;
   bufferU[Inc(j)] := 4;
@@ -1999,7 +1999,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_StartCodeProg]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+   fprintf(logfile, '%s' + NL + '', strings[S_StartCodeProg]);
   w := 0;
   i := 0;
   while (i) < (dim) do
@@ -2120,7 +2120,7 @@ begin
   begin
    PrintMessage(strings[S_EEAreaW]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_EEAreaW]);
+    fprintf(logfile, '%s' + NL + '', strings[S_EEAreaW]);
    errEE := 0;
    j := 0;
    for i := 0 to (dim2) - 1 do
@@ -2198,7 +2198,7 @@ begin
   begin
    PrintMessage(strings[S_FuseAreaW]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_FuseAreaW]);
+    fprintf(logfile, '%s' + NL + '', strings[S_FuseAreaW]);
   end;
   if (AVRfuse) < ($100) then
   begin
@@ -2356,7 +2356,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 function WriteAT_HV(dim: Integer; dim2: Integer; page: Integer; options: Integer): Pointer;
@@ -2382,7 +2382,7 @@ begin
   signature := [0, 0, 0];
   if (FWVersion) < ($900) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.9.0");
+   sprintf(str, strings[S_FWver2old], '0.9.0');
    PrintMessage(str);
    Exit;
   end;
@@ -2399,7 +2399,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "WriteAT_HV(0x%X,0x%X,0x%X,0x%X)\n", dim, dim2, page, options);
+   fprintf(logfile, 'WriteAT_HV(0x%X,0x%X,0x%X,0x%X)' + NL + '', dim, dim2, page, options);
   end;
   if (dim) > (size) then
    dim := size
@@ -2547,11 +2547,11 @@ begin
    Inc(z);
   end;
   signature[2] := bufferI[(z) + (1)];
-  sprintf(str, "CHIP ID:%02X%02X%02X\r\n", signature[0], signature[1], signature[2]);
+  sprintf(str, 'CHIP ID:%02X%02X%02X' + #13 + '' + NL + '', signature[0], signature[1], signature[2]);
   PrintMessage(str);
   AtmelID(signature);
   if saveLog then
-   fprintf(logfile, "CHIP ERASE\n");
+   fprintf(logfile, 'CHIP ERASE' + NL + '');
   j := 0;
   bufferU[Inc(j)] := $48;
   bufferU[Inc(j)] := 3;
@@ -2591,11 +2591,11 @@ begin
    Inc(t);
   end;
   if ((sdo) = (0)) and (saveLog) then
-   fprintf(logfile, "SDO=0\r\n");
+   fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_StartCodeProg]);
   if saveLog then
-   fprintf(logfile, "WRITE CODE\n");
+   fprintf(logfile, 'WRITE CODE' + NL + '');
   currPage := -(1);
   j := 0;
   if (page) = (0) then
@@ -2655,7 +2655,7 @@ begin
       Inc(t);
      end;
      if (saveLog) and ((sdo) = (0)) then
-      fprintf(logfile, "SDO=0\r\n");
+      fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
      bufferU[Inc(j)] := $48;
      bufferU[Inc(j)] := 3;
      bufferU[Inc(j)] := $3C;
@@ -2699,7 +2699,7 @@ begin
       Inc(t);
      end;
      if (saveLog) and ((sdo) = (0)) then
-      fprintf(logfile, "SDO=0\r\n");
+      fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
      sprintf(str, strings[S_CodeWriting], ((i) * (100)) div (dim), i);
      gtk_statusbar_push(status_bar, statusID, str);
      while gtk_events_pending() do
@@ -2852,7 +2852,7 @@ begin
       Inc(t);
      end;
      if ((sdo) = (0)) and (saveLog) then
-      fprintf(logfile, "SDO=0\r\n");
+      fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
      sprintf(str, strings[S_CodeWriting], ((i) * (100)) div (dim), i);
      gtk_statusbar_push(status_bar, statusID, str);
      while gtk_events_pending() do
@@ -2935,7 +2935,7 @@ begin
    errEE := 0;
    PrintMessage(strings[S_EEAreaW]);
    if saveLog then
-    fprintf(logfile, "WRITE EEPROM\n");
+    fprintf(logfile, 'WRITE EEPROM' + NL + '');
    j := 0;
    for i := 0 to (dim2) - 1 do
    begin
@@ -2998,7 +2998,7 @@ begin
       Inc(t);
      end;
      if ((sdo) = (0)) and (saveLog) then
-      fprintf(logfile, "SDO=0\r\n");
+      fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
      bufferU[Inc(j)] := $48;
      bufferU[Inc(j)] := 5;
      bufferU[Inc(j)] := $4C;
@@ -3041,7 +3041,7 @@ begin
    err := err + errEE;
    if (err) >= (max_err) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_MaxErr], err);
     PrintMessage(str);
    end;
@@ -3054,7 +3054,7 @@ begin
   if (AVRfuse) < ($100) then
   begin
    if saveLog then
-    fprintf(logfile, "WRITE FUSE\n");
+    fprintf(logfile, 'WRITE FUSE' + NL + '');
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 4;
    bufferU[Inc(j)] := $4C;
@@ -3100,7 +3100,7 @@ begin
     Inc(i);
    end;
    if ((sdo) = (0)) and (saveLog) then
-    fprintf(logfile, "SDO=0\r\n");
+    fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
    j := 0;
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 3;
@@ -3125,7 +3125,7 @@ begin
    end;
    if ((z) = ((64) - (1))) or ((AVRfuse) <> (bufferI[(z) + (1)])) then
    begin
-    sprintf(str, strings[S_WErr1], "fuse", AVRfuse, bufferI[(z) + (1)]);
+    sprintf(str, strings[S_WErr1], 'fuse', AVRfuse, bufferI[(z) + (1)]);
     PrintMessage(str);
     Inc(err_f);
    end;
@@ -3133,7 +3133,7 @@ begin
   if (AVRfuse_h) < ($100) then
   begin
    if saveLog then
-    fprintf(logfile, "WRITE FUSEH\n");
+    fprintf(logfile, 'WRITE FUSEH' + NL + '');
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 4;
    bufferU[Inc(j)] := $4C;
@@ -3179,7 +3179,7 @@ begin
     Inc(i);
    end;
    if ((sdo) = (0)) and (saveLog) then
-    fprintf(logfile, "SDO=0\r\n");
+    fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
    j := 0;
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 3;
@@ -3204,7 +3204,7 @@ begin
    end;
    if ((z) = ((64) - (1))) or ((AVRfuse_h) <> (bufferI[(z) + (1)])) then
    begin
-    sprintf(str, strings[S_WErr1], "fuseH", AVRfuse_h, bufferI[(z) + (1)]);
+    sprintf(str, strings[S_WErr1], 'fuseH', AVRfuse_h, bufferI[(z) + (1)]);
     PrintMessage(str);
     Inc(err_f);
    end;
@@ -3212,7 +3212,7 @@ begin
   if (AVRfuse_x) < ($100) then
   begin
    if saveLog then
-    fprintf(logfile, "WRITE FUSEX\n");
+    fprintf(logfile, 'WRITE FUSEX' + NL + '');
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 4;
    bufferU[Inc(j)] := $4C;
@@ -3258,7 +3258,7 @@ begin
     Inc(i);
    end;
    if ((sdo) = (0)) and (saveLog) then
-    fprintf(logfile, "SDO=0\r\n");
+    fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
    j := 0;
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 3;
@@ -3283,7 +3283,7 @@ begin
    end;
    if ((z) = ((64) - (1))) or ((AVRfuse_x) <> (bufferI[(z) + (1)])) then
    begin
-    sprintf(str, strings[S_WErr1], "fuseX", AVRfuse_x, bufferI[(z) + (1)]);
+    sprintf(str, strings[S_WErr1], 'fuseX', AVRfuse_x, bufferI[(z) + (1)]);
     PrintMessage(str);
     Inc(err_f);
    end;
@@ -3291,7 +3291,7 @@ begin
   if (AVRlock) < ($100) then
   begin
    if saveLog then
-    fprintf(logfile, "WRITE LOCK\n");
+    fprintf(logfile, 'WRITE LOCK' + NL + '');
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 4;
    bufferU[Inc(j)] := $4C;
@@ -3337,7 +3337,7 @@ begin
     Inc(i);
    end;
    if ((sdo) = (0)) and (saveLog) then
-    fprintf(logfile, "SDO=0\r\n");
+    fprintf(logfile, 'SDO=0' + #13 + '' + NL + '');
    j := 0;
    bufferU[Inc(j)] := $48;
    bufferU[Inc(j)] := 3;
@@ -3362,7 +3362,7 @@ begin
    end;
    if ((z) = ((64) - (1))) or ((AVRlock) <> (bufferI[(z) + (1)])) then
    begin
-    sprintf(str, strings[S_WErr1], "lock", AVRlock, bufferI[(z) + (1)]);
+    sprintf(str, strings[S_WErr1], 'lock', AVRlock, bufferI[(z) + (1)]);
     PrintMessage(str);
     Inc(err_f);
    end;
@@ -3396,7 +3396,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 end.

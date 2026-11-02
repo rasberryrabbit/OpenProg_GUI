@@ -18,10 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
 
 const
+  NL = #10;
   MTAP_COMMAND = $07;
   MTAP_SW_MTAP = $04;
   MTAP_SW_ETAP = $05;
@@ -63,7 +63,7 @@ begin
    if ((id) and ($0FFFFFFF)) = (PIC32LIST[i].id) then
    begin
     strcpy(s, PIC32LIST[i].device);
-    strcat(s, "\r\n");
+    strcat(s, '' + #13 + '' + NL + '');
     PrintMessage(s);
     Exit;
    end;
@@ -124,7 +124,7 @@ begin
    end;
    if (i) = (20) then
    begin
-    sprintf(str, "i=20 ECR=0x%08X\r\n", w0);
+    sprintf(str, 'i=20 ECR=0x%08X' + #13 + '' + NL + '', w0);
     PrintMessage(str);
    end;
    i := 0;
@@ -172,7 +172,7 @@ begin
   z := 0;
   if (FWVersion) < ($A00) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.10.0");
+   sprintf(str, strings[S_FWver2old], '0.10.0');
    PrintMessage(str);
    Exit;
   end;
@@ -184,7 +184,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read32x(%d,%d)    (0x%X,0x%X)\n", dim, options, dim, options);
+   fprintf(logfile, 'Read32x(%d,%d)    (0x%X,0x%X)' + NL + '', dim, options, dim, options);
   end;
   if ((dim) > ($80000)) or ((dim) < (0)) then
   begin
@@ -272,7 +272,7 @@ begin
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
    Inc(i);
   end;
-  sprintf(str, "Device status: CFGRDY=%d FCBUSY=%d (0x%02X)\r\n", IfThen((w0) and ($8), 1, 0), IfThen((w0) and ($4), 1, 0), (w0) and ($FF));
+  sprintf(str, 'Device status: CFGRDY=%d FCBUSY=%d (0x%02X)' + #13 + '' + NL + '', IfThen((w0) and ($8), 1, 0), IfThen((w0) and ($4), 1, 0), (w0) and ($FF));
   PrintMessage(str);
   bufferU[Inc(j)] := $54;
   bufferU[Inc(j)] := $01;
@@ -291,7 +291,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "IDCODE=0x%08X\r\n", w0);
+  sprintf(str, 'IDCODE=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   PIC32_ID(w0);
   bufferU[Inc(j)] := $54;
@@ -353,7 +353,7 @@ begin
    if (w0) and ($40000) then
     Break;
   end;
-  sprintf(str, "ECR=0x%08X\r\n", w0);
+  sprintf(str, 'ECR=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   i := $bFC00BF0;
   while (i) < ($bFC00C10) do
@@ -388,7 +388,7 @@ begin
    end;
    if (z) < ((64) - (4)) then
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-   sprintf(str, "[0x%08X]=0x%08X\r\n", i, w0);
+   sprintf(str, '[0x%08X]=0x%08X' + #13 + '' + NL + '', i, w0);
    PrintMessage(str);
    Inc(i, 4);
   end;
@@ -423,7 +423,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "DEVID=0x%08X\r\n", w0);
+  sprintf(str, 'DEVID=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   PacketIO(5);
   z := 0;
@@ -433,7 +433,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "DEVID=0x%08X\r\n", w0);
+  sprintf(str, 'DEVID=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   PacketIO(5);
   z := 0;
@@ -443,7 +443,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "DEVID=0x%08X\r\n", w0);
+  sprintf(str, 'DEVID=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   PacketIO(5);
   z := 0;
@@ -453,7 +453,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "DEVID=0x%08X\r\n", w0);
+  sprintf(str, 'DEVID=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   PacketIO(5);
   z := 0;
@@ -463,7 +463,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "DEVID=0x%08X\r\n", w0);
+  sprintf(str, 'DEVID=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   XferInstruction(-(1), $3C13FF20);
   XferInstruction(-(1), ($3C080000) + ((i) shr (16)));
@@ -495,7 +495,7 @@ begin
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  sprintf(str, "DEVID=0x%08X\r\n", w0);
+  sprintf(str, 'DEVID=0x%08X' + #13 + '' + NL + '', w0);
   PrintMessage(str);
   i := $1FC00000;
   while ((i) < ($1FC00BF0)) and (0) do
@@ -545,7 +545,7 @@ begin
    end;
    if (z) < ((64) - (4)) then
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-   sprintf(str, "[0x%08X]=0x%08X\r\n", i, w0);
+   sprintf(str, '[0x%08X]=0x%08X' + #13 + '' + NL + '', i, w0);
    PrintMessage(str);
    Inc(i, 4);
   end;
@@ -570,7 +570,7 @@ begin
   if saveLog then
    WriteLogIO();
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
   if saveLog then

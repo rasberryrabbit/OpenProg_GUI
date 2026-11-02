@@ -18,10 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
 
 const
+  NL = #10;
   LOAD_PC_ADDR = $80;
   BULK_ERASE = $18;
   ROW_ERASE_PROGRAM_MEM = $F0;
@@ -82,7 +82,7 @@ begin
      Exit;
     end;
   end;
-  sprintf(s, "%s", strings[S_nodev]);
+  sprintf(s, '%s', strings[S_nodev]);
   PrintMessage(s);
 end;
 
@@ -97,8 +97,8 @@ var
   j: Integer;
   lines: Integer;
 begin
-  s := "";
-  t := "";
+  s := '';
+  t := '';
   aux := malloc((((dim) div (16)) + (1)) * ((16) + ((16) * (6))));
   aux[0] := 0;
   valid := 0;
@@ -111,7 +111,7 @@ begin
    j := i;
    while ((j) < ((i) + ((16) * (2)))) and ((j) < (dim)) do
    begin
-    sprintf(t, "%02X ", memCODE[j]);
+    sprintf(t, '%02X ', memCODE[j]);
     strcat(s, t);
     if (memCODE[j]) < ($ff) then
      valid := 1;
@@ -119,13 +119,13 @@ begin
    end;
    if valid then
    begin
-    sprintf(t, "%04X: %s\r\n", i, s);
+    sprintf(t, '%04X: %s' + #13 + '' + NL + '', i, s);
     strcat(aux, t);
     empty := 0;
     Inc(lines);
     if (lines) > (500) then
     begin
-     strcat(aux, "(...)\r\n");
+     strcat(aux, '(...)' + #13 + '' + NL + '');
      i := (IfThen((dim) < (size), dim, size)) - ((16) * (4));
      lines := 490;
     end;
@@ -187,7 +187,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read18F(%d,%d,%d)    (0x%X,0x%X,0x%X)\n", dim, dim2, options, dim, dim2, options);
+   fprintf(logfile, 'Read18F(%d,%d,%d)    (0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options, dim, dim2, options);
   end;
   size := dim;
   sizeEE := dim2;
@@ -293,7 +293,7 @@ begin
   end;
   PrintMessage(strings[S_CodeReading1]);
   if saveLog then
-   fprintf(logfile, "Read code\n");
+   fprintf(logfile, 'Read code' + NL + '');
   j := 0;
   i := 0;
   while (i) < (dim) do
@@ -335,14 +335,14 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadCodeErr2], dim, k);
    PrintMessage(str);
   end
   else
    PrintMessage(strings[S_Compl]);
   if saveLog then
-   fprintf(logfile, "Read config\n");
+   fprintf(logfile, 'Read config' + NL + '');
   bufferU[Inc(j)] := $21;
   bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $20;
@@ -409,7 +409,7 @@ begin
   begin
    PrintMessage(strings[S_ReadEE]);
    if saveLog then
-    fprintf(logfile, "Read EEPROM\n");
+    fprintf(logfile, 'Read EEPROM' + NL + '');
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $9E;
    bufferU[Inc(j)] := IfThen((newAddr) = (0), $A6, $7F);
@@ -480,14 +480,14 @@ begin
    end;
    if (k2) <> (dim2) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadEEErr], dim2, k2);
     PrintMessage(str);
    end
    else
     PrintMessage(strings[S_Compl]);
   end;
-  PrintMessage("\r\n");
+  PrintMessage('' + #13 + '' + NL + '');
   bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := 1;
   bufferU[Inc(j)] := $0E;
@@ -502,7 +502,7 @@ begin
   end;
   PacketIO(1);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   i := 0;
   while (i) < (8) do
   begin
@@ -594,7 +594,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write18F(%d,%d,%d,%d)    (0x%X,0x%X,0x%X,0x%X)\n", dim, dim2, wbuf, options, dim, dim2, wbuf, options);
+   fprintf(logfile, 'Write18F(%d,%d,%d,%d)    (0x%X,0x%X,0x%X,0x%X)' + NL + '', dim, dim2, wbuf, options, dim, dim2, wbuf, options);
   end;
   if (dim) > (size) then
    dim := size;
@@ -804,7 +804,7 @@ begin
    j := 0;
    if saveLog then
    begin
-    fprintf(logfile, "ERASE BLOCK0\n");
+    fprintf(logfile, 'ERASE BLOCK0' + NL + '');
    end;
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $0E;
@@ -849,7 +849,7 @@ begin
    j := 0;
    if saveLog then
    begin
-    fprintf(logfile, "ERASE BLOCK1\n");
+    fprintf(logfile, 'ERASE BLOCK1' + NL + '');
    end;
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $0E;
@@ -894,7 +894,7 @@ begin
    j := 0;
    if saveLog then
    begin
-    fprintf(logfile, "ERASE BLOCK2\n");
+    fprintf(logfile, 'ERASE BLOCK2' + NL + '');
    end;
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $0E;
@@ -939,7 +939,7 @@ begin
    j := 0;
    if saveLog then
    begin
-    fprintf(logfile, "ERASE BLOCK3\n");
+    fprintf(logfile, 'ERASE BLOCK3' + NL + '');
    end;
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $0E;
@@ -984,7 +984,7 @@ begin
    j := 0;
    if saveLog then
    begin
-    fprintf(logfile, "ERASE BOOT BLOCK\n");
+    fprintf(logfile, 'ERASE BOOT BLOCK' + NL + '');
    end;
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $0E;
@@ -1029,7 +1029,7 @@ begin
    j := 0;
    if saveLog then
    begin
-    fprintf(logfile, "ERASE CONFIG\n");
+    fprintf(logfile, 'ERASE CONFIG' + NL + '');
    end;
    if programID then
    begin
@@ -1073,7 +1073,7 @@ begin
     j := 0;
     if saveLog then
     begin
-     fprintf(logfile, "ERASE ID\n");
+     fprintf(logfile, 'ERASE ID' + NL + '');
     end;
    end;
   end;
@@ -1112,7 +1112,7 @@ begin
    wdly := 3.4;
   if saveLog then
   begin
-   fprintf(logfile, "WRITE CODE\ndim=%d(0x%X)\n", dim, dim);
+   fprintf(logfile, 'WRITE CODE' + NL + 'dim=%d(0x%X)' + NL + '', dim, dim);
   end;
   j := 0;
   k := 0; i := 0;
@@ -1239,7 +1239,7 @@ begin
   begin
    PrintMessage(strings[S_IDW]);
    if saveLog then
-    fprintf(logfile, "Write ID\n");
+    fprintf(logfile, 'Write ID' + NL + '');
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $8E;
    bufferU[Inc(j)] := IfThen((optWrite) <> (3), $A6, $7F);
@@ -1288,7 +1288,7 @@ begin
   begin
    PrintMessage(strings[S_EEAreaW]);
    if saveLog then
-    fprintf(logfile, "Write EEPROM\n");
+    fprintf(logfile, 'Write EEPROM' + NL + '');
    errEE := 0;
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $9E;
@@ -1399,7 +1399,7 @@ begin
   end;
   PrintMessage(strings[S_CodeV]);
   if saveLog then
-   fprintf(logfile, "VERIFY CODE\n");
+   fprintf(logfile, 'VERIFY CODE' + NL + '');
   bufferU[Inc(j)] := $21;
   bufferU[Inc(j)] := $8E;
   bufferU[Inc(j)] := IfThen((optWrite) <> (3), $A6, $7F);
@@ -1424,7 +1424,7 @@ begin
   PacketIO(2);
   if saveLog then
   begin
-   fprintf(logfile, "\n\n");
+   fprintf(logfile, '' + NL + '' + NL + '');
   end;
   j := 0;
   k := 0;
@@ -1580,7 +1580,7 @@ begin
   begin
    PrintMessage(strings[S_ConfigW]);
    if saveLog then
-    fprintf(logfile, "Write CONFIG\n");
+    fprintf(logfile, 'Write CONFIG' + NL + '');
    bufferU[Inc(j)] := $21;
    bufferU[Inc(j)] := $8E;
    bufferU[Inc(j)] := IfThen((optWrite) <> (3), $A6, $7F);
@@ -1713,7 +1713,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 function Read18FKx(dim: Integer; dim2: Integer; options: Integer): Pointer;
@@ -1818,7 +1818,7 @@ begin
         CONFIGorg := 1;
        end
        else
-        PrintMessage("unexpected parameter");
+        PrintMessage('unexpected parameter');
   if ((dim) > ($1FFFFF)) or ((dim) < (0)) then
   begin
    PrintMessage(strings[S_CodeLim]);
@@ -1843,7 +1843,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read18FKx(%d,%d,%d)    (0x%X,0x%X,0x%X)\n", dim, dim2, options, dim, dim2, options);
+   fprintf(logfile, 'Read18FKx(%d,%d,%d)    (0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options, dim, dim2, options);
   end;
   size := dim;
   if memCODE then
@@ -1943,14 +1943,14 @@ begin
   begin
    devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   end;
-  sprintf(str, "DevID: 0x%04X\r\n", devID);
+  sprintf(str, 'DevID: 0x%04X' + #13 + '' + NL + '', devID);
   PrintMessage(str);
-  sprintf(str, "RevID: 0x%04X\r\n", devREV);
+  sprintf(str, 'RevID: 0x%04X' + #13 + '' + NL + '', devREV);
   PrintMessage(str);
   PIC18_ID((devID) + ((devREV) shl (16)));
   if (DCIaddr) > (0) then
   begin
-   PrintMessage("Device Configuration Information:\r\n");
+   PrintMessage('Device Configuration Information:' + #13 + '' + NL + '');
    z := 3;
    while ((bufferI[z]) <> ($58)) and ((z) < (64)) do
    begin
@@ -1958,7 +1958,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "Erase row size: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'Erase row size: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
    z := 3;
@@ -1968,7 +1968,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "Write latches per row: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'Write latches per row: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
    z := 3;
@@ -1978,7 +1978,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "User rows: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'User rows: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
    z := 3;
@@ -1988,7 +1988,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "EEPROM size: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'EEPROM size: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
     sizeEE := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
    end;
@@ -1999,7 +1999,7 @@ begin
    end;
    if (z) < ((64) - (3)) then
    begin
-    sprintf(str, "Pin count: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'Pin count: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
   end
@@ -2009,7 +2009,7 @@ begin
   if saveLog then
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_CodeReading1]);
+   fprintf(logfile, '%s' + NL + '', strings[S_CodeReading1]);
   j := 0;
   i := 0;
   while (i) < (dim) do
@@ -2050,7 +2050,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadCodeErr2], dim, k);
    PrintMessage(str);
   end
@@ -2060,7 +2060,7 @@ begin
   if saveLog then
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_Read_CONFIG_A]);
+   fprintf(logfile, '%s' + NL + '', strings[S_Read_CONFIG_A]);
   MemAddr := ($300000) shl (1);
   bufferU[Inc(j)] := $39;
   bufferU[Inc(j)] := 2;
@@ -2109,7 +2109,7 @@ begin
    CONFIGlen := CONFIGlen * 2;
   if (k2) <> (CONFIGlen) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadConfigErr], CONFIGlen, k2);
    PrintMessage(str);
   end
@@ -2118,7 +2118,7 @@ begin
   if saveLog then
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
-   fprintf(logfile, "Read user ID\n");
+   fprintf(logfile, 'Read user ID' + NL + '');
   MemAddr := ($200000) shl (1);
   bufferU[Inc(j)] := $39;
   bufferU[Inc(j)] := 2;
@@ -2166,7 +2166,7 @@ begin
   end;
   if (k2) <> (UIDlen) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadConfigErr], UIDlen, k2);
    PrintMessage(str);
   end;
@@ -2175,7 +2175,7 @@ begin
    if saveLog then
     fprintf(logfile, strings[S_sepLine]);
    if saveLog then
-    fprintf(logfile, "Read device info area\n");
+    fprintf(logfile, 'Read device info area' + NL + '');
    MemAddr := (DIAaddr) shl (1);
    bufferU[Inc(j)] := $39;
    bufferU[Inc(j)] := 2;
@@ -2223,7 +2223,7 @@ begin
    end;
    if (k2) <> (DIAlen) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadConfigErr], DIAlen, k2);
     PrintMessage(str);
    end;
@@ -2246,7 +2246,7 @@ begin
    if saveLog then
     fprintf(logfile, strings[S_sepLine]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_ReadEE]);
+    fprintf(logfile, '%s' + NL + '', strings[S_ReadEE]);
    MemAddr := (EEaddr) shl (1);
    bufferU[Inc(j)] := $39;
    bufferU[Inc(j)] := 2;
@@ -2290,7 +2290,7 @@ begin
    end;
    if (k) <> (sizeEE) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadEEErr], sizeEE, k);
     PrintMessage(str);
    end
@@ -2311,7 +2311,7 @@ begin
   end;
   PacketIO(1);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   PrintMessage(strings[S_ConfigMem]);
   i := 0;
   while (i) < (UIDlen) do
@@ -2340,7 +2340,7 @@ begin
     if ((type_) = (5)) and (((i) >= ($B)) and ((i) <= ($17))) then
     else
     begin
-     sprintf(str, "CONFIG%d: 0x%02X\r\n", (i) + (1), memCONFIG[i]);
+     sprintf(str, 'CONFIG%d: 0x%02X' + #13 + '' + NL + '', (i) + (1), memCONFIG[i]);
      PrintMessage(str);
     end;
    end;
@@ -2493,7 +2493,7 @@ begin
         delayWriteConfig := 11000;
        end
        else
-        PrintMessage("unexpected parameter");
+        PrintMessage('unexpected parameter');
   if ((dim) > ($1FFFFF)) or ((dim) < (0)) then
   begin
    PrintMessage(strings[S_CodeLim]);
@@ -2518,7 +2518,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write18FKx(%d,%d,%d)    (0x%X,0x%X,0x%X)\n", dim, dim2, options, dim, dim2, options);
+   fprintf(logfile, 'Write18FKx(%d,%d,%d)    (0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options, dim, dim2, options);
   end;
   if (dim) > (size) then
    dim := size;
@@ -2610,14 +2610,14 @@ begin
   begin
    devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   end;
-  sprintf(str, "DevID: 0x%04X\r\n", devID);
+  sprintf(str, 'DevID: 0x%04X' + #13 + '' + NL + '', devID);
   PrintMessage(str);
-  sprintf(str, "RevID: 0x%04X\r\n", devREV);
+  sprintf(str, 'RevID: 0x%04X' + #13 + '' + NL + '', devREV);
   PrintMessage(str);
   PIC18_ID((devID) + ((devREV) shl (16)));
   if (DCIaddr) > (0) then
   begin
-   PrintMessage("Device Configuration Information:\r\n");
+   PrintMessage('Device Configuration Information:' + #13 + '' + NL + '');
    z := 3;
    while ((bufferI[z]) <> ($58)) and ((z) < (64)) do
    begin
@@ -2625,7 +2625,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "Erase row size: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'Erase row size: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
    z := 3;
@@ -2636,7 +2636,7 @@ begin
    if (z) < ((64) - (2)) then
    begin
     rowN := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-    sprintf(str, "Write latches per row: %d\r\n", rowN);
+    sprintf(str, 'Write latches per row: %d' + #13 + '' + NL + '', rowN);
     PrintMessage(str);
    end;
    z := 3;
@@ -2646,7 +2646,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "User rows: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'User rows: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
    z := 3;
@@ -2656,7 +2656,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "EEPROM size: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'EEPROM size: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
    z := 3;
@@ -2666,7 +2666,7 @@ begin
    end;
    if (z) < ((64) - (3)) then
    begin
-    sprintf(str, "Pin count: %d\r\n", ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
+    sprintf(str, 'Pin count: %d' + #13 + '' + NL + '', ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]));
     PrintMessage(str);
    end;
   end;
@@ -2741,7 +2741,7 @@ begin
   if saveLog then
   begin
    fprintf(logfile, strings[S_sepLine]);
-   fprintf(logfile, "WRITE CODE\ndim=%d(0x%X)\n", dim, dim);
+   fprintf(logfile, 'WRITE CODE' + NL + 'dim=%d(0x%X)' + NL + '', dim, dim);
   end;
   if ((((type_) = (1)) or ((type_) = (2))) or ((type_) = (4))) or ((type_) = (5)) then
   begin
@@ -2830,7 +2830,7 @@ begin
         begin
          if ((memCODE[k]) <> (bufferI[(z) + (4)])) or ((memCODE[(k) + (1)]) <> (bufferI[(z) + (3)])) then
          begin
-          PrintMessage("\r\n");
+          PrintMessage('' + #13 + '' + NL + '');
           sprintf(str, strings[S_CodeWError2], k, ((memCODE[(k) + (1)]) shl (8)) + (memCODE[k]), ((bufferI[(z) + (3)]) shl (8)) + (bufferI[(z) + (4)]));
           PrintMessage(str);
           Inc(err);
@@ -2950,7 +2950,7 @@ begin
     if saveLog then
     begin
      fprintf(logfile, strings[S_sepLine]);
-     fprintf(logfile, "%s\n", strings[S_CodeV]);
+     fprintf(logfile, '%s' + NL + '', strings[S_CodeV]);
     end;
     j := 0;
     bufferU[Inc(j)] := $39;
@@ -3056,7 +3056,7 @@ begin
    if saveLog then
    begin
     fprintf(logfile, strings[S_sepLine]);
-    fprintf(logfile, "WRITE EEPROM\ndim2=%d(0x%X)\n", dim2, dim2);
+    fprintf(logfile, 'WRITE EEPROM' + NL + 'dim2=%d(0x%X)' + NL + '', dim2, dim2);
    end;
    errEE := 0;
    j := 0;
@@ -3124,7 +3124,7 @@ begin
         w := IfThen(((((type_) = (1)) or ((type_) = (2))) or ((type_) = (4))) or ((type_) = (5)), bufferI[(z) + (4)], bufferI[(z) + (5)]);
         if (memEE[k]) <> (w) then
         begin
-         PrintMessage("\r\n");
+         PrintMessage('' + #13 + '' + NL + '');
          sprintf(str, strings[S_CodeWError2], k, memEE[k], w);
          PrintMessage(str);
          Inc(errEE);
@@ -3160,7 +3160,7 @@ begin
    if saveLog then
    begin
     fprintf(logfile, strings[S_sepLine]);
-    fprintf(logfile, "Write ID\n");
+    fprintf(logfile, 'Write ID' + NL + '');
    end;
    errID := 0;
    j := 0;
@@ -3232,7 +3232,7 @@ begin
         x := ((memID[(k) + (1)]) shl (8)) + (memID[k]);
         if (x) <> (w) then
         begin
-         PrintMessage("\r\n");
+         PrintMessage('' + #13 + '' + NL + '');
          sprintf(str, strings[S_CodeWError2], k, x, w);
          PrintMessage(str);
          Inc(errID);
@@ -3268,7 +3268,7 @@ begin
    if saveLog then
    begin
     fprintf(logfile, strings[S_sepLine]);
-    fprintf(logfile, "Write CONFIG\n");
+    fprintf(logfile, 'Write CONFIG' + NL + '');
    end;
    errC := 0;
    j := 0;
@@ -3347,7 +3347,7 @@ begin
          end;
        if (not (x)) and (w) then
        begin
-        PrintMessage("\r\n");
+        PrintMessage('' + #13 + '' + NL + '');
         sprintf(str, strings[S_CodeWError2], (k) + ($300000), x, w);
         PrintMessage(str);
         Inc(errC);
@@ -3395,11 +3395,11 @@ begin
     PrintMessage(strings[S_SkipSaflock]);
    if (((useSAFLOCK_flag) and ((type_) = (5))) and ((memCONFIG[$18]) <> ($FF))) and ((err) = (0)) then
    begin
-    PrintMessage("\r\nWrite SAFLOCK");
+    PrintMessage('' + #13 + '' + NL + 'Write SAFLOCK');
     if saveLog then
     begin
      fprintf(logfile, strings[S_sepLine]);
-     fprintf(logfile, "Write SAFLOCK\n");
+     fprintf(logfile, 'Write SAFLOCK' + NL + '');
     end;
     errC := 0;
     if (memCONFIG[$19]) <> ($FF) then
@@ -3435,7 +3435,7 @@ begin
        x := memCONFIG[$19];
        if (not (x)) and (w) then
        begin
-        PrintMessage("\r\n");
+        PrintMessage('' + #13 + '' + NL + '');
         sprintf(str, strings[S_CodeWError2], $300019, x, w);
         PrintMessage(str);
         PrintMessage(strings[S_IntW]);
@@ -3488,7 +3488,7 @@ begin
        x := memCONFIG[$18];
        if (not (x)) and (w) then
        begin
-        PrintMessage("\r\n");
+        PrintMessage('' + #13 + '' + NL + '');
         sprintf(str, strings[S_CodeWError2], $300018, x, w);
         PrintMessage(str);
         PrintMessage(strings[S_IntW]);
@@ -3525,7 +3525,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 end.

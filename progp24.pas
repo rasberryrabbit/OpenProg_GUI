@@ -18,8 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
+
+const
+  NL = #10;
 
 type
   DWORD = Cardinal;
@@ -64,7 +66,7 @@ begin
    if (id) = (PIC24LIST[i].id) then
    begin
     strcpy(s, PIC24LIST[i].device);
-    strcat(s, "\r\n");
+    strcat(s, '' + #13 + '' + NL + '');
     PrintMessage(s);
     Exit;
    end;
@@ -84,8 +86,8 @@ var
   d: Integer;
   lines: Integer;
 begin
-  s := "";
-  t := "";
+  s := '';
+  t := '';
   aux := malloc(((((dim) div (16)) + (1)) * (2)) * ((16) + ((16) * (9))));
   aux[0] := 0;
   valid := 0;
@@ -99,7 +101,7 @@ begin
    while ((j) < ((i) + ((16) * (2)))) and ((j) < (dim)) do
    begin
     d := ((((memCODE[(j) + (3)]) shl (24)) + ((memCODE[(j) + (2)]) shl (16))) + ((memCODE[(j) + (1)]) shl (8))) + (memCODE[j]);
-    sprintf(t, "%08X ", d);
+    sprintf(t, '%08X ', d);
     strcat(s, t);
     if (d) <> ($ffffffff) then
      valid := 1;
@@ -107,13 +109,13 @@ begin
    end;
    if valid then
    begin
-    sprintf(t, "%06X: %s\r\n", (i) div (2), s);
+    sprintf(t, '%06X: %s' + #13 + '' + NL + '', (i) div (2), s);
     empty := 0;
     strcat(aux, t);
     Inc(lines);
     if (lines) > (500) then
     begin
-     strcat(aux, "(...)\r\n");
+     strcat(aux, '(...)' + #13 + '' + NL + '');
      i := (IfThen((dim) < (size), dim, size)) - ((16) * (4));
      lines := 490;
     end;
@@ -153,16 +155,16 @@ begin
    j := i;
    while (((j) < ((i) + (16))) and ((j) < ($1000))) and ((i) < (sizeEE)) do
    begin
-    sprintf(t, "%02X %02X ", memEE[j], memEE[(j) + (1)]);
+    sprintf(t, '%02X %02X ', memEE[j], memEE[(j) + (1)]);
     strcat(s, t);
-    sprintf(t, "%c", IfThen((isprint(memEE[j])) and ((memEE[j]) < ($FF)), memEE[j], #46));
+    sprintf(t, '%c', IfThen((isprint(memEE[j])) and ((memEE[j]) < ($FF)), memEE[j], #46));
     g := g_locale_to_utf8(t, -(1), NULL, NULL, NULL);
     if g then
      strcat(v, g);
     g_free(g);
     if (memEE[j]) < ($ff) then
      valid := 1;
-    sprintf(t, "%c", IfThen((isprint(memEE[(j) + (1)])) and ((memEE[(j) + (1)]) < ($FF)), memEE[(j) + (1)], #46));
+    sprintf(t, '%c', IfThen((isprint(memEE[(j) + (1)])) and ((memEE[(j) + (1)]) < ($FF)), memEE[(j) + (1)], #46));
     g := g_locale_to_utf8(t, -(1), NULL, NULL, NULL);
     if g then
      strcat(v, g);
@@ -173,7 +175,7 @@ begin
    end;
    if valid then
    begin
-    sprintf(t, "%04X: %s %s\r\n", (i) + ($F000), s, v);
+    sprintf(t, '%04X: %s %s' + #13 + '' + NL + '', (i) + ($F000), s, v);
     strcat(aux, t);
     empty := 0;
    end;
@@ -221,7 +223,7 @@ begin
   newTABLPAG := IfThen((options) and ($100), 1, 0);
   if (FWVersion) < ($700) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.7.0");
+   sprintf(str, strings[S_FWver2old], '0.7.0');
    PrintMessage(str);
    Exit;
   end;
@@ -233,7 +235,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read24Fx(%d,%d,%d,%d,%d)    (0x%X,0x%X,0x%X,0x%X,0x%X)\n", dim, dim2, options, appIDaddr, executiveArea, dim, dim2, options, appIDaddr, executiveArea);
+   fprintf(logfile, 'Read24Fx(%d,%d,%d,%d,%d)    (0x%X,0x%X,0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options, appIDaddr, executiveArea, dim, dim2, options, appIDaddr, executiveArea);
   end;
   dim := dim * 2;
   if ((dim) > ($80000)) or ((dim) < (0)) then
@@ -433,7 +435,7 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "DevID: 0x%04X\r\nDevRev: 0x%04X\r\n", w0, w1);
+  sprintf(str, 'DevID: 0x%04X' + #13 + '' + NL + 'DevRev: 0x%04X' + #13 + '' + NL + '', w0, w1);
   PrintMessage(str);
   PIC24_ID(w0);
   bufferU[Inc(j)] := $3F;
@@ -505,7 +507,7 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w0 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "ApplicationID @ 0x80%04X:  0x%04X\r\n", appIDaddr, w0);
+  sprintf(str, 'ApplicationID @ 0x80%04X:  0x%04X' + #13 + '' + NL + '', appIDaddr, w0);
   PrintMessage(str);
   PrintMessage(strings[S_CodeReading1]);
   High := 0;
@@ -727,7 +729,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadCodeErr2], dim, k);
    PrintMessage(str);
   end
@@ -736,7 +738,7 @@ begin
   if (config) > (2) then
   begin
    if saveLog then
-    fprintf(logfile, "\nCONFIG:\n");
+    fprintf(logfile, '' + NL + 'CONFIG:' + NL + '');
    bufferU[Inc(j)] := $3F;
    bufferU[Inc(j)] := 4;
    bufferU[Inc(j)] := $20;
@@ -866,12 +868,12 @@ begin
     memCONFIG[((i) * (4)) + (1)] := bufferI[(z) + (1)];
     z := z + 3;
    end;
-   gtk_statusbar_push(status_bar, statusID, "");
+   gtk_statusbar_push(status_bar, statusID, '');
   end;
   if dim2 then
   begin
    if saveLog then
-    fprintf(logfile, "\nEEPROM:\n");
+    fprintf(logfile, '' + NL + 'EEPROM:' + NL + '');
    PrintMessage(strings[S_ReadEE]);
    bufferU[Inc(j)] := $3F;
    bufferU[Inc(j)] := $45;
@@ -941,7 +943,7 @@ begin
    end;
    if (k2) <> (dim2) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadEEErr], dim2, k2);
     PrintMessage(str);
    end
@@ -953,7 +955,7 @@ begin
    j := 0;
    PrintMessage(strings[S_Read_EXE_A]);
    if saveLog then
-    fprintf(logfile, "\nExecutive area:\n");
+    fprintf(logfile, '' + NL + 'Executive area:' + NL + '');
    bufferU[Inc(j)] := $3F;
    bufferU[Inc(j)] := $45;
    bufferU[Inc(j)] := $20;
@@ -1116,14 +1118,14 @@ begin
    end;
    if (k) <> (executiveArea) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadCodeErr2], executiveArea, k);
     PrintMessage(str);
    end
    else
     PrintMessage(strings[S_Compl]);
   end;
-  PrintMessage("\r\n");
+  PrintMessage('' + #13 + '' + NL + '');
   bufferU[Inc(j)] := $07;
   bufferU[Inc(j)] := 1;
   bufferU[Inc(j)] := (2000) shr (8);
@@ -1140,80 +1142,80 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   if (config) > (2) then
   begin
    PrintMessage(strings[S_ConfigMem]);
    if (((config) = (3)) or ((config) = (4))) or ((config) = (6)) then
    begin
-    sprintf(str, "0xF80000: FBS = 0x%02X\r\n", memCONFIG[0]);
+    sprintf(str, '0xF80000: FBS = 0x%02X' + #13 + '' + NL + '', memCONFIG[0]);
     PrintMessage(str);
     if (config) = (4) then
     begin
-     sprintf(str, "0xF80002: FSS = 0x%02X\r\n", memCONFIG[4]);
+     sprintf(str, '0xF80002: FSS = 0x%02X' + #13 + '' + NL + '', memCONFIG[4]);
      PrintMessage(str);
     end;
-    sprintf(str, "0xF80004: FGS = 0x%02X\r\n", memCONFIG[8]);
+    sprintf(str, '0xF80004: FGS = 0x%02X' + #13 + '' + NL + '', memCONFIG[8]);
     PrintMessage(str);
-    sprintf(str, "0xF80006: FOSCSEL = 0x%02X\r\n", memCONFIG[12]);
+    sprintf(str, '0xF80006: FOSCSEL = 0x%02X' + #13 + '' + NL + '', memCONFIG[12]);
     PrintMessage(str);
-    sprintf(str, "0xF80008: FOSC = 0x%02X\r\n", memCONFIG[16]);
+    sprintf(str, '0xF80008: FOSC = 0x%02X' + #13 + '' + NL + '', memCONFIG[16]);
     PrintMessage(str);
-    sprintf(str, "0xF8000A: FWDT = 0x%02X\r\n", memCONFIG[20]);
+    sprintf(str, '0xF8000A: FWDT = 0x%02X' + #13 + '' + NL + '', memCONFIG[20]);
     PrintMessage(str);
-    sprintf(str, "0xF8000C: FPOR = 0x%02X\r\n", memCONFIG[24]);
+    sprintf(str, '0xF8000C: FPOR = 0x%02X' + #13 + '' + NL + '', memCONFIG[24]);
     PrintMessage(str);
-    sprintf(str, "0xF8000E: FICD = 0x%02X\r\n", memCONFIG[28]);
+    sprintf(str, '0xF8000E: FICD = 0x%02X' + #13 + '' + NL + '', memCONFIG[28]);
     PrintMessage(str);
     if (config) = (3) then
     begin
-     sprintf(str, "0xF80010: FDS = 0x%02X\r\n", memCONFIG[32]);
+     sprintf(str, '0xF80010: FDS = 0x%02X' + #13 + '' + NL + '', memCONFIG[32]);
      PrintMessage(str);
     end
     else
      if (config) = (4) then
      begin
-      sprintf(str, "0xF80010: UID0 = 0x%02X\r\n", memCONFIG[32]);
+      sprintf(str, '0xF80010: UID0 = 0x%02X' + #13 + '' + NL + '', memCONFIG[32]);
       PrintMessage(str);
-      sprintf(str, "0xF80012: UID1 = 0x%02X\r\n", memCONFIG[36]);
+      sprintf(str, '0xF80012: UID1 = 0x%02X' + #13 + '' + NL + '', memCONFIG[36]);
       PrintMessage(str);
-      sprintf(str, "0xF80014: UID2 = 0x%02X\r\n", memCONFIG[40]);
+      sprintf(str, '0xF80014: UID2 = 0x%02X' + #13 + '' + NL + '', memCONFIG[40]);
       PrintMessage(str);
-      sprintf(str, "0xF80016: UID3 = 0x%02X\r\n", memCONFIG[44]);
+      sprintf(str, '0xF80016: UID3 = 0x%02X' + #13 + '' + NL + '', memCONFIG[44]);
       PrintMessage(str);
      end;
    end
    else
     if (config) = (5) then
     begin
-     sprintf(str, "0xF80000: FOSC = 0x%02X%02X\r\n", memCONFIG[1], memCONFIG[0]);
+     sprintf(str, '0xF80000: FOSC = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[1], memCONFIG[0]);
      PrintMessage(str);
-     sprintf(str, "0xF80002: FWDT = 0x%02X%02X\r\n", memCONFIG[5], memCONFIG[4]);
+     sprintf(str, '0xF80002: FWDT = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[5], memCONFIG[4]);
      PrintMessage(str);
-     sprintf(str, "0xF80004: FBORPOR = 0x%02X%02X\r\n", memCONFIG[9], memCONFIG[8]);
+     sprintf(str, '0xF80004: FBORPOR = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[9], memCONFIG[8]);
      PrintMessage(str);
-     sprintf(str, "0xF80006: FBS = 0x%02X%02X\r\n", memCONFIG[13], memCONFIG[12]);
+     sprintf(str, '0xF80006: FBS = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[13], memCONFIG[12]);
      PrintMessage(str);
-     sprintf(str, "0xF80008: FSS = 0x%02X%02X\r\n", memCONFIG[17], memCONFIG[16]);
+     sprintf(str, '0xF80008: FSS = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[17], memCONFIG[16]);
      PrintMessage(str);
-     sprintf(str, "0xF8000A: FGS = 0x%02X%02X\r\n", memCONFIG[21], memCONFIG[20]);
+     sprintf(str, '0xF8000A: FGS = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[21], memCONFIG[20]);
      PrintMessage(str);
-     sprintf(str, "0xF8000C: FICD = 0x%02X%02X\r\n", memCONFIG[25], memCONFIG[24]);
+     sprintf(str, '0xF8000C: FICD = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[25], memCONFIG[24]);
      PrintMessage(str);
     end;
   end
   else
   begin
-   sprintf(str, "CONFIG1: 0x%04X\r\nCONFIG2: 0x%04X\r\n", ((memCODE[(dim) - (3)]) shl (8)) + (memCODE[(dim) - (4)]), ((memCODE[(dim) - (7)]) shl (8)) + (memCODE[(dim) - (8)]));
+   sprintf(str, 'CONFIG1: 0x%04X' + #13 + '' + NL + 'CONFIG2: 0x%04X' + #13 + '' + NL + '', ((memCODE[(dim) - (3)]) shl (8)) + (memCODE[(dim) - (4)]), ((memCODE[(dim) - (7)]) shl (8)) + (memCODE[(dim) - (8)]));
    PrintMessage(str);
    if (config) = (1) then
    begin
-    sprintf(str, "CONFIG3: 0x%04X\r\n", ((memCODE[(dim) - (11)]) shl (8)) + (memCODE[(dim) - (12)]));
+    sprintf(str, 'CONFIG3: 0x%04X' + #13 + '' + NL + '', ((memCODE[(dim) - (11)]) shl (8)) + (memCODE[(dim) - (12)]));
     PrintMessage(str);
    end;
    if (config) = (2) then
    begin
-    sprintf(str, "CONFIG4: 0x%04X\r\n", ((memCODE[(dim) - (15)]) shl (8)) + (memCODE[(dim) - (16)]));
+    sprintf(str, 'CONFIG4: 0x%04X' + #13 + '' + NL + '', ((memCODE[(dim) - (15)]) shl (8)) + (memCODE[(dim) - (16)]));
     PrintMessage(str);
    end;
   end;
@@ -1240,7 +1242,7 @@ begin
     while ((j) < ((i) + ((16) * (2)))) and ((j) < (executiveArea)) do
     begin
      d := ((((memExec[(j) + (3)]) shl (24)) + ((memExec[(j) + (2)]) shl (16))) + ((memExec[(j) + (1)]) shl (8))) + (memExec[j]);
-     sprintf(t, "%08X ", d);
+     sprintf(t, '%08X ', d);
      strcat(s, t);
      if (d) <> ($ffffffff) then
       valid := 1;
@@ -1248,7 +1250,7 @@ begin
     end;
     if valid then
     begin
-     sprintf(t, "%06X: %s\r\n", (i) div (2), s);
+     sprintf(t, '%06X: %s' + #13 + '' + NL + '', (i) div (2), s);
      empty := 0;
      strcat(aux, t);
     end;
@@ -1298,7 +1300,7 @@ begin
   end;
   if (FWVersion) < ($900) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.9.0");
+   sprintf(str, strings[S_FWver2old], '0.9.0');
    PrintMessage(str);
    Exit;
   end;
@@ -1310,7 +1312,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read24Ex(%d,%d,%d,%d,%d)    (0x%X,0x%X,0x%X,0x%X,0x%X)\n", dim, dim2, options, appIDaddr, executiveArea, dim, dim2, options, appIDaddr, executiveArea);
+   fprintf(logfile, 'Read24Ex(%d,%d,%d,%d,%d)    (0x%X,0x%X,0x%X,0x%X,0x%X)' + NL + '', dim, dim2, options, appIDaddr, executiveArea, dim, dim2, options, appIDaddr, executiveArea);
   end;
   dim := dim * 2;
   if ((dim) > ($100000)) or ((dim) < (0)) then
@@ -1457,7 +1459,7 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "DevID: 0x%04X\r\nDevRev: 0x%04X\r\n", w0, w1);
+  sprintf(str, 'DevID: 0x%04X' + #13 + '' + NL + 'DevRev: 0x%04X' + #13 + '' + NL + '', w0, w1);
   PrintMessage(str);
   PIC24_ID(w0);
   bufferU[Inc(j)] := $3F;
@@ -1514,7 +1516,7 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w0 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "ApplicationID @ 0x80%04X:  0x%04X\r\n", appIDaddr, w0);
+  sprintf(str, 'ApplicationID @ 0x80%04X:  0x%04X' + #13 + '' + NL + '', appIDaddr, w0);
   PrintMessage(str);
   PrintMessage(strings[S_CodeReading1]);
   High := 0;
@@ -1731,7 +1733,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadCodeErr2], dim, k);
    PrintMessage(str);
   end
@@ -1742,7 +1744,7 @@ begin
    j := 0;
    PrintMessage(strings[S_Read_EXE_A]);
    if saveLog then
-    fprintf(logfile, "\nExecutive area:\n");
+    fprintf(logfile, '' + NL + 'Executive area:' + NL + '');
    bufferU[Inc(j)] := $3F;
    bufferU[Inc(j)] := $45;
    bufferU[Inc(j)] := $20;
@@ -1903,17 +1905,17 @@ begin
    end;
    if (k) <> (executiveArea) then
    begin
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
     sprintf(str, strings[S_ReadCodeErr2], executiveArea, k);
     PrintMessage(str);
    end
    else
     PrintMessage(strings[S_Compl]);
   end;
-  PrintMessage("\r\n");
+  PrintMessage('' + #13 + '' + NL + '');
   j := 0;
   if saveLog then
-   fprintf(logfile, "\nUser ID:\n");
+   fprintf(logfile, '' + NL + 'User ID:' + NL + '');
   bufferU[Inc(j)] := $3F;
   bufferU[Inc(j)] := $45;
   bufferU[Inc(j)] := $20;
@@ -2053,7 +2055,7 @@ begin
    UID[(k) + (13)] := bufferI[(z) + (1)];
    UID[(k) + (12)] := bufferI[(z) + (2)];
   end;
-  PrintMessage("\r\n");
+  PrintMessage('' + #13 + '' + NL + '');
   bufferU[Inc(j)] := $07;
   bufferU[Inc(j)] := 1;
   bufferU[Inc(j)] := (2000) shr (8);
@@ -2070,10 +2072,10 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   for i := 0 to (10) - 1 do
   begin
-   sprintf(str, "CONFIG%d(0x%05X): 0x%02X\r\n", i, (((dim) - (40)) + ((i) * (4))) div (2), memCODE[((dim) - (40)) + ((i) * (4))]);
+   sprintf(str, 'CONFIG%d(0x%05X): 0x%02X' + #13 + '' + NL + '', i, (((dim) - (40)) + ((i) * (4))) div (2), memCODE[((dim) - (40)) + ((i) * (4))]);
    PrintMessage(str);
   end;
   PrintMessage(strings[S_CodeMem]);
@@ -2094,7 +2096,7 @@ begin
     while ((j) < ((i) + ((16) * (2)))) and ((j) < (executiveArea)) do
     begin
      d := ((((memExec[(j) + (3)]) shl (24)) + ((memExec[(j) + (2)]) shl (16))) + ((memExec[(j) + (1)]) shl (8))) + (memExec[j]);
-     sprintf(t, "%08X ", d);
+     sprintf(t, '%08X ', d);
      strcat(s, t);
      if (d) <> ($ffffffff) then
       valid := 1;
@@ -2102,7 +2104,7 @@ begin
     end;
     if valid then
     begin
-     sprintf(t, "%06X: %s\r\n", (i) div (2), s);
+     sprintf(t, '%06X: %s' + #13 + '' + NL + '', (i) div (2), s);
      empty := 0;
      strcat(aux, t);
     end;
@@ -2119,7 +2121,7 @@ begin
   begin
    if ((UID[(i) * (4)]) <> ($FF)) or ((UID[((i) * (4)) + (1)]) <> ($FF)) then
    begin
-    sprintf(str, "UserID%d=%04X", i, ((UID[(i) * (4)]) shl (8)) + (UID[((i) * (4)) + (1)]));
+    sprintf(str, 'UserID%d=%04X', i, ((UID[(i) * (4)]) shl (8)) + (UID[((i) * (4)) + (1)]));
     PrintMessage(str);
    end;
   end;
@@ -2177,7 +2179,7 @@ begin
   err := 0;
   if (FWVersion) < ($700) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.7.0");
+   sprintf(str, strings[S_FWver2old], '0.7.0');
    PrintMessage(str);
    Exit;
   end;
@@ -2189,7 +2191,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write24Fx(%d,%d,%d,%d,%d,%.1f)    (0x%X,0x%X,0x%X,0x%X,0x%X,%.3f)\n", dim, dim2, options, appIDaddr, rowSize, wait, dim, dim2, options, appIDaddr, rowSize, wait);
+   fprintf(logfile, 'Write24Fx(%d,%d,%d,%d,%d,%.1f)    (0x%X,0x%X,0x%X,0x%X,0x%X,%.3f)' + NL + '', dim, dim2, options, appIDaddr, rowSize, wait, dim, dim2, options, appIDaddr, rowSize, wait);
   end;
   dim := dim * 2;
   if ((dim) > ($80000)) or ((dim) < (0)) then
@@ -2237,74 +2239,74 @@ begin
    PrintMessage(strings[S_ConfigMem]);
    if (((config) = (3)) or ((config) = (4))) or ((config) = (6)) then
    begin
-    sprintf(str, "0xF80000: FBS = 0x%02X\r\n", memCONFIG[0]);
+    sprintf(str, '0xF80000: FBS = 0x%02X' + #13 + '' + NL + '', memCONFIG[0]);
     PrintMessage(str);
     if (config) = (4) then
     begin
-     sprintf(str, "0xF80002: FSS = 0x%02X\r\n", memCONFIG[4]);
+     sprintf(str, '0xF80002: FSS = 0x%02X' + #13 + '' + NL + '', memCONFIG[4]);
      PrintMessage(str);
     end;
-    sprintf(str, "0xF80004: FGS = 0x%02X\r\n", memCONFIG[8]);
+    sprintf(str, '0xF80004: FGS = 0x%02X' + #13 + '' + NL + '', memCONFIG[8]);
     PrintMessage(str);
-    sprintf(str, "0xF80006: FOSCSEL = 0x%02X\r\n", memCONFIG[12]);
+    sprintf(str, '0xF80006: FOSCSEL = 0x%02X' + #13 + '' + NL + '', memCONFIG[12]);
     PrintMessage(str);
-    sprintf(str, "0xF80008: FOSC = 0x%02X\r\n", memCONFIG[16]);
+    sprintf(str, '0xF80008: FOSC = 0x%02X' + #13 + '' + NL + '', memCONFIG[16]);
     PrintMessage(str);
-    sprintf(str, "0xF8000A: FWDT = 0x%02X\r\n", memCONFIG[20]);
+    sprintf(str, '0xF8000A: FWDT = 0x%02X' + #13 + '' + NL + '', memCONFIG[20]);
     PrintMessage(str);
-    sprintf(str, "0xF8000C: FPOR = 0x%02X\r\n", memCONFIG[24]);
+    sprintf(str, '0xF8000C: FPOR = 0x%02X' + #13 + '' + NL + '', memCONFIG[24]);
     PrintMessage(str);
-    sprintf(str, "0xF8000E: FICD = 0x%02X\r\n", memCONFIG[28]);
+    sprintf(str, '0xF8000E: FICD = 0x%02X' + #13 + '' + NL + '', memCONFIG[28]);
     PrintMessage(str);
     if (config) = (3) then
     begin
-     sprintf(str, "0xF80010: FDS = 0x%02X\r\n", memCONFIG[32]);
+     sprintf(str, '0xF80010: FDS = 0x%02X' + #13 + '' + NL + '', memCONFIG[32]);
      PrintMessage(str);
     end
     else
      if (config) = (4) then
      begin
-      sprintf(str, "0xF80010: UID0 = 0x%02X\r\n", memCONFIG[32]);
+      sprintf(str, '0xF80010: UID0 = 0x%02X' + #13 + '' + NL + '', memCONFIG[32]);
       PrintMessage(str);
-      sprintf(str, "0xF80012: UID1 = 0x%02X\r\n", memCONFIG[36]);
+      sprintf(str, '0xF80012: UID1 = 0x%02X' + #13 + '' + NL + '', memCONFIG[36]);
       PrintMessage(str);
-      sprintf(str, "0xF80014: UID2 = 0x%02X\r\n", memCONFIG[40]);
+      sprintf(str, '0xF80014: UID2 = 0x%02X' + #13 + '' + NL + '', memCONFIG[40]);
       PrintMessage(str);
-      sprintf(str, "0xF80016: UID3 = 0x%02X\r\n", memCONFIG[44]);
+      sprintf(str, '0xF80016: UID3 = 0x%02X' + #13 + '' + NL + '', memCONFIG[44]);
       PrintMessage(str);
      end;
    end
    else
     if (config) = (5) then
     begin
-     sprintf(str, "0xF80000: FOSC = 0x%02X%02X\r\n", memCONFIG[1], memCONFIG[0]);
+     sprintf(str, '0xF80000: FOSC = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[1], memCONFIG[0]);
      PrintMessage(str);
-     sprintf(str, "0xF80002: FWDT = 0x%02X%02X\r\n", memCONFIG[5], memCONFIG[4]);
+     sprintf(str, '0xF80002: FWDT = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[5], memCONFIG[4]);
      PrintMessage(str);
-     sprintf(str, "0xF80004: FBORPOR = 0x%02X%02X\r\n", memCONFIG[9], memCONFIG[8]);
+     sprintf(str, '0xF80004: FBORPOR = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[9], memCONFIG[8]);
      PrintMessage(str);
-     sprintf(str, "0xF80006: FBS = 0x%02X%02X\r\n", memCONFIG[13], memCONFIG[12]);
+     sprintf(str, '0xF80006: FBS = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[13], memCONFIG[12]);
      PrintMessage(str);
-     sprintf(str, "0xF80008: FSS = 0x%02X%02X\r\n", memCONFIG[17], memCONFIG[16]);
+     sprintf(str, '0xF80008: FSS = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[17], memCONFIG[16]);
      PrintMessage(str);
-     sprintf(str, "0xF8000A: FGS = 0x%02X%02X\r\n", memCONFIG[21], memCONFIG[20]);
+     sprintf(str, '0xF8000A: FGS = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[21], memCONFIG[20]);
      PrintMessage(str);
-     sprintf(str, "0xF8000C: FICD = 0x%02X%02X\r\n", memCONFIG[25], memCONFIG[24]);
+     sprintf(str, '0xF8000C: FICD = 0x%02X%02X' + #13 + '' + NL + '', memCONFIG[25], memCONFIG[24]);
      PrintMessage(str);
     end;
   end
   else
   begin
-   sprintf(str, "CONFIG1: 0x%04X\r\nCONFIG2: 0x%04X\r\n", ((memCODE[(dim) - (3)]) shl (8)) + (memCODE[(dim) - (4)]), ((memCODE[(dim) - (7)]) shl (8)) + (memCODE[(dim) - (8)]));
+   sprintf(str, 'CONFIG1: 0x%04X' + #13 + '' + NL + 'CONFIG2: 0x%04X' + #13 + '' + NL + '', ((memCODE[(dim) - (3)]) shl (8)) + (memCODE[(dim) - (4)]), ((memCODE[(dim) - (7)]) shl (8)) + (memCODE[(dim) - (8)]));
    PrintMessage(str);
    if (config) = (1) then
    begin
-    sprintf(str, "CONFIG3: 0x%04X\r\n", ((memCODE[(dim) - (11)]) shl (8)) + (memCODE[(dim) - (12)]));
+    sprintf(str, 'CONFIG3: 0x%04X' + #13 + '' + NL + '', ((memCODE[(dim) - (11)]) shl (8)) + (memCODE[(dim) - (12)]));
     PrintMessage(str);
    end;
    if (config) = (2) then
    begin
-    sprintf(str, "CONFIG4: 0x%04X\r\n", ((memCODE[(dim) - (15)]) shl (8)) + (memCODE[(dim) - (16)]));
+    sprintf(str, 'CONFIG4: 0x%04X' + #13 + '' + NL + '', ((memCODE[(dim) - (15)]) shl (8)) + (memCODE[(dim) - (16)]));
     PrintMessage(str);
    end;
   end;
@@ -2458,7 +2460,7 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "DevID: 0x%04X\r\nDevRev: 0x%04X\r\n", w0, w1);
+  sprintf(str, 'DevID: 0x%04X' + #13 + '' + NL + 'DevRev: 0x%04X' + #13 + '' + NL + '', w0, w1);
   PrintMessage(str);
   PIC24_ID(w0);
   bufferU[Inc(j)] := $3F;
@@ -2511,11 +2513,11 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w0 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "ApplicationID @ 0x80%04X:  0x%04X\r\n", appIDaddr, w0);
+  sprintf(str, 'ApplicationID @ 0x80%04X:  0x%04X' + #13 + '' + NL + '', appIDaddr, w0);
   PrintMessage(str);
   PrintMessage(strings[S_StartErase]);
   if saveLog then
-   fprintf(logfile, "\nERASE:\n");
+   fprintf(logfile, '' + NL + 'ERASE:' + NL + '');
   erase := ((options) and ($F00)) shr (8);
   bufferU[Inc(j)] := $3F;
   bufferU[Inc(j)] := 4;
@@ -2667,7 +2669,7 @@ begin
    Inc(i);
   end;
   if saveLog then
-   fprintf(logfile, "\nErase time: %dms\n", (i) * (12));
+   fprintf(logfile, '' + NL + 'Erase time: %dms' + NL + '', (i) * (12));
   msDelay(10);
   bufferU[Inc(j)] := $3F;
   bufferU[Inc(j)] := 5;
@@ -2706,7 +2708,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_StartCodeProg]);
   if saveLog then
-   fprintf(logfile, "\nWRITE CODE:\n");
+   fprintf(logfile, '' + NL + 'WRITE CODE:' + NL + '');
   High := 0;
   k := 0;
   i := 0;
@@ -2909,7 +2911,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_CodeV]);
   if saveLog then
-   fprintf(logfile, "\nVERIFY CODE:\n");
+   fprintf(logfile, '' + NL + 'VERIFY CODE:' + NL + '');
   High := $E0000000;
   r0 := 0;
   r1 := 0;
@@ -3121,7 +3123,7 @@ begin
   begin
    PrintMessage(strings[S_EEAreaW]);
    if saveLog then
-    fprintf(logfile, "\nWRITE EEPROM:\n");
+    fprintf(logfile, '' + NL + 'WRITE EEPROM:' + NL + '');
    eewrite := ((options) and ($f000)) shr (12);
    if (eewrite) = (0) then
    begin
@@ -3417,7 +3419,7 @@ begin
     Inc(i, 2);
    end;
    if saveLog then
-    fprintf(logfile, "\nVERIFY EEPROM:\n");
+    fprintf(logfile, '' + NL + 'VERIFY EEPROM:' + NL + '');
    bufferU[Inc(j)] := $36;
    bufferU[Inc(j)] := $2F;
    bufferU[Inc(j)] := (EEbaseAddr) shr (4);
@@ -3478,14 +3480,14 @@ begin
    sprintf(str, strings[S_ComplErr], errE);
    PrintMessage(str);
    err := err + errE;
-   gtk_statusbar_push(status_bar, statusID, "");
+   gtk_statusbar_push(status_bar, statusID, '');
   end;
   j := 0;
   if (((config) > (2)) and ((config) < (5))) and ((err) < (max_err)) then
   begin
    PrintMessage(strings[S_ConfigW]);
    if saveLog then
-    fprintf(logfile, "\nWRITE CONFIG:\n");
+    fprintf(logfile, '' + NL + 'WRITE CONFIG:' + NL + '');
    confword := ((options) and ($F0000)) shr (16);
    bufferU[Inc(j)] := $3F;
    bufferU[Inc(j)] := 6;
@@ -3683,7 +3685,7 @@ begin
    end;
    sprintf(str, strings[S_ComplErr], errC);
    PrintMessage(str);
-   gtk_statusbar_push(status_bar, statusID, "");
+   gtk_statusbar_push(status_bar, statusID, '');
    err := err + errC;
   end
   else
@@ -3691,7 +3693,7 @@ begin
    begin
     PrintMessage(strings[S_ConfigW]);
     if saveLog then
-     fprintf(logfile, "\nWRITE CONFIG:\n");
+     fprintf(logfile, '' + NL + 'WRITE CONFIG:' + NL + '');
     Nconf := IfThen((config) = (5), 7, 8);
     bufferU[Inc(j)] := $3F;
     bufferU[Inc(j)] := 4;
@@ -3906,7 +3908,7 @@ begin
     end;
     sprintf(str, strings[S_ComplErr], errC);
     PrintMessage(str);
-    gtk_statusbar_push(status_bar, statusID, "");
+    gtk_statusbar_push(status_bar, statusID, '');
     err := err + errC;
    end;
   bufferU[Inc(j)] := $0F;
@@ -3929,7 +3931,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 function Write24Ex(dim: Integer; dim2: Integer; options: Integer; appIDaddr: Integer; rowSize: Integer; wait: Double): Pointer;
@@ -3959,7 +3961,7 @@ begin
   err := 0;
   if (FWVersion) < ($900) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.9.0");
+   sprintf(str, strings[S_FWver2old], '0.9.0');
    PrintMessage(str);
    Exit;
   end;
@@ -3971,7 +3973,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write24Ex(%d,%d,%d,%d,%d,%.1f)    (0x%X,0x%X,0x%X,0x%X,0x%X,%.3f)\n", dim, dim2, options, appIDaddr, rowSize, wait, dim, dim2, options, appIDaddr, rowSize, wait);
+   fprintf(logfile, 'Write24Ex(%d,%d,%d,%d,%d,%.1f)    (0x%X,0x%X,0x%X,0x%X,0x%X,%.3f)' + NL + '', dim, dim2, options, appIDaddr, rowSize, wait, dim, dim2, options, appIDaddr, rowSize, wait);
   end;
   dim := dim * 2;
   if ((dim) > ($100000)) or ((dim) < (0)) then
@@ -3992,7 +3994,7 @@ begin
   StartHVReg(-(1));
   for i := 0 to (10) - 1 do
   begin
-   sprintf(str, "CONFIG%d(0x%05X): 0x%02X\r\n", i, (((dim) - (40)) + ((i) * (4))) div (2), memCODE[((dim) - (40)) + ((i) * (4))]);
+   sprintf(str, 'CONFIG%d(0x%05X): 0x%02X' + #13 + '' + NL + '', i, (((dim) - (40)) + ((i) * (4))) div (2), memCODE[((dim) - (40)) + ((i) * (4))]);
    PrintMessage(str);
   end;
   start := GetTickCount();
@@ -4120,7 +4122,7 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "DevID: 0x%04X\r\nDevRev: 0x%04X\r\n", w0, w1);
+  sprintf(str, 'DevID: 0x%04X' + #13 + '' + NL + 'DevRev: 0x%04X' + #13 + '' + NL + '', w0, w1);
   PrintMessage(str);
   PIC24_ID(w0);
   bufferU[Inc(j)] := $3F;
@@ -4166,11 +4168,11 @@ begin
   end;
   if (z) < ((64) - (2)) then
    w0 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  sprintf(str, "ApplicationID @ 0x80%04X:  0x%04X\r\n", appIDaddr, w0);
+  sprintf(str, 'ApplicationID @ 0x80%04X:  0x%04X' + #13 + '' + NL + '', appIDaddr, w0);
   PrintMessage(str);
   PrintMessage(strings[S_StartErase]);
   if saveLog then
-   fprintf(logfile, "\nERASE:\n");
+   fprintf(logfile, '' + NL + 'ERASE:' + NL + '');
   bufferU[Inc(j)] := $3F;
   bufferU[Inc(j)] := 2;
   bufferU[Inc(j)] := $24;
@@ -4269,7 +4271,7 @@ begin
    Inc(i);
   end;
   if saveLog then
-   fprintf(logfile, "ERASE TIME: %d ms\n", (i) * (10));
+   fprintf(logfile, 'ERASE TIME: %d ms' + NL + '', (i) * (10));
   msDelay(70);
   bufferU[Inc(j)] := $38;
   bufferU[Inc(j)] := $38;
@@ -4306,7 +4308,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_StartCodeProg]);
   if saveLog then
-   fprintf(logfile, "\nWRITE CODE:\n");
+   fprintf(logfile, '' + NL + 'WRITE CODE:' + NL + '');
   High := 0;
   k := 0;
   i := 0;
@@ -4441,7 +4443,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_CodeV]);
   if saveLog then
-   fprintf(logfile, "\nVERIFY CODE:\n");
+   fprintf(logfile, '' + NL + 'VERIFY CODE:' + NL + '');
   High := $E0000000;
   r0 := 0;
   r1 := 0;
@@ -4662,7 +4664,7 @@ begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
 end;
 
 end.

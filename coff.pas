@@ -17,8 +17,10 @@ uses
   Buttons,
   Spin,
   Menus,
-  LCLType,
-  mainform;
+  LCLType;
+
+const
+  NL = #10;
 
 const
   LMAX = $2200;
@@ -189,7 +191,7 @@ var
   line: Tcoff_lineno;
   raw: PByte;
 begin
-  f := fopen(filename, "rb");
+  f := fopen(filename, 'rb');
   if not (f) then
    Exit(0);
   fread(@(FileHeader), SizeOf(filehdr_t), 1, f);
@@ -204,7 +206,7 @@ begin
    fread(@(sections[i]), 40, 1, f);
   end;
   if fseek(f, (FileHeader.f_symptr) + ((FileHeader.f_nsyms) * (20)), SEEK_SET) then
-   printf("seek error\n");
+   printf('seek error' + NL + '');
   strsize := 0;
   strN := 0;
   fread(@(strsize), 4, 1, f);
@@ -230,7 +232,7 @@ begin
    end;
    Inc(i);
   end;
-  null := "";
+  null := '';
   for i := 0 to (FileHeader.f_nscns) - 1 do
   begin
    if sections[i]._s._s_name[0] then
@@ -252,7 +254,7 @@ begin
   filemax := 0;
   nsym^ := 0;
   if fseek(f, FileHeader.f_symptr, SEEK_SET) then
-   printf("seek error\n");
+   printf('seek error' + NL + '');
   for i := 0 to (FileHeader.f_nsyms) - 1 do
   begin
    j := fread(@(symbol), 1, 14, f);
@@ -273,7 +275,7 @@ begin
     end
     else
     begin
-     printf("conflicting labels at address %X: %s vs. %s\n", symbol.n_value, label_[symbol.n_value], name_);
+     printf('conflicting labels at address %X: %s vs. %s' + NL + '', symbol.n_value, label_[symbol.n_value], name_);
     end;
    end;
    if ((((symbol.n_sclass) = (7)) and ((symbol.n_value) < ($400))) and ((symbol.n_scnum) > (0))) and ((sections[(symbol.n_scnum) - (1)].s_size) > (0)) then
@@ -285,7 +287,7 @@ begin
     end
     else
     begin
-     printf("conflicting labels at address %X: %s vs. %s\n", symbol.n_value, ulabel[symbol.n_value], name_);
+     printf('conflicting labels at address %X: %s vs. %s' + NL + '', symbol.n_value, ulabel[symbol.n_value], name_);
     end;
    end;
    if (symbol.n_sclass) = (7) then
@@ -325,7 +327,7 @@ begin
   for i := 0 to (FileHeader.f_nscns) - 1 do
   begin
    if fseek(f, sections[i].s_lnnoptr, SEEK_SET) then
-    printf("seek error\n");
+    printf('seek error' + NL + '');
    for j := 0 to (sections[i].s_nlnno) - 1 do
    begin
     fread(@(line), 6, 1, f);
@@ -361,7 +363,7 @@ begin
    if (sections[i].s_size) > (0) then
    begin
     if fseek(f, sections[i].s_scnptr, SEEK_SET) then
-     printf("seek error\n");
+     printf('seek error' + NL + '');
     raw := malloc(sections[i].s_size);
     fread(raw, sections[i].s_size, 1, f);
     if ((sections[i].s_paddr) + ((sections[i].s_size) div (2))) < ($2200) then
@@ -382,7 +384,7 @@ var
   p: LongInt;
   i: PChar;
 begin
-  f := fopen(s_files_p^.name_, "rb");
+  f := fopen(s_files_p^.name_, 'rb');
   s_files_p^.ptr := f;
   if not (f) then
    Exit(f);

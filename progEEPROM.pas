@@ -18,10 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
 
 const
+  NL = #10;
   PRE = $08;
   S = $10;
   W = $20;
@@ -106,7 +106,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "ReadI2C(%d,%d)    (0x%X,0x%X)\n", dim, addr, dim, addr);
+   fprintf(logfile, 'ReadI2C(%d,%d)    (0x%X,0x%X)' + NL + '', dim, addr, dim, addr);
   end;
   sizeEE := dim;
   if memEE then
@@ -189,7 +189,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
@@ -206,14 +206,14 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   DisplayEE();
   sum := 0;
   for i := 0 to (sizeEE) - 1 do
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, "Checksum: 0x%X\r\n", (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
   PrintMessage(str);
   sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
@@ -253,7 +253,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "WriteI2C(%d,%d,%d)    (0x%X,0x%X)\n", dim, addr, page, dim, addr);
+   fprintf(logfile, 'WriteI2C(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, addr, page, dim, addr);
   end;
   if (dim) > (sizeEE) then
   begin
@@ -413,7 +413,7 @@ begin
     begin
      if (memEE[Inc(k)]) <> (bufferI[z]) then
      begin
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
       sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[(k) - (1)], bufferI[z]);
       PrintMessage(str);
       Inc(err);
@@ -440,7 +440,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
   end;
@@ -456,7 +456,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
@@ -491,7 +491,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read93x(%d,%d,%d)    (0x%X,0x%X)\n", dim, na, options, dim, na);
+   fprintf(logfile, 'Read93x(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, na, options, dim, na);
   end;
   x8 := (options) and (1);
   sizeEE := dim;
@@ -578,7 +578,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
@@ -598,14 +598,14 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   DisplayEE();
   sum := 0;
   for i := 0 to (sizeEE) - 1 do
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, "Checksum: 0x%X\r\n", (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
   PrintMessage(str);
   sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
@@ -644,7 +644,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write93Sx(%d,%d,%d)    (0x%X,0x%X)\n", dim, na, page, dim, na);
+   fprintf(logfile, 'Write93Sx(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, na, page, dim, na);
   end;
   if (dim) > (sizeEE) then
   begin
@@ -865,14 +865,14 @@ begin
     begin
      if (memEE[(k) + (1)]) <> (bufferI[z]) then
      begin
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
       sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[(k) + (1)], bufferI[z]);
       PrintMessage(str);
       Inc(err);
      end;
      if (memEE[k]) <> (bufferI[(z) + (1)]) then
      begin
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
       sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[k], bufferI[(z) + (1)]);
       PrintMessage(str);
       Inc(err);
@@ -900,7 +900,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
   end;
@@ -919,7 +919,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
@@ -955,7 +955,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write93Cx(%d,%d,%d)    (0x%X,0x%X)\n", dim, na, options, dim, na);
+   fprintf(logfile, 'Write93Cx(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, na, options, dim, na);
   end;
   if (dim) > (sizeEE) then
   begin
@@ -1191,7 +1191,7 @@ begin
      begin
       if (memEE[k]) <> (bufferI[(z) + (2)]) then
       begin
-       PrintMessage("\r\n");
+       PrintMessage('' + #13 + '' + NL + '');
        sprintf(str, strings[S_CodeVError], k, k, memEE[k], bufferI[(z) + (2)]);
        PrintMessage(str);
        Inc(err);
@@ -1202,14 +1202,14 @@ begin
      begin
       if (memEE[k]) <> (bufferI[(z) + (3)]) then
       begin
-       PrintMessage("\r\n");
+       PrintMessage('' + #13 + '' + NL + '');
        sprintf(str, strings[S_CodeVError], k, k, memEE[k], bufferI[(z) + (3)]);
        PrintMessage(str);
        Inc(err);
       end;
       if (memEE[(k) + (1)]) <> (bufferI[(z) + (2)]) then
       begin
-       PrintMessage("\r\n");
+       PrintMessage('' + #13 + '' + NL + '');
        sprintf(str, strings[S_CodeVError], (k) + (1), (k) + (1), memEE[(k) + (1)], bufferI[(z) + (2)]);
        PrintMessage(str);
        Inc(err);
@@ -1237,7 +1237,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
   end;
@@ -1256,7 +1256,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
@@ -1288,7 +1288,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read25xx(%d)    (0x%X)\n", dim, dim);
+   fprintf(logfile, 'Read25xx(%d)    (0x%X)' + NL + '', dim, dim);
   end;
   sizeEE := dim;
   if memEE then
@@ -1357,7 +1357,7 @@ begin
   ID := (((bufferI[(z) + (2)]) shl (16)) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   if ((ID) > (0)) and ((ID) <> ($FFFFFF)) then
   begin
-   sprintf(str, "DEVICE ID=0x%06X\r\n", ID);
+   sprintf(str, 'DEVICE ID=0x%06X' + #13 + '' + NL + '', ID);
    PrintMessage(str);
   end;
   PrintMessage(strings[S_ReadEE]);
@@ -1405,7 +1405,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
@@ -1425,14 +1425,14 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   DisplayEE();
   sum := 0;
   for i := 0 to (sizeEE) - 1 do
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, "Checksum: 0x%X\r\n", (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
   PrintMessage(str);
   sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
@@ -1473,7 +1473,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write25xx(%d,%d)    (0x%X,0x%X)\n", dim, options, dim, options);
+   fprintf(logfile, 'Write25xx(%d,%d)    (0x%X,0x%X)' + NL + '', dim, options, dim, options);
   end;
   if (dim) > (sizeEE) then
   begin
@@ -1554,10 +1554,10 @@ begin
   ID := (((bufferI[(z) + (2)]) shl (16)) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   if ((ID) > (0)) and ((ID) <> ($FFFFFF)) then
   begin
-   sprintf(str, "DEVICE ID=0x%06X\r\n", ID);
+   sprintf(str, 'DEVICE ID=0x%06X' + #13 + '' + NL + '', ID);
    PrintMessage(str);
    if saveLog then
-    fprintf(logfile, "DEVICE ID=0x%06X\n", ID);
+    fprintf(logfile, 'DEVICE ID=0x%06X' + NL + '', ID);
   end;
   msDelay(10);
   bufferU[Inc(j)] := $32;
@@ -1613,7 +1613,7 @@ begin
   begin
    PrintMessage(strings[S_StartErase]);
    if saveLog then
-    fprintf(logfile, "%s\n", strings[S_StartErase]);
+    fprintf(logfile, '%s' + NL + '', strings[S_StartErase]);
    bufferU[Inc(j)] := $32;
    bufferU[Inc(j)] := 16;
    bufferU[Inc(j)] := $40;
@@ -1703,7 +1703,7 @@ begin
     Inc(j);
    end;
    if saveLog then
-    fprintf(logfile, "Erase time %d ms\n", (j) * (100));
+    fprintf(logfile, 'Erase time %d ms' + NL + '', (j) * (100));
    PrintMessage(strings[S_Compl]);
    sprintf(str, strings[S_Compl], 0, 0);
    gtk_statusbar_push(status_bar, statusID, str);
@@ -1714,7 +1714,7 @@ begin
   end;
   PrintMessage(strings[S_EEAreaW]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_EEAreaW]);
+   fprintf(logfile, '%s' + NL + '', strings[S_EEAreaW]);
   j := 0;
   i := 0;
   while (i) < (dim) do
@@ -1867,7 +1867,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_EEV]);
+   fprintf(logfile, '%s' + NL + '', strings[S_EEV]);
   j := 0;
   bufferU[Inc(j)] := $32;
   bufferU[Inc(j)] := 16;
@@ -2013,7 +2013,7 @@ begin
   end;
   if (i) < (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, i);
    PrintMessage(str);
   end;
@@ -2029,7 +2029,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
@@ -2053,7 +2053,7 @@ begin
     Exit;
    end;
   end;
-  sprintf(s, "%s", strings[S_nodev]);
+  sprintf(s, '%s', strings[S_nodev]);
   PrintMessage(s);
 end;
 
@@ -2072,7 +2072,7 @@ begin
   hvreg := 0;
   if (FWVersion) < ($800) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.8.0");
+   sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
@@ -2084,7 +2084,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "ReadOneWireMem(%d)    (0x%X)\n", dim, dim);
+   fprintf(logfile, 'ReadOneWireMem(%d)    (0x%X)' + NL + '', dim, dim);
   end;
   sizeEE := dim;
   if memEE then
@@ -2151,14 +2151,14 @@ begin
   end;
   if ((bufferI[z]) = ($42)) and ((z) < ((64) - (9))) then
   begin
-   sprintf(str, "Family code: 0x%02X ", bufferI[(z) + (2)]);
+   sprintf(str, 'Family code: 0x%02X ', bufferI[(z) + (2)]);
    PrintMessage(str);
    OW_ID(bufferI[(z) + (2)]);
-   sprintf(str, "Serial ID: 0x%02X%02X%02X", bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
+   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
    PrintMessage(str);
-   sprintf(str, "%02X%02X%02X", bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
+   sprintf(str, '%02X%02X%02X', bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
    PrintMessage(str);
-   sprintf(str, "\r\nCRC: 0x%02X\r\n", bufferI[(z) + (9)]);
+   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (9)]);
    PrintMessage(str);
   end;
   j := 0;
@@ -2236,7 +2236,7 @@ begin
    end;
    if (z) < ((64) - (2)) then
    begin
-    sprintf(str, "Status register: 0x%02X\r\n", bufferI[(z) + (2)]);
+    sprintf(str, 'Status register: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
     PrintMessage(str);
    end;
    z := 2;
@@ -2244,15 +2244,15 @@ begin
    begin
     Inc(z);
    end;
-   PrintMessage("Application register: 0x");
+   PrintMessage('Application register: 0x');
    i := (z) + (2);
    while ((i) < ((z) + (10))) and ((i) < (64)) do
    begin
-    sprintf(str, "%02X", bufferI[i]);
+    sprintf(str, '%02X', bufferI[i]);
     PrintMessage(str);
     Inc(i);
    end;
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
   end
   else
    if (options) = (2) then
@@ -2281,54 +2281,54 @@ begin
      begin
       for i := 0 to (10) - 1 do
       begin
-       sprintf(str, "Protection Control Byte Block %d: 0x%02X\r\n", i, bufferI[((z) + (2)) + (i)]);
+       sprintf(str, 'Protection Control Byte Block %d: 0x%02X' + #13 + '' + NL + '', i, bufferI[((z) + (2)) + (i)]);
        PrintMessage(str);
       end;
-      PrintMessage("User EEPROM:\r\n");
+      PrintMessage('User EEPROM:' + #13 + '' + NL + '');
       for i := 0 to (10) - 1 do
       begin
-       sprintf(str, "%02X", bufferI[(((z) + (2)) + (i)) + (10)]);
+       sprintf(str, '%02X', bufferI[(((z) + (2)) + (i)) + (10)]);
        PrintMessage(str);
       end;
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
       for i := 0 to (10) - 1 do
       begin
-       sprintf(str, "%02X", bufferI[(((z) + (2)) + (i)) + (20)]);
+       sprintf(str, '%02X', bufferI[(((z) + (2)) + (i)) + (20)]);
        PrintMessage(str);
       end;
-      sprintf(str, "\r\nMemory Block Lock: 0x%02X\r\n", bufferI[((z) + (2)) + (30)]);
+      sprintf(str, '' + #13 + '' + NL + 'Memory Block Lock: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (30)]);
       PrintMessage(str);
-      sprintf(str, "Register Page Lock: 0x%02X\r\n", bufferI[((z) + (2)) + (31)]);
+      sprintf(str, 'Register Page Lock: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (31)]);
       PrintMessage(str);
-      sprintf(str, "Factory Byte: 0x%02X\r\n", bufferI[((z) + (2)) + (32)]);
+      sprintf(str, 'Factory Byte: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (32)]);
       PrintMessage(str);
-      sprintf(str, "Factory Trim Bytes: 0x%02X%02X\r\n", bufferI[((z) + (2)) + (33)], bufferI[((z) + (2)) + (34)]);
+      sprintf(str, 'Factory Trim Bytes: 0x%02X%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (33)], bufferI[((z) + (2)) + (34)]);
       PrintMessage(str);
-      sprintf(str, "Manufacturer ID: 0x%02X%02X\r\n", bufferI[((z) + (2)) + (35)], bufferI[((z) + (2)) + (36)]);
+      sprintf(str, 'Manufacturer ID: 0x%02X%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (35)], bufferI[((z) + (2)) + (36)]);
       PrintMessage(str);
      end
      else
      begin
-      sprintf(str, "Protection Control Byte Page 0: 0x%02X\r\n", bufferI[(z) + (2)]);
+      sprintf(str, 'Protection Control Byte Page 0: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
       PrintMessage(str);
-      sprintf(str, "Protection Control Byte Page 1: 0x%02X\r\n", bufferI[((z) + (2)) + (1)]);
+      sprintf(str, 'Protection Control Byte Page 1: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (1)]);
       PrintMessage(str);
-      sprintf(str, "Protection Control Byte Page 2: 0x%02X\r\n", bufferI[((z) + (2)) + (2)]);
+      sprintf(str, 'Protection Control Byte Page 2: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (2)]);
       PrintMessage(str);
-      sprintf(str, "Protection Control Byte Page 3: 0x%02X\r\n", bufferI[((z) + (2)) + (3)]);
+      sprintf(str, 'Protection Control Byte Page 3: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (3)]);
       PrintMessage(str);
-      sprintf(str, "Copy Protection Byte: 0x%02X\r\n", bufferI[((z) + (2)) + (4)]);
+      sprintf(str, 'Copy Protection Byte: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (4)]);
       PrintMessage(str);
-      sprintf(str, "Factory Byte: 0x%02X\r\n", bufferI[((z) + (2)) + (5)]);
+      sprintf(str, 'Factory Byte: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (5)]);
       PrintMessage(str);
-      sprintf(str, "User Bytes/Manufacturer ID: 0x%02X%02X\r\n", bufferI[((z) + (2)) + (6)], bufferI[((z) + (2)) + (7)]);
+      sprintf(str, 'User Bytes/Manufacturer ID: 0x%02X%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (6)], bufferI[((z) + (2)) + (7)]);
       PrintMessage(str);
      end;
     end;
    end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
@@ -2343,14 +2343,14 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   DisplayEE();
   sum := 0;
   for i := 0 to (sizeEE) - 1 do
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, "Checksum: 0x%X\r\n", (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
   PrintMessage(str);
   sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
@@ -2378,7 +2378,7 @@ begin
   hvreg := 0;
   if (FWVersion) < ($800) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.8.0");
+   sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
@@ -2390,7 +2390,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "WriteOneWireMem(%d,%d)    (0x%X,0x%X)\n", dim, options, dim, options);
+   fprintf(logfile, 'WriteOneWireMem(%d,%d)    (0x%X,0x%X)' + NL + '', dim, options, dim, options);
   end;
   if (dim) > (sizeEE) then
   begin
@@ -2458,14 +2458,14 @@ begin
   end;
   if (bufferI[z]) = ($42) then
   begin
-   sprintf(str, "Family code: 0x%02X ", bufferI[(z) + (2)]);
+   sprintf(str, 'Family code: 0x%02X ', bufferI[(z) + (2)]);
    PrintMessage(str);
    OW_ID(bufferI[(z) + (2)]);
-   sprintf(str, "Serial ID: 0x%02X%02X%02X", bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
+   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
    PrintMessage(str);
-   sprintf(str, "%02X%02X%02X", bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
+   sprintf(str, '%02X%02X%02X', bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
    PrintMessage(str);
-   sprintf(str, "\r\nCRC: 0x%02X\r\n", bufferI[(z) + (9)]);
+   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (9)]);
    PrintMessage(str);
   end;
   PrintMessage(strings[S_EEAreaW]);
@@ -2525,7 +2525,7 @@ begin
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   if saveLog then
-   fprintf(logfile, "%s\n", strings[S_EEV]);
+   fprintf(logfile, '%s' + NL + '', strings[S_EEV]);
   k := 0;
   bufferU[Inc(j)] := $40;
   bufferU[Inc(j)] := $41;
@@ -2579,7 +2579,7 @@ begin
     begin
      if (memEE[Inc(k)]) <> (bufferI[z]) then
      begin
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
       sprintf(str, strings[S_CodeVError], ((i) + (z)) - ((j) + (2)), ((i) + (z)) - ((j) + (2)), memEE[(k) - (1)], bufferI[z]);
       PrintMessage(str);
       Inc(err);
@@ -2606,7 +2606,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
@@ -2623,7 +2623,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
@@ -2647,14 +2647,14 @@ begin
   hvreg := 0;
   if (FWVersion) < ($800) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.8.0");
+   sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "ReadDS1820()\n");
+   fprintf(logfile, 'ReadDS1820()' + NL + '');
   end;
   start := GetTickCount();
   j := 0;
@@ -2710,7 +2710,7 @@ begin
   end;
   if (z) < ((64) - (9)) then
   begin
-   sprintf(str, "Family code: 0x%02X ", bufferI[(z) + (2)]);
+   sprintf(str, 'Family code: 0x%02X ', bufferI[(z) + (2)]);
    PrintMessage(str);
    OW_ID(bufferI[(z) + (2)]);
    if (bufferI[(z) + (2)]) = ($10) then
@@ -2718,11 +2718,11 @@ begin
    else
     if (bufferI[(z) + (2)]) = ($28) then
      TLSB := 0.0625;
-   sprintf(str, "Serial ID: 0x%02X%02X%02X", bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
+   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
    PrintMessage(str);
-   sprintf(str, "%02X%02X%02X", bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
+   sprintf(str, '%02X%02X%02X', bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
    PrintMessage(str);
-   sprintf(str, "\r\nCRC: 0x%02X\r\n", bufferI[(z) + (9)]);
+   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (9)]);
    PrintMessage(str);
   end;
   msDelay(800);
@@ -2749,7 +2749,7 @@ begin
   T := (bufferI[(z) + (2)]) + ((bufferI[(z) + (3)]) shl (8));
   if (T) > ($F000) then
    T := T or $FFFF0000;
-  sprintf(str, "T=%.4f°C  (0x%04X)\r\n", (T) * (TLSB), T);
+  sprintf(str, 'T=%.4f°C  (0x%04X)' + #13 + '' + NL + '', (T) * (TLSB), T);
   PrintMessage(str);
   bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
@@ -2785,7 +2785,7 @@ begin
   hvreg := 0;
   if (FWVersion) < ($800) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.8.0");
+   sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
@@ -2797,7 +2797,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Read11xx(%d)    (0x%X)\n", dim, dim);
+   fprintf(logfile, 'Read11xx(%d)    (0x%X)' + NL + '', dim, dim);
   end;
   sizeEE := dim;
   if memEE then
@@ -2871,7 +2871,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
@@ -2888,14 +2888,14 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   DisplayEE();
   sum := 0;
   for i := 0 to (sizeEE) - 1 do
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, "Checksum: 0x%X\r\n", (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
   PrintMessage(str);
   sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
@@ -2922,7 +2922,7 @@ begin
   err := 0;
   if (FWVersion) < ($800) then
   begin
-   sprintf(str, strings[S_FWver2old], "0.8.0");
+   sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
@@ -2935,7 +2935,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "Write11xx(%d,%d)    (0x%X,0x%X)\n", dim, page, dim, page);
+   fprintf(logfile, 'Write11xx(%d,%d)    (0x%X,0x%X)' + NL + '', dim, page, dim, page);
   end;
   if (dim) > (sizeEE) then
   begin
@@ -3111,7 +3111,7 @@ begin
     begin
      if (memEE[Inc(k)]) <> (bufferI[z]) then
      begin
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
       sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[(k) - (1)], bufferI[z]);
       PrintMessage(str);
       Inc(err);
@@ -3138,7 +3138,7 @@ begin
   end;
   if (k) <> (dim) then
   begin
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
   end;
@@ -3154,7 +3154,7 @@ begin
   end;
   PacketIO(2);
   stop := GetTickCount();
-  gtk_statusbar_push(status_bar, statusID, "");
+  gtk_statusbar_push(status_bar, statusID, '');
   sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then

@@ -18,10 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
-  common,
-  mainform;
+  common;
 
 const
+  NL = #10;
   CS = 8;
   HLD = 16;
 
@@ -66,7 +66,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "I2C-SPI receive\tmode=%d\tspeed=%d\n", mode, speed);
+   fprintf(logfile, 'I2C-SPI receive' + #9 + 'mode=%d' + #9 + 'speed=%d' + NL + '', mode, speed);
   end;
   bufferU[Inc(j)] := $06;
   bufferU[Inc(j)] := $0E;
@@ -144,24 +144,24 @@ begin
     end
     else
     begin
-     str := "";
-     t := "";
+     str := '';
+     t := '';
      if (mode) = (0) then
-      sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3])
+      sprintf(str, '> %02X %02X' + #13 + '' + NL + '', bufferU[2], bufferU[3])
      else
       if (mode) = (1) then
-       sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3]);
-     strcat(str, "< ");
+       sprintf(str, '> %02X %02X' + #13 + '' + NL + '', bufferU[2], bufferU[3]);
+     strcat(str, '< ');
      for i := 0 to (bufferI[1]) - 1 do
      begin
-      sprintf(t, "%02X ", bufferI[(i) + (2)]);
+      sprintf(t, '%02X ', bufferI[(i) + (2)]);
       strcat(str, t);
       if (i) and (((i) mod (16)) = (15)) then
       begin
-       strcat(str, "\r\n");
+       strcat(str, '' + #13 + '' + NL + '');
       end;
      end;
-     strcat(str, "\r\n");
+     strcat(str, '' + #13 + '' + NL + '');
      PrintMessageI2C(str);
      fflush(stdout);
     end;
@@ -195,7 +195,7 @@ begin
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, "I2C-SPI send\tmode=%d\tspeed=%d\n", mode, speed);
+   fprintf(logfile, 'I2C-SPI send' + #9 + 'mode=%d' + #9 + 'speed=%d' + NL + '', mode, speed);
   end;
   bufferU[Inc(j)] := $06;
   bufferU[Inc(j)] := $0E;
@@ -285,19 +285,19 @@ begin
     else
     begin
      n := 2;
-     sprintf(str, "> ");
+     sprintf(str, '> ');
      if (mode) < (2) then
       n := 4;
      for i := 0 to (bufferU[1]) - 1 do
      begin
-      sprintf(t, "%02X ", bufferU[(i) + (n)]);
+      sprintf(t, '%02X ', bufferU[(i) + (n)]);
       strcat(str, t);
       if (i) and (((i) mod (16)) = (15)) then
       begin
-       strcat(str, "\r\n");
+       strcat(str, '' + #13 + '' + NL + '');
       end;
      end;
-     strcat(str, "\r\n");
+     strcat(str, '' + #13 + '' + NL + '');
      PrintMessageI2C(str);
     end;
   end

@@ -24,8 +24,10 @@ uses
   progp18,
   progp24,
   progeeprom,
-  progavr,
-  mainform;
+  progavr;
+
+const
+  NL = #10;
 
 type
   DWORD = Cardinal;
@@ -81,7 +83,7 @@ var
   list: PChar;
 begin
   len := 0;
-  last := "";
+  last := '';
   list := 0;
   for i := 0 to (Ndevices) - 1 do
   begin
@@ -96,9 +98,9 @@ begin
    begin
     list := realloc(list, ((len) + (l)) + (3));
     if strncmp(devices[i], last, 2) then
-     strcpy((list) + (len), ",\n")
+     strcpy((list) + (len), ',' + NL + '')
     else
-     strcpy((list) + (len), ", ");
+     strcpy((list) + (len), ', ');
     strcpy(((list) + (len)) + (2), devices[i]);
     len := len + (l) + (2);
    end;
@@ -117,11 +119,11 @@ begin
   begin
    if (GetDevType(devices[i])) < (0) then
    begin
-    printf("Can't find %s\n", devices[i]);
+    printf('Can't find %s' + NL + '', devices[i]);
     fflush(stdout);
    end;
   end;
-  printf("OK %d devices\n", Ndevices);
+  printf('OK %d devices' + NL + '', Ndevices);
   fflush(stdout);
 end;
 
@@ -140,7 +142,7 @@ begin
     free(str);
    str := malloc((strlen(DEVLIST[i].device)) + (1));
    strcpy(str, DEVLIST[i].device);
-   tok := strtok(str, ",");
+   tok := strtok(str, ',');
    while tok do
    begin
     if not (strcmp(dev, tok)) then
@@ -231,7 +233,7 @@ begin
      end;
      Exit;
     end;
-    tok := strtok(NULL, ",");
+    tok := strtok(NULL, ',');
    end;
   end;
   PrintMessage(strings[S_nodev_r]);
@@ -252,7 +254,7 @@ begin
     free(str);
    str := malloc((strlen(DEVLIST[i].device)) + (1));
    strcpy(str, DEVLIST[i].device);
-   tok := strtok(str, ",");
+   tok := strtok(str, ',');
    while tok do
    begin
     if not (strcmp(dev, tok)) then
@@ -335,7 +337,7 @@ begin
      end;
      Exit;
     end;
-    tok := strtok(NULL, ",");
+    tok := strtok(NULL, ',');
    end;
   end;
   PrintMessage(strings[S_nodev_w]);
@@ -356,7 +358,7 @@ begin
     free(str);
    str := malloc((strlen(DEVLIST[i].device)) + (1));
    strcpy(str, DEVLIST[i].device);
-   tok := strtok(str, ",");
+   tok := strtok(str, ',');
    while tok do
    begin
     if not (strcmp(dev, tok)) then
@@ -365,7 +367,7 @@ begin
      tok := 0;
      i := (SizeOf(DEVLIST)) div (SizeOf(DEVLIST[0]));
     end;
-    tok := strtok(NULL, ",");
+    tok := strtok(NULL, ',');
    end;
   end;
   free(str);
@@ -376,21 +378,21 @@ function nameToGroup(devName: PChar): Tgroup_t;
 var
   // (no local variables detected)
 begin
-  if (((not (strncmp(devName, "10F", 3))) or (not (strncmp(devName, "12F", 3)))) or (not (strncmp(devName, "12C", 3)))) or (not (strncmp(devName, "12LF", 4))) then
+  if (((not (strncmp(devName, '10F', 3))) or (not (strncmp(devName, '12F', 3)))) or (not (strncmp(devName, '12C', 3)))) or (not (strncmp(devName, '12LF', 4))) then
    Exit(G_PIC_10_12);
-  if ((not (strncmp(devName, "16F", 3))) or (not (strncmp(devName, "16LF", 4)))) or (not (strncmp(devName, "16C", 3))) then
+  if ((not (strncmp(devName, '16F', 3))) or (not (strncmp(devName, '16LF', 4)))) or (not (strncmp(devName, '16C', 3))) then
    Exit(G_PIC_16);
-  if not (strncmp(devName, "18F", 3)) then
+  if not (strncmp(devName, '18F', 3)) then
    Exit(G_PIC_18);
-  if ((not (strncmp(devName, "24F", 3))) or (not (strncmp(devName, "24H", 3)))) or (not (strncmp(devName, "24E", 3))) then
+  if ((not (strncmp(devName, '24F', 3))) or (not (strncmp(devName, '24H', 3)))) or (not (strncmp(devName, '24E', 3))) then
    Exit(G_PIC_24);
-  if ((not (strncmp(devName, "30F", 3))) or (not (strncmp(devName, "33F", 3)))) or (not (strncmp(devName, "33E", 3))) then
+  if ((not (strncmp(devName, '30F', 3))) or (not (strncmp(devName, '33F', 3)))) or (not (strncmp(devName, '33E', 3))) then
    Exit(G_PIC_30_33);
-  if not (strncmp(devName, "AT", 2)) then
+  if not (strncmp(devName, 'AT', 2)) then
    Exit(G_ATMEL);
-  if (((((not (strncmp(devName, "24", 2))) or (not (strncmp(devName, "25", 2)))) or (not (strncmp(devName, "93", 2)))) or (not (strncmp(devName, "95", 2)))) or (not (strncmp(devName, "11", 2)))) or (not (strncmp(devName, "DS", 2))) then
+  if (((((not (strncmp(devName, '24', 2))) or (not (strncmp(devName, '25', 2)))) or (not (strncmp(devName, '93', 2)))) or (not (strncmp(devName, '95', 2)))) or (not (strncmp(devName, '11', 2)))) or (not (strncmp(devName, 'DS', 2))) then
    Exit(G_EEPROM);
-  sprintf(str, "can't determine group of device '%s'\n", devName);
+  sprintf(str, 'can't determine group of device '%s'' + NL + '', devName);
   PrintMessage(str);
   Exit(-(1));
 end;
@@ -411,112 +413,112 @@ begin
   str2[0] := 0;
   x := (info^size) div (1024.0);
   if (x) - (x) then
-   sprintf(strF, "%.1f", x)
+   sprintf(strF, '%.1f', x)
   else
-   sprintf(strF, "%d", x);
+   sprintf(strF, '%d', x);
   case info^family of
    PIC12:
    begin
-    sprintf(str2, "PIC12, ");
+    sprintf(str2, 'PIC12, ');
     if (info^size) < (1024) then
-     sprintf(str3, "%dW FLASH", info^size)
+     sprintf(str3, '%dW FLASH', info^size)
     else
-     sprintf(str3, "%sKW FLASH", strF);
+     sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
    end;
    PIC16:
    begin
-    sprintf(str2, "PIC16, ");
+    sprintf(str2, 'PIC16, ');
     if (info^size) < (1024) then
-     sprintf(str3, "%dW FLASH", info^size)
+     sprintf(str3, '%dW FLASH', info^size)
     else
-     sprintf(str3, "%sKW FLASH", strF);
+     sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
     if info^sizeEE then
     begin
      ee := info^sizeEE;
      if (ee) < (0) then
       ee := -(ee);
-     sprintf(str3, " + %dB EEPROM", ee);
+     sprintf(str3, ' + %dB EEPROM', ee);
      strcat(str2, str3);
     end;
    end;
    PIC18:
    begin
-    sprintf(str2, "PIC18, ");
+    sprintf(str2, 'PIC18, ');
     if (info^size) < (1024) then
-     sprintf(str3, "%dB FLASH ", info^size)
+     sprintf(str3, '%dB FLASH ', info^size)
     else
-     sprintf(str3, "%sKB FLASH ", strF);
+     sprintf(str3, '%sKB FLASH ', strF);
     strcat(str2, str3);
     if info^sizeEE then
     begin
-     sprintf(str3, "+ %dB EEPROM ", info^sizeEE);
+     sprintf(str3, '+ %dB EEPROM ', info^sizeEE);
      strcat(str2, str3);
     end;
    end;
    PIC24:
    begin
-    sprintf(str2, "PIC24, ");
+    sprintf(str2, 'PIC24, ');
     if (info^size) < (1024) then
-     sprintf(str3, "%dW FLASH", info^size)
+     sprintf(str3, '%dW FLASH', info^size)
     else
-     sprintf(str3, "%sKW FLASH", strF);
+     sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
     if info^sizeEE then
     begin
-     sprintf(str3, " + %dB EEPROM", info^sizeEE);
+     sprintf(str3, ' + %dB EEPROM', info^sizeEE);
      strcat(str2, str3);
     end;
    end;
    PIC32:
    begin
-    sprintf(str2, "PIC32, ");
+    sprintf(str2, 'PIC32, ');
     if (info^size) < (1024) then
-     sprintf(str3, "%dW FLASH", info^size)
+     sprintf(str3, '%dW FLASH', info^size)
     else
-     sprintf(str3, "%sKW FLASH", strF);
+     sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
     if info^sizeEE then
     begin
-     sprintf(str3, " + %dB EEPROM", info^sizeEE);
+     sprintf(str3, ' + %dB EEPROM', info^sizeEE);
      strcat(str2, str3);
     end;
    end;
    AVR:
    begin
-    sprintf(str2, "AVR, ");
+    sprintf(str2, 'AVR, ');
     if (info^size) < (1024) then
-     sprintf(str3, "%dB FLASH", info^size)
+     sprintf(str3, '%dB FLASH', info^size)
     else
-     sprintf(str3, "%sKB FLASH", strF);
+     sprintf(str3, '%sKB FLASH', strF);
     strcat(str2, str3);
     if info^sizeEE then
     begin
-     sprintf(str3, " + %dB EEPROM", info^sizeEE);
+     sprintf(str3, ' + %dB EEPROM', info^sizeEE);
      strcat(str2, str3);
     end;
    end;
    I2CEE:
    begin
     if (info^size) < (1024) then
-     sprintf(str2, "%s, %dB", strings[I_I2CMEM], info^size)
+     sprintf(str2, '%s, %dB', strings[I_I2CMEM], info^size)
     else
-     sprintf(str2, "%s, %sKB", strings[I_I2CMEM], strF);
+     sprintf(str2, '%s, %sKB', strings[I_I2CMEM], strF);
    end;
    SPIEE:
    begin
     if (info^size) < (1024) then
-     sprintf(str2, "%s, %dB", strings[I_SPIMEM], info^size)
+     sprintf(str2, '%s, %dB', strings[I_SPIMEM], info^size)
     else
-     sprintf(str2, "%s, %sKB", strings[I_SPIMEM], strF);
+     sprintf(str2, '%s, %sKB', strings[I_SPIMEM], strF);
    end;
    UWEE:
    begin
     if (info^size) < (1024) then
-     sprintf(str2, "%s, %dB", strings[I_UWMEM], info^size)
+     sprintf(str2, '%s, %dB', strings[I_UWMEM], info^size)
     else
-     sprintf(str2, "%s,%sKB", strings[I_UWMEM], strF);
+     sprintf(str2, '%s,%sKB', strings[I_UWMEM], strF);
    end;
    OWEE:
    begin
@@ -524,30 +526,30 @@ begin
      sprintf(str2, strings[I_OWDEV])
     else
      if (info^size) < (1024) then
-      sprintf(str2, "%s, %dB", strings[I_OWMEM], info^size)
+      sprintf(str2, '%s, %dB', strings[I_OWMEM], info^size)
      else
-      sprintf(str2, "%s, %sKB", strings[I_OWMEM], strF);
+      sprintf(str2, '%s, %sKB', strings[I_OWMEM], strF);
    end;
    UNIOEE:
    begin
     if (info^size) < (1024) then
-     sprintf(str2, "%s, %dB", strings[I_UNIOMEM], info^size)
+     sprintf(str2, '%s, %dB', strings[I_UNIOMEM], info^size)
     else
-     sprintf(str2, "%s, %sKB", strings[I_UNIOMEM], strF);
+     sprintf(str2, '%s, %sKB', strings[I_UNIOMEM], strF);
    end;
    else
    begin
-    sprintf(str2, "!!unknown family!!");
+    sprintf(str2, '!!unknown family!!');
    end;
   end;
   if (info^HV) > (0) then
   begin
-   sprintf(str3, ", %.1fV", info^HV);
+   sprintf(str3, ', %.1fV', info^HV);
    strcat(str2, str3);
   end;
   if info^V33 then
   begin
-   strcat(str2, ", ");
+   strcat(str2, ', ');
    strcat(str2, strings[I_3V3REQUIRED]);
   end;
   info^features := malloc((strlen(str2)) + (1));
@@ -573,7 +575,7 @@ begin
   begin
    str := malloc((strlen(DEVLIST[i].device)) + (1));
    strcpy(str, DEVLIST[i].device);
-   tok := strtok(str, ",");
+   tok := strtok(str, ',');
    while tok do
    begin
     if not (strcmp(dev, tok)) then
@@ -585,7 +587,7 @@ begin
      free(str);
      Exit(info);
     end;
-    tok := strtok(NULL, ",");
+    tok := strtok(NULL, ',');
    end;
    free(str);
   end;

@@ -24,8 +24,10 @@ uses
   progp18,
   progp24,
   progavr,
-  devicerw,
-  mainform;
+  devicerw;
+
+const
+  NL = #10;
 
 type
   DWORD = Cardinal;
@@ -94,17 +96,17 @@ var
   word: Integer;
   valid: Integer;
 begin
-  f := fopen(savefile, "w");
+  f := fopen(savefile, 'w');
   if not (f) then
    Exit;
-  str1 := "";
+  str1 := '';
   sum := 0;
   count := 0;
   ext := 0;
   if ((devType) = (PIC12)) or ((devType) = (PIC16)) then
   begin
    x := $3fff;
-   fprintf(f, ":020000040000FA\n");
+   fprintf(f, ':020000040000FA' + NL + '');
    for i := 0 to (sizeW) - 1 do
    begin
     memCODE_W[i] := memCODE_W[i] and x;
@@ -117,7 +119,7 @@ begin
    while (i) < (sizeW) do
    begin
     sum := sum + ((memCODE_W[i]) shr (8)) + ((memCODE_W[i]) and ($ff));
-    sprintf(str, "%02X%02X", (memCODE_W[i]) and ($ff), (memCODE_W[i]) shr (8));
+    sprintf(str, '%02X%02X', (memCODE_W[i]) and ($ff), (memCODE_W[i]) shr (8));
     strcat(str1, str);
     Inc(count);
     if ((count) = (8)) or ((i) = ((sizeW) - (1))) then
@@ -136,10 +138,10 @@ begin
      if ((base) shr (15)) > (ext) then
      begin
       ext := (base) shr (15);
-      fprintf(f, ":02000004%04X%02X\n", ext, ((-(6)) - (ext)) and ($ff));
+      fprintf(f, ':02000004%04X%02X' + NL + '', ext, ((-(6)) - (ext)) and ($ff));
      end;
      if count then
-      fprintf(f, ":%02X%04X00%s%02X\n", (count) * (2), (addr) and ($FFFF), str1, (-(sum)) and ($ff));
+      fprintf(f, ':%02X%04X00%s%02X' + NL + '', (count) * (2), (addr) and ($FFFF), str1, (-(sum)) and ($ff));
      str1[0] := 0;
      sum := 0; count := 0;
     end;
@@ -148,12 +150,12 @@ begin
    if sizeEE then
    begin
     if (ext) <> ($01) then
-     fprintf(f, ":020000040001F9\n");
+     fprintf(f, ':020000040001F9' + NL + '');
     sum := 0; count := 0;
     for i := 0 to (sizeEE) - 1 do
     begin
      sum := sum + memEE[i];
-     sprintf(str, "%02X00", (memEE[i]) and ($ff));
+     sprintf(str, '%02X00', (memEE[i]) and ($ff));
      strcat(str1, str);
      Inc(count);
      if ((count) = (8)) or ((i) = ((sizeEE) - (1))) then
@@ -170,19 +172,19 @@ begin
       sum := sum + (((count) * (2)) + ((addr) and ($ff))) + ((addr) shr (8));
       if count then
       begin
-       fprintf(f, ":%02X%04X00%s%02X\n", (count) * (2), addr, str1, (-(sum)) and ($ff));
+       fprintf(f, ':%02X%04X00%s%02X' + NL + '', (count) * (2), addr, str1, (-(sum)) and ($ff));
       end;
       str1[0] := 0;
       sum := 0; count := 0;
      end;
     end;
    end;
-   fprintf(f, ":00000001FF\n");
+   fprintf(f, ':00000001FF' + NL + '');
   end
   else
    if (devType) = (PIC18) then
    begin
-    fprintf(f, ":020000040000FA\n");
+    fprintf(f, ':020000040000FA' + NL + '');
     i := 0;
     while ((i) < (size)) and ((memCODE[i]) = ($ff)) do
     begin
@@ -191,7 +193,7 @@ begin
     while (i) < (size) do
     begin
      sum := sum + memCODE[i];
-     sprintf(str, "%02X", memCODE[i]);
+     sprintf(str, '%02X', memCODE[i]);
      strcat(str1, str);
      Inc(count);
      if ((count) = (16)) or ((i) = ((size) - (1))) then
@@ -209,11 +211,11 @@ begin
       if ((base) shr (16)) > (ext) then
       begin
        ext := (base) shr (16);
-       fprintf(f, ":02000004%04X%02X\n", ext, ((-(6)) - (ext)) and ($ff));
+       fprintf(f, ':02000004%04X%02X' + NL + '', ext, ((-(6)) - (ext)) and ($ff));
       end;
       if count then
       begin
-       fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+       fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
       end;
       str1[0] := 0;
       sum := 0; count := 0;
@@ -224,12 +226,12 @@ begin
     for i := 0 to (8) - 1 do
     begin
      sum := sum + memID[i];
-     sprintf(str, "%02X", (memID[i]) and ($ff));
+     sprintf(str, '%02X', (memID[i]) and ($ff));
      strcat(str1, str);
      Inc(count);
      if (count) = (8) then
      begin
-      fprintf(f, ":020000040020DA\n");
+      fprintf(f, ':020000040020DA' + NL + '');
       base := ((i) - (count)) + (1);
       s := i;
       while ((s) > ((i) - (count))) and ((memID[s]) >= ($ff)) do
@@ -242,7 +244,7 @@ begin
       sum := sum + ((count) + ((base) and ($ff))) + (((base) shr (8)) and ($ff));
       if count then
       begin
-       fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+       fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
       end;
       str1[0] := 0;
       sum := 0; count := 0;
@@ -252,12 +254,12 @@ begin
     for i := 0 to (14) - 1 do
     begin
      sum := sum + memCONFIG[i];
-     sprintf(str, "%02X", (memCONFIG[i]) and ($ff));
+     sprintf(str, '%02X', (memCONFIG[i]) and ($ff));
      strcat(str1, str);
      Inc(count);
      if (count) = (14) then
      begin
-      fprintf(f, ":020000040030CA\n");
+      fprintf(f, ':020000040030CA' + NL + '');
       base := ((i) - (count)) + (1);
       s := i;
       while ((s) > ((i) - (count))) and ((memCONFIG[s]) >= ($ff)) do
@@ -270,7 +272,7 @@ begin
       sum := sum + ((count) + ((base) and ($ff))) + (((base) shr (8)) and ($ff));
       if count then
       begin
-       fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+       fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
       end;
       str1[0] := 0;
       sum := 0; count := 0;
@@ -278,12 +280,12 @@ begin
     end;
     if sizeEE then
     begin
-     fprintf(f, ":0200000400F00A\n");
+     fprintf(f, ':0200000400F00A' + NL + '');
      sum := 0; count := 0;
      for i := 0 to (sizeEE) - 1 do
      begin
       sum := sum + memEE[i];
-      sprintf(str, "%02X", (memEE[i]) and ($ff));
+      sprintf(str, '%02X', (memEE[i]) and ($ff));
       strcat(str1, str);
       Inc(count);
       if ((count) = (16)) or ((i) = ((sizeEE) - (1))) then
@@ -300,19 +302,19 @@ begin
        sum := sum + ((count) + ((base) and ($ff))) + (((base) shr (8)) and ($ff));
        if count then
        begin
-        fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+        fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
        end;
        str1[0] := 0;
        sum := 0; count := 0;
       end;
      end;
     end;
-    fprintf(f, ":00000001FF\n");
+    fprintf(f, ':00000001FF' + NL + '');
    end
    else
     if (devType) = (PIC24) then
     begin
-     fprintf(f, ":020000040000FA\n");
+     fprintf(f, ':020000040000FA' + NL + '');
      sum := 0;
      count := 0;
      word := (((memCODE[0]) + ((memCODE[1]) shl (8))) + ((memCODE[2]) shl (16))) + ((memCODE[3]) shl (24));
@@ -325,7 +327,7 @@ begin
      while (i) < (size) do
      begin
       sum := sum + memCODE[i];
-      sprintf(str, "%02X", memCODE[i]);
+      sprintf(str, '%02X', memCODE[i]);
       strcat(str1, str);
       Inc(count);
       if ((count) = (16)) or ((i) = ((size) - (1))) then
@@ -343,11 +345,11 @@ begin
        if ((base) shr (16)) > (ext) then
        begin
         ext := (base) shr (16);
-        fprintf(f, ":02000004%04X%02X\n", ext, ((-(6)) - (ext)) and ($ff));
+        fprintf(f, ':02000004%04X%02X' + NL + '', ext, ((-(6)) - (ext)) and ($ff));
        end;
        if (count) and (valid) then
        begin
-        fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+        fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
        end;
        str1[0] := 0;
        sum := 0; count := 0;
@@ -356,13 +358,13 @@ begin
      end;
      if sizeCONFIG then
      begin
-      fprintf(f, ":0200000401F009\n");
+      fprintf(f, ':0200000401F009' + NL + '');
       i := 0;
       sum := 0; count := 0;
       while ((i) < (sizeCONFIG)) and ((i) < (48)) do
       begin
        sum := sum + memCONFIG[i];
-       sprintf(str, "%02X", memCONFIG[i]);
+       sprintf(str, '%02X', memCONFIG[i]);
        strcat(str1, str);
        Inc(count);
        if ((count) = (4)) or ((i) = ((sizeCONFIG) - (1))) then
@@ -371,7 +373,7 @@ begin
         sum := sum + ((count) + ((base) and ($ff))) + (((base) shr (8)) and ($ff));
         if count then
         begin
-         fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+         fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
         end;
         str1[0] := 0;
         sum := 0; count := 0;
@@ -381,14 +383,14 @@ begin
      end;
      if sizeEE then
      begin
-      fprintf(f, ":0200000400FFFB\n");
+      fprintf(f, ':0200000400FFFB' + NL + '');
       str1[0] := 0;
       sum := 0; count := 0;
       i := 0;
       while (i) < (sizeEE) do
       begin
        sum := sum + (memEE[i]) + (memEE[(i) + (1)]);
-       sprintf(str, "%02X%02X0000", (memEE[i]) and ($ff), (memEE[(i) + (1)]) and ($ff));
+       sprintf(str, '%02X%02X0000', (memEE[i]) and ($ff), (memEE[(i) + (1)]) and ($ff));
        strcat(str1, str);
        count := count + 4;
        if ((count) = (16)) or ((i) = ((sizeEE) - (2))) then
@@ -405,7 +407,7 @@ begin
         sum := sum + ((($E0) + (count)) + ((base) and ($ff))) + ((base) shr (8));
         if (count) and (valid) then
         begin
-         fprintf(f, ":%02X%04X00%s%02X\n", count, (base) + ($E000), str1, (-(sum)) and ($ff));
+         fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) + ($E000), str1, (-(sum)) and ($ff));
         end;
         str1[0] := 0;
         sum := 0; count := 0;
@@ -413,12 +415,12 @@ begin
        Inc(i, 2);
       end;
      end;
-     fprintf(f, ":00000001FF\n");
+     fprintf(f, ':00000001FF' + NL + '');
     end
     else
      if (devType) = (AVR) then
      begin
-      fprintf(f, ":020000040000FA\n");
+      fprintf(f, ':020000040000FA' + NL + '');
       i := 0;
       while ((i) < (size)) and ((memCODE[i]) = ($ff)) do
       begin
@@ -427,7 +429,7 @@ begin
       while (i) < (size) do
       begin
        sum := sum + memCODE[i];
-       sprintf(str, "%02X", memCODE[i]);
+       sprintf(str, '%02X', memCODE[i]);
        strcat(str1, str);
        Inc(count);
        if ((count) = (16)) or ((i) = ((size) - (1))) then
@@ -445,33 +447,33 @@ begin
         if ((base) shr (16)) > (ext) then
         begin
          ext := (base) shr (16);
-         fprintf(f, ":02000004%04X%02X\n", ext, ((-(6)) - (ext)) and ($ff));
+         fprintf(f, ':02000004%04X%02X' + NL + '', ext, ((-(6)) - (ext)) and ($ff));
         end;
         if count then
         begin
-         fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+         fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
         end;
         str1[0] := 0;
         sum := 0; count := 0;
        end;
        Inc(i);
       end;
-      fprintf(f, ":00000001FF\n");
+      fprintf(f, ':00000001FF' + NL + '');
      end
      else
       if (((((devType) = (I2CEE)) or ((devType) = (SPIEE))) or ((devType) = (UWEE))) or ((devType) = (OWEE))) or ((devType) = (UNIOEE)) then
       begin
-       if (strstr(savefile, ".bin")) or (strstr(savefile, ".BIN")) then
+       if (strstr(savefile, '.bin')) or (strstr(savefile, '.BIN')) then
        begin
         fwrite(memEE, 1, sizeEE, f);
        end
        else
        begin
-        fprintf(f, ":020000040000FA\n");
+        fprintf(f, ':020000040000FA' + NL + '');
         for i := 0 to (sizeEE) - 1 do
         begin
          sum := sum + memEE[i];
-         sprintf(str, "%02X", memEE[i]);
+         sprintf(str, '%02X', memEE[i]);
          strcat(str1, str);
          Inc(count);
          if ((count) = (16)) or ((i) = ((sizeEE) - (1))) then
@@ -490,18 +492,18 @@ begin
            if ((base) shr (16)) > (ext) then
            begin
             ext := (base) shr (16);
-            fprintf(f, ":02000004%04X%02X\n", ext, ((-(6)) - (ext)) and ($ff));
+            fprintf(f, ':02000004%04X%02X' + NL + '', ext, ((-(6)) - (ext)) and ($ff));
            end;
            if count then
            begin
-            fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+            fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
            end;
           end;
           str1[0] := 0;
           sum := 0; count := 0;
          end;
         end;
-        fprintf(f, ":00000001FF\n");
+        fprintf(f, ':00000001FF' + NL + '');
        end;
       end;
   if f then
@@ -519,21 +521,21 @@ var
   count: Integer;
   s: Integer;
 begin
-  f := fopen(savefile, "w");
+  f := fopen(savefile, 'w');
   if not (f) then
    Exit
   else
    if (devType) = (AVR) then
    begin
-    str1 := "";
-    fprintf(f, ":020000040000FA\n");
+    str1 := '';
+    fprintf(f, ':020000040000FA' + NL + '');
     sum := 0;
     count := 0;
     sum := 0; count := 0;
     for i := 0 to (sizeEE) - 1 do
     begin
      sum := sum + memEE[i];
-     sprintf(str, "%02X", (memEE[i]) and ($ff));
+     sprintf(str, '%02X', (memEE[i]) and ($ff));
      strcat(str1, str);
      Inc(count);
      if ((count) = (16)) or ((i) = ((sizeEE) - (1))) then
@@ -550,13 +552,13 @@ begin
       sum := sum + ((count) + ((base) and ($ff))) + (((base) shr (8)) and ($ff));
       if count then
       begin
-       fprintf(f, ":%02X%04X00%s%02X\n", count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
+       fprintf(f, ':%02X%04X00%s%02X' + NL + '', count, (base) and ($FFFF), str1, (-(sum)) and ($ff));
       end;
       str1[0] := 0;
       sum := 0; count := 0;
      end;
     end;
-    fprintf(f, ":00000001FF\n");
+    fprintf(f, ':00000001FF' + NL + '');
    end;
   if f then
    fclose(f);
@@ -596,10 +598,10 @@ var
 begin
   input_address := 0;
   ext_addr := 0;
-  f := fopen(loadfile, "r");
+  f := fopen(loadfile, 'r');
   if not (f) then
    Exit(-(1));
-  sprintf(str, "[%d] %s :\r\n", devType, loadfile);
+  sprintf(str, '[%d] %s :' + #13 + '' + NL + '', devType, loadfile);
   PrintMessage(str);
   if ((devType) = (PIC12)) or ((devType) = (PIC16)) then
   begin
@@ -702,7 +704,7 @@ begin
    else
     if sizeEE then
      DisplayEE();
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
   end
   else
    if (devType) = (PIC18) then
@@ -804,21 +806,21 @@ begin
     i := 0;
     while (i) < (8) do
     begin
-     sprintf(str, "ID%d: 0x%02X   ID%d: 0x%02X\r\n", i, memID[i], (i) + (1), memID[(i) + (1)]);
+     sprintf(str, 'ID%d: 0x%02X   ID%d: 0x%02X' + #13 + '' + NL + '', i, memID[i], (i) + (1), memID[(i) + (1)]);
      PrintMessage(str);
      Inc(i, 2);
     end;
     PrintMessage(strings[S_ConfigMem]);
     for i := 0 to (12) - 1 do
     begin
-     sprintf(str, "[0x%06X] 0x%02X\r\n", ($300000) + (i), memCONFIG[i]);
+     sprintf(str, '[0x%06X] 0x%02X' + #13 + '' + NL + '', ($300000) + (i), memCONFIG[i]);
      PrintMessage(str);
     end;
     while (i) < (32) do
     begin
      if (memCONFIG[i]) <> ($FF) then
      begin
-      sprintf(str, "[0x%06X] 0x%02X\r\n", ($300000) + (i), memCONFIG[i]);
+      sprintf(str, '[0x%06X] 0x%02X' + #13 + '' + NL + '', ($300000) + (i), memCONFIG[i]);
       PrintMessage(str);
      end;
      Inc(i);
@@ -827,7 +829,7 @@ begin
     DisplayCODE18F(size);
     if sizeEE then
      DisplayEE();
-    PrintMessage("\r\n");
+    PrintMessage('' + #13 + '' + NL + '');
    end
    else
     if (devType) = (PIC24) then
@@ -951,7 +953,7 @@ begin
        d := ((memCONFIG[(i) + (1)]) shl (8)) + (memCONFIG[i]);
        if ((i) < (36)) or ((d) < ($FFFF)) then
        begin
-        sprintf(str, "0xF800%02X: 0x%04X\r\n", (i) div (2), d);
+        sprintf(str, '0xF800%02X: 0x%04X' + #13 + '' + NL + '', (i) div (2), d);
         PrintMessage(str);
        end;
        Inc(i, 4);
@@ -965,7 +967,7 @@ begin
       PrintMessage(strings[S_EEMem]);
       DisplayEE24F();
      end;
-     PrintMessage("\r\n");
+     PrintMessage('' + #13 + '' + NL + '');
     end
     else
      if (devType) = (AVR) then
@@ -1030,12 +1032,12 @@ begin
       if size then
        PrintMessage(strings[S_CodeMem]);
       DisplayCODEAVR(size);
-      PrintMessage("\r\n");
+      PrintMessage('' + #13 + '' + NL + '');
      end
      else
       if (((((devType) = (I2CEE)) or ((devType) = (SPIEE))) or ((devType) = (UWEE))) or ((devType) = (OWEE))) or ((devType) = (UNIOEE)) then
       begin
-       if (strstr(loadfile, ".bin")) or (strstr(loadfile, ".BIN")) then
+       if (strstr(loadfile, '.bin')) or (strstr(loadfile, '.BIN')) then
        begin
         fseek(f, 0, SEEK_END);
         sizeEE := ftell(f);
@@ -1126,9 +1128,9 @@ begin
        begin
         sum := sum + memEE[i];
        end;
-       sprintf(str, "Checksum: 0x%X\r\n", (sum) and ($FFFF));
+       sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
        PrintMessage(str);
-       PrintMessage("\r\n");
+       PrintMessage('' + #13 + '' + NL + '');
       end;
   fclose(f);
   Exit(0);
@@ -1145,14 +1147,14 @@ var
   hex_count: Integer;
   sum: Integer;
 begin
-  f := fopen(loadfile, "r");
+  f := fopen(loadfile, 'r');
   if not (f) then
    Exit;
   if (devType) = (AVR) then
   begin
    input_address := 0;
    ext_addr := 0;
-   sprintf(str, "%s :\r\n\r\n", loadfile);
+   sprintf(str, '%s :' + #13 + '' + NL + '' + #13 + '' + NL + '', loadfile);
    PrintMessage(str);
    memset(bufferEE, $FF, SizeOf(bufferEE));
    while fgets(line, 256, f) do
@@ -1213,7 +1215,7 @@ begin
    memcpy(memEE, bufferEE, sizeEE);
    if sizeEE then
     DisplayEE();
-   PrintMessage("\r\n");
+   PrintMessage('' + #13 + '' + NL + '');
    fclose(f);
   end;
 end;
@@ -1223,14 +1225,14 @@ var
   timeinfo: ^Ttm;
   rawtime: Ttime_t;
 begin
-  logfile := fopen(LogFileName, "w");
+  logfile := fopen(LogFileName, 'w');
   if not (logfile) then
    Exit;
-  fprintf(logfile, "OPGUI version %s (%s)\n", "unknown", "Linux");
-  fprintf(logfile, "Firmware version %d.%d.%d\n", (FWVersion) shr (16), ((FWVersion) shr (8)) and ($FF), (FWVersion) and ($FF));
+  fprintf(logfile, 'OPGUI version %s (%s)' + NL + '', 'unknown', 'Linux');
+  fprintf(logfile, 'Firmware version %d.%d.%d' + NL + '', (FWVersion) shr (16), ((FWVersion) shr (8)) and ($FF), (FWVersion) and ($FF));
   time(@(rawtime));
   timeinfo := localtime(@(rawtime));
-  fprintf(logfile, "%s\n", asctime(timeinfo));
+  fprintf(logfile, '%s' + NL + '', asctime(timeinfo));
 end;
 
 procedure CloseLogFile;
@@ -1266,13 +1268,13 @@ begin
    begin
     if (bufferU[u]) = (inst[i].code) then
     begin
-     fprintf(logfile, "%02X %s", bufferU[u], inst[i].name_);
+     fprintf(logfile, '%02X %s', bufferU[u], inst[i].name_);
      if (inst[i].params) < ($100) then
      begin
       for p := 0 to (inst[i].params) - 1 do
       begin
        Inc(u);
-       fprintf(logfile, " %02X", bufferU[u]);
+       fprintf(logfile, ' %02X', bufferU[u]);
       end;
      end
      else
@@ -1288,7 +1290,7 @@ begin
       for p := 0 to (tot) - 1 do
       begin
        Inc(u);
-       fprintf(logfile, " %02X", bufferU[u]);
+       fprintf(logfile, ' %02X', bufferU[u]);
       end;
      end;
      if (inst[i].retParams) = (-(1)) then
@@ -1299,24 +1301,24 @@ begin
        if (bufferI[r]) = (inst[i].code) then
        begin
         Inc(r);
-        fprintf(logfile, " ->");
+        fprintf(logfile, ' ->');
         if (inst[i].retParams) = (0) then
-         fprintf(logfile, " OK");
+         fprintf(logfile, ' OK');
         for p := 0 to (inst[i].retParams) - 1 do
         begin
          if ((p) > (15)) and (((p) mod (22)) = (0)) then
-          fprintf(logfile, "\n\t\t\t\t");
-         fprintf(logfile, " %02X", bufferI[Inc(r)]);
+          fprintf(logfile, '' + NL + '' + #9 + '' + #9 + '' + #9 + '' + #9 + '');
+         fprintf(logfile, ' %02X', bufferI[Inc(r)]);
         end;
        end
        else
-        fprintf(logfile, " -> NAK");
+        fprintf(logfile, ' -> NAK');
       end
       else
       begin
        if (bufferI[r]) = (inst[i].code) then
        begin
-        fprintf(logfile, " ->");
+        fprintf(logfile, ' ->');
         N := bufferI[(r) + (1)];
         A := (inst[i].retParams) shr (8);
         x := (inst[i].retParams) and ($F);
@@ -1331,21 +1333,21 @@ begin
         begin
          Inc(r);
          if ((p) > (15)) and (((p) mod (22)) = (0)) then
-          fprintf(logfile, "\n\t\t\t\t");
-         fprintf(logfile, " %02X", bufferI[r]);
+          fprintf(logfile, '' + NL + '' + #9 + '' + #9 + '' + #9 + '' + #9 + '');
+         fprintf(logfile, ' %02X', bufferI[r]);
         end;
         Inc(r);
        end
        else
-        fprintf(logfile, " -> NAK");
+        fprintf(logfile, ' -> NAK');
       end;
-     fprintf(logfile, "\n");
+     fprintf(logfile, NL);
      Break;
     end;
    end;
    if (i) >= ((SizeOf(inst)) div (SizeOf(struct INSTRUCTIONS))) then
    begin
-    fprintf(logfile, "%02X ??\n", bufferU[u]);
+    fprintf(logfile, '%02X ??' + NL + '', bufferU[u]);
    end;
   end;
 end;
@@ -1354,22 +1356,22 @@ procedure WriteLogIO;
 var
   i: Integer;
 begin
-  fprintf(logfile, "bufferU=[");
+  fprintf(logfile, 'bufferU=[');
   for i := 0 to (64) - 1 do
   begin
    if ((i) mod (32)) = (0) then
-    fprintf(logfile, "\n");
-   fprintf(logfile, "%02X ", bufferU[i]);
+    fprintf(logfile, NL);
+   fprintf(logfile, '%02X ', bufferU[i]);
   end;
-  fprintf(logfile, "]\n");
-  fprintf(logfile, "bufferI=[");
+  fprintf(logfile, ']' + NL + '');
+  fprintf(logfile, 'bufferI=[');
   for i := 0 to (64) - 1 do
   begin
    if ((i) mod (32)) = (0) then
-    fprintf(logfile, "\n");
-   fprintf(logfile, "%02X ", bufferI[i]);
+    fprintf(logfile, NL);
+   fprintf(logfile, '%02X ', bufferI[i]);
   end;
-  fprintf(logfile, "]\n");
+  fprintf(logfile, ']' + NL + '');
   WriteLogParsedIO();
 end;
 

@@ -17,8 +17,10 @@ uses
   Buttons,
   Spin,
   Menus,
-  LCLType,
-  mainform;
+  LCLType;
+
+const
+  NL = #10;
 
 type
   DWORD = Cardinal;

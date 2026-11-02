@@ -19,10 +19,10 @@ uses
   Menus,
   LCLType,
   common,
-  coff,
-  mainform;
+  coff;
 
 const
+  NL = #10;
   Tck = 30;
   VER = 1;
   STEP = 2;
@@ -184,7 +184,7 @@ begin
   bufferU[Inc(j)] := EN_VPP_VCC;
   bufferU[Inc(j)] := $1;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -192,7 +192,7 @@ begin
   PacketIO(3);
   if (saveLog) <> 0 then
   begin
-   fprintf(logfile, 'startICD()' + LineEnding + '');
+   fprintf(logfile, 'startICD()' + NL + '');
   end;
 end;
 
@@ -208,7 +208,7 @@ begin
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := READ_PINS;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -218,10 +218,10 @@ begin
   if (saveLog) <> 0 then
   begin
    // return value of fprintf() ignored
-   fprintf(logfile, 'isRunning()' + LineEnding + '');
+   fprintf(logfile, 'isRunning()' + NL + '');
   end;
   z := 0;
-  while (z<DIMBUF-1) and (bufferI[z]<>READ_PINS) do
+  while (z < DIMBUF-1) and (bufferI[z] <> READ_PINS) do
   begin
    Inc(z);
   end;
@@ -241,7 +241,7 @@ begin
   bufferU[Inc(j)] := TX16;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := WREG;
-  bufferU[Inc(j)] := IfThen((break_addr shr 8)+(freeze, $40, 0));
+  bufferU[Inc(j)] := (break_addr shr 8)+(IfThen(freeze, $40, 0));
   bufferU[Inc(j)] := $1;
   bufferU[Inc(j)] := $8E;
   bufferU[Inc(j)] := TX16;
@@ -257,7 +257,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -265,7 +265,7 @@ begin
   PacketIO(1+5*Tcom);
   if (saveLog) <> 0 then
   begin
-   fprintf(logfile, 'continue()' + LineEnding + '');
+   fprintf(logfile, 'continue()' + NL + '');
   end;
   running := 1;
 end;
@@ -282,7 +282,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -290,7 +290,7 @@ begin
   PacketIO(1+Tcom);
   if (saveLog) <> 0 then
   begin
-   fprintf(logfile, 'step()' + LineEnding + '');
+   fprintf(logfile, 'step()' + NL + '');
   end;
 end;
 
@@ -304,7 +304,7 @@ begin
   bufferU[Inc(j)] := EN_VPP_VCC;
   bufferU[Inc(j)] := $5;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -312,7 +312,7 @@ begin
   PacketIO(2);
   if (saveLog) <> 0 then
   begin
-   fprintf(logfile, 'run()' + LineEnding + '');
+   fprintf(logfile, 'run()' + NL + '');
   end;
   running := 1;
 end;
@@ -330,7 +330,7 @@ begin
   bufferU[Inc(j)] := RX16;
   bufferU[Inc(j)] := $1;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -340,10 +340,10 @@ begin
   if (saveLog) <> 0 then
   begin
    // return value of fprintf() ignored
-   fprintf(logfile, 'version()' + LineEnding + '');
+   fprintf(logfile, 'version()' + NL + '');
   end;
   z := 0;
-  while (z<DIMBUF-2) and (bufferI[z]<>RX16) do
+  while (z < DIMBUF-2) and (bufferI[z] <> RX16) do
   begin
    Inc(z);
   end;
@@ -360,7 +360,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -368,7 +368,7 @@ begin
   PacketIO(2);
   if (saveLog) <> 0 then
   begin
-   fprintf(logfile, 'halt()' + LineEnding + '');
+   fprintf(logfile, 'halt()' + NL + '');
   end;
   running := 0;
 end;
@@ -390,7 +390,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -400,10 +400,10 @@ begin
   if (saveLog) <> 0 then
   begin
    // return value of fprintf() ignored
-   fprintf(logfile, 'ReadRegister(0x%X)' + LineEnding + '', addr);
+   fprintf(logfile, 'ReadRegister(0x%X)' + NL + '', addr);
   end;
   z := 0;
-  while (z<DIMBUF-2) and (bufferI[z]<>RX16) do
+  while (z < DIMBUF-2) and (bufferI[z] <> RX16) do
   begin
    Inc(z);
   end;
@@ -419,9 +419,9 @@ var
 begin
   j := 0;
   i := 0;
-  while i<n do
+  while i < n do
   begin
-   w := IfThen(i+(DIMBUF-9)/2<n, (DIMBUF-9)/2, n-i);
+   w := IfThen(i+(DIMBUF-9)/2 < n, (DIMBUF-9)/2, n-i);
    bufferU[Inc(j)] := TX16;
    bufferU[Inc(j)] := $2;
    bufferU[Inc(j)] := RREG;
@@ -431,7 +431,7 @@ begin
    bufferU[Inc(j)] := RX16;
    bufferU[Inc(j)] := w;
    bufferU[Inc(j)] := FLUSH;
-   while j<DIMBUF do
+   while j < DIMBUF do
    begin
     bufferU[j] := $0;
     Inc(j);
@@ -441,10 +441,10 @@ begin
    if (saveLog) <> 0 then
    begin
     // return value of fprintf() ignored
-    fprintf(logfile, 'ReadRegisterN(0x%X,%d)' + LineEnding + '', addr, n);
+    fprintf(logfile, 'ReadRegisterN(0x%X,%d)' + NL + '', addr, n);
    end;
    z := 0;
-   while (z<DIMBUF-2) and (bufferI[z]<>RX16) do
+   while (z < DIMBUF-2) and (bufferI[z] <> RX16) do
    begin
     Inc(z);
    end;
@@ -457,14 +457,14 @@ begin
   end;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   // return value of PacketIO() ignored
   PacketIO(2);
-  Exit(IfThen(i=n, 0, -1));
+  Exit(IfThen(i = n, 0, -1));
 end;
 
 procedure WriteRegister(addr: Integer; data: Integer);
@@ -481,7 +481,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -489,7 +489,7 @@ begin
   PacketIO(1+2*Tcom);
   if (saveLog) <> 0 then
   begin
-   fprintf(logfile, 'WriteRegister(0x%X,0x%X)' + LineEnding + '', addr, data);
+   fprintf(logfile, 'WriteRegister(0x%X,0x%X)' + NL + '', addr, data);
   end;
 end;
 
@@ -538,7 +538,7 @@ var
 begin
   if (saveLog) <> 0 then
    // return value of fprintf() ignored
-   fprintf(logfile, 'ReadProgMemN(0x%X,%d)' + LineEnding + '', addr, n);
+   fprintf(logfile, 'ReadProgMemN(0x%X,%d)' + NL + '', addr, n);
   j := 0;
   bufferU[Inc(j)] := TX16;
   bufferU[Inc(j)] := 2;
@@ -563,7 +563,7 @@ begin
   bufferU[Inc(j)] := (EECON1 shr 8) and $FF;
   bufferU[Inc(j)] := EECON1 and $FF;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -572,14 +572,14 @@ begin
   PacketIO(1+13*Tcom);
   j := 0;
   z := 0;
-  while (z<DIMBUF-5) and (bufferI[z]<>RX16) do
+  while (z < DIMBUF-5) and (bufferI[z] <> RX16) do
   begin
    Inc(z);
   end;
   data_temp := bufferI[z+3]+(bufferI[z+7] shl 8);
   addr_temp := bufferI[z+5]+(bufferI[z+9] shl 8);
   Inc(z, 10);
-  while (z<DIMBUF-3) and (bufferI[z]<>RX16) do
+  while (z < DIMBUF-3) and (bufferI[z] <> RX16) do
   begin
    Inc(z);
   end;
@@ -608,10 +608,10 @@ begin
    bufferU[Inc(j)] := RX16;
    bufferU[Inc(j)] := 3;
    Inc(w);
-   if (j>DIMBUF-21) or (i=n-1) then
+   if (j > DIMBUF-21) or (i = n-1) then
    begin
     bufferU[Inc(j)] := FLUSH;
-    while j<DIMBUF do
+    while j < DIMBUF do
     begin
      bufferU[j] := $0;
      Inc(j);
@@ -622,7 +622,7 @@ begin
     w := 0;
     for z := 0 to (DIMBUF-5) - 1 do
     begin
-     if bufferI[z]=RX16 then
+     if bufferI[z] = RX16 then
      begin
       buf[Inc(k)] := bufferI[z+3]+(bufferI[z+7] shl 8);
       Inc(z, 8);
@@ -654,7 +654,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -703,7 +703,7 @@ var
 begin
   if (saveLog) <> 0 then
    // return value of fprintf() ignored
-   fprintf(logfile, 'ReadDataMemN(0x%X,%d)' + LineEnding + '', addr, n);
+   fprintf(logfile, 'ReadDataMemN(0x%X,%d)' + NL + '', addr, n);
   j := 0;
   bufferU[Inc(j)] := TX16;
   bufferU[Inc(j)] := 2;
@@ -728,7 +728,7 @@ begin
   bufferU[Inc(j)] := (EECON1 shr 8) and $FF;
   bufferU[Inc(j)] := EECON1 and $FF;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -737,14 +737,14 @@ begin
   PacketIO(1+13*Tcom);
   j := 0;
   z := 0;
-  while (z<DIMBUF-5) and (bufferI[z]<>RX16) do
+  while (z < DIMBUF-5) and (bufferI[z] <> RX16) do
   begin
    Inc(z);
   end;
   data_temp := bufferI[z+3];
   addr_temp := bufferI[z+5];
   Inc(z, 6);
-  while (z<DIMBUF-3) and (bufferI[z]<>RX16) do
+  while (z < DIMBUF-3) and (bufferI[z] <> RX16) do
   begin
    Inc(z);
   end;
@@ -769,10 +769,10 @@ begin
    bufferU[Inc(j)] := RX16;
    bufferU[Inc(j)] := 1;
    Inc(w);
-   if (j>DIMBUF-17) or (i=n-1) then
+   if (j > DIMBUF-17) or (i = n-1) then
    begin
     bufferU[Inc(j)] := FLUSH;
-    while j<DIMBUF do
+    while j < DIMBUF do
     begin
      bufferU[j] := $0;
      Inc(j);
@@ -783,7 +783,7 @@ begin
     w := 0;
     for z := 0 to (DIMBUF-5) - 1 do
     begin
-     if bufferI[z]=RX16 then
+     if bufferI[z] = RX16 then
      begin
       buf[Inc(k)] := bufferI[z+3];
       Inc(z, 4);
@@ -807,7 +807,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -850,7 +850,7 @@ var
   iter2: TGtkTextIter;
 begin
   sourceBuf.SelEnd := Length(sourceBuf.Text);
-  if line>0 then
+  if line > 0 then
   begin
    gtk_text_iter_set_line(@( iter ), line-1);
    iter2 := iter;
@@ -875,7 +875,7 @@ var
   iter2: TGtkTextIter;
   tag: ^TGtkTextTag;
 begin
-  if line>0 then
+  if line > 0 then
   begin
    tag := gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(sourceBuf), 'break_text');
    if  not tag then
@@ -897,7 +897,7 @@ var
   iter: TGtkTextIter;
   iter2: TGtkTextIter;
 begin
-  if line>0 then
+  if line > 0 then
   begin
    sourceBuf.SelEnd := Length(sourceBuf.Text);
    gtk_text_iter_set_line(@( iter ), line-1);
@@ -941,7 +941,7 @@ begin
   dialog := gtk_file_chooser_dialog_new(strings[I_LOAD_COFF], GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, strings[I_CANCEL], GTK_RESPONSE_CANCEL, strings[I_OPEN], GTK_RESPONSE_ACCEPT, nil);
   if (cur_path) <> 0 then
    gtk_file_chooser_set_current_folder(dialog, cur_path);
-  if gtk_dialog_run (GTK_DIALOG (dialog)) = GTK_RESPONSE_ACCEPT then
+  if gtk_dialog_run(GTK_DIALOG(dialog)) = GTK_RESPONSE_ACCEPT then
   begin
    filename := gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
    if (cur_path) <> 0 then
@@ -949,9 +949,9 @@ begin
    cur_path := gtk_file_chooser_get_current_folder(dialog);
    UseCoff := analyzeCOFF(filename, Slabel, Sulabel, source_info, @( s_files ), coff_data, @( sym ), @( nsym ));
    g_free(filename);
-   if source_info[0].src_file<>-1 then
+   if source_info[0].src_file <> -1 then
    begin
-    if currentSource=source_info[0].src_file then
+    if currentSource = source_info[0].src_file then
     begin
      scrollToLine(source_info[0].src_line);
     end
@@ -1074,7 +1074,7 @@ procedure icdCheck(widget: ^TControl; window: ^TControl);
 var
   // (no local variables detected)
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if  not isRunning() then
   begin
@@ -1087,7 +1087,7 @@ procedure icdRun(widget: ^TControl; window: ^TControl);
 var
   // (no local variables detected)
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if  not icdConnected then
   begin
@@ -1095,7 +1095,7 @@ begin
    if (saveLog) <> 0 then
    begin
     OpenLogFile();
-    fprintf(logfile, 'ICD start' + LineEnding + '');
+    fprintf(logfile, 'ICD start' + NL + '');
    end;
    startICD(Tck);
    run();
@@ -1115,7 +1115,7 @@ procedure icdHalt(widget: ^TControl; window: ^TControl);
 var
   // (no local variables detected)
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if (running) <> 0 then
   begin
@@ -1129,7 +1129,7 @@ procedure icdStep(widget: ^TControl; window: ^TControl);
 var
   // (no local variables detected)
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if (running) <> 0 then
   begin
@@ -1146,7 +1146,7 @@ var
   addr: Integer;
   data: Integer;
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if (running) <> 0 then
   begin
@@ -1155,7 +1155,7 @@ begin
   end;
   addr := ((ReadRegister($18E) and $1F) shl 8)+ReadRegister($18F);
   data := ReadProgMem(addr);
-  if (data shr 11)=4 then
+  if (data shr 11) = 4 then
   begin
    cont(addr+1, freeze);
    icdTimer := Application.ProcessMessages;
@@ -1172,7 +1172,7 @@ procedure icdStop(widget: ^TControl; window: ^TControl);
 var
   j: Integer;
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if (running) <> 0 then
   begin
@@ -1186,7 +1186,7 @@ begin
   bufferU[Inc(j)] := SET_CK_D;
   bufferU[Inc(j)] := $2;
   bufferU[Inc(j)] := FLUSH;
-  while j<DIMBUF do
+  while j < DIMBUF do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -1203,7 +1203,7 @@ procedure icdRefresh(widget: ^TControl; window: ^TControl);
 var
   // (no local variables detected)
 begin
-  if DeviceDetected<>1 then
+  if DeviceDetected <> 1 then
    Exit;
   if  not running then
   begin
@@ -1217,18 +1217,18 @@ var
   temp: array[0..128-1] of Char;
   i: Integer;
 begin
-  if bank>3 then
+  if bank > 3 then
    bank := 3;
-  if bank<0 then
+  if bank < 0 then
    bank := 0;
   sprintf(temp, 'bank %d:', bank);
   strcat(status, temp);
   ReadRegisterN(bank*$80, 128, b);
   for i := 0 to (128) - 1 do
   begin
-   if i mod 16=0 then
+   if i mod 16 = 0 then
    begin
-    sprintf(temp, '' + LineEnding + '0x%03X:', i+bank*$80);
+    sprintf(temp, '' + NL + '0x%03X:', i+bank*$80);
     strcat(status, temp);
    end;
    sprintf(temp, '%02X', b[i]);
@@ -1269,14 +1269,30 @@ begin
    data := coff_data[addr];
   if gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(icdMenuPC)) then
   begin
-   sprintf(temp, '%s: %s (0x%04X) ' + LineEnding + 'PC=0x%04X' + LineEnding + '', strings[S_NextIns], decodeCmd(data, cmd, (s and $60) shl 2), data, addr);
+   sprintf(temp, '%s: %s (0x%04X) ' + NL + 'PC=0x%04X' + NL + '', strings[S_NextIns], decodeCmd(data, cmd, (s and $60) shl 2), data, addr);
    strcat(status, temp);
   end;
   if gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(icdMenuSTAT)) then
   begin
-   sprintf(temp, IfThen("STATUS=0x mod 02X (",s); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $80, 'IRP', IfThen("   "); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $40, 'RP1', IfThen("   "); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $20, 'RP0', IfThen("   "); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $10, 'TO', IfThen("  "); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $8, 'PD', IfThen("  "); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $4, 'Z', IfThen(" "); 		strcat(status,temp); 		sprintf(temp," mod s ",s and $2, 'DC', '  "); 		strcat(status,temp); 		sprintf(temp,"%s)' + LineEnding + ''))))))), IfThen(s and $1, 'C', ' '));
+   sprintf(temp, 'STATUS=0x%02X (', s);
    strcat(status, temp);
-   sprintf(temp, 'W=0x%02X PCLATH=0x%02X FSR=0x%02X' + LineEnding + '', ReadRegister(w_temp), ReadRegister(pclath_temp), ReadRegister(fsr_temp));
+   sprintf(temp, '%s ', IfThen(s and $80, 'IRP', '   '));
+   strcat(status, temp);
+   sprintf(temp, '%s ', IfThen(s and $40, 'RP1', '   '));
+   strcat(status, temp);
+   sprintf(temp, '%s ', IfThen(s and $20, 'RP0', '   '));
+   strcat(status, temp);
+   sprintf(temp, '%s ', IfThen(s and $10, 'TO', '  '));
+   strcat(status, temp);
+   sprintf(temp, '%s ', IfThen(s and $8, 'PD', '  '));
+   strcat(status, temp);
+   sprintf(temp, '%s ', IfThen(s and $4, 'Z', ' '));
+   strcat(status, temp);
+   sprintf(temp, '%s ', IfThen(s and $2, 'DC', '  '));
+   strcat(status, temp);
+   sprintf(temp, '%s)' + NL + '', IfThen(s and $1, 'C', ' '));
+   strcat(status, temp);
+   sprintf(temp, 'W=0x%02X PCLATH=0x%02X FSR=0x%02X' + NL + '', ReadRegister(w_temp), ReadRegister(pclath_temp), ReadRegister(fsr_temp));
    strcat(status, temp);
   end;
   if gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(icdMenuBank0)) then
@@ -1290,17 +1306,17 @@ begin
   rawsource := 0;
   if (UseCoff) <> 0 then
   begin
-   if data<>coff_data[addr] then
+   if data <> coff_data[addr] then
    begin
-    sprintf(temp, 'code at address 0x%04X (0x%04X) is different than what specified in coff file (0x%04X)' + LineEnding + '', addr, data, coff_data[addr]);
+    sprintf(temp, 'code at address 0x%04X (0x%04X) is different than what specified in coff file (0x%04X)' + NL + '', addr, data, coff_data[addr]);
     strcat(status, temp);
     rawsource := 1;
    end
    else
    begin
-    if source_info[addr].src_file<>-1 then
+    if source_info[addr].src_file <> -1 then
     begin
-     if currentSource=source_info[addr].src_file then
+     if currentSource = source_info[addr].src_file then
       scrollToLine(source_info[addr].src_line)
      else if loadSource(s_files[source_info[addr].src_file].ptr) then
      begin
@@ -1314,18 +1330,18 @@ begin
      rawsource := 1;
    end;
   end;
-  if (not UseCoff) or (rawsource=1) then
+  if (not UseCoff) or (rawsource = 1) then
   begin
    line_pc := 0;
    tmp[0] := 0;
-   addr0 := IfThen(addr-LINES_BEFORE<0, 0, addr-LINES_BEFORE);
-   addr1 := IfThen(addr+LINES_AFTER>$1FFF, $1FFF, addr+LINES_AFTER);
+   addr0 := IfThen(addr-LINES_BEFORE < 0, 0, addr-LINES_BEFORE);
+   addr1 := IfThen(addr+LINES_AFTER > $1FFF, $1FFF, addr+LINES_AFTER);
    ReadProgMemN(addr0, addr1-addr0, progmem);
    for i := addr0 to (addr1) - 1 do
    begin
-    sprintf(t2, '0x%04X: %s (0x%04X)' + LineEnding + '', i, decodeCmd(progmem[i-addr0], cmd, (s and $60) shl 2), progmem[i-addr0]);
+    sprintf(t2, '0x%04X: %s (0x%04X)' + NL + '', i, decodeCmd(progmem[i-addr0], cmd, (s and $60) shl 2), progmem[i-addr0]);
     strcat(tmp, t2);
-    if i=addr then
+    if i = addr then
      line_pc := i;
    end;
    currentSource := -1;
@@ -1333,7 +1349,7 @@ begin
   end;
   for i := 0 to (nwatch) - 1 do
   begin
-   sprintf(temp, '%s=0x%02X' + LineEnding + '', watch[i].name, ReadRegister(watch[i].value));
+   sprintf(temp, '%s=0x%02X' + NL + '', watch[i].name, ReadRegister(watch[i].value));
    strcat(status, temp);
   end;
   if gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(icdMenuEE)) then
@@ -1341,18 +1357,18 @@ begin
    str[0] := 0;
    t[8] := 0;
    ReadDataMemN(0, 256, data);
-   strcat(str, 'EEPROM:' + LineEnding + '');
+   strcat(str, 'EEPROM:' + NL + '');
    for i := 0 to ($100) - 1 do
    begin
-    if i mod 8=0 then
+    if i mod 8 = 0 then
     begin
-     sprintf(s, '' + LineEnding + '0x%02X: ', i);
+     sprintf(s, '' + NL + '0x%02X: ', i);
      strcat(str, s);
     end;
     sprintf(s, '%02X ', data[i]);
     strcat(str, s);
     t[i and $7] := IfThen(isprint(data[i]), data[i], #46);
-    if i mod 8=7 then
+    if i mod 8 = 7 then
     begin
      g := g_locale_to_utf8(t, -1, nil, nil, nil);
      if (g) <> 0 then
@@ -1368,13 +1384,13 @@ var
   i: Integer;
 begin
   i := 0;
-  while (i<nwatch) and (AnsiCompareStr(watch[i].name, s.name)) do
+  while (i < nwatch) and (AnsiCompareStr(watch[i].name, s.name)) do
   begin
    Inc(i);
   end;
-  if i<nwatch then
+  if i < nwatch then
   begin
-   while i<nwatch-1 do
+   while i < nwatch-1 do
    begin
     watch[i].name := watch[i+1].name;
     watch[i].value := watch[i+1].value;
@@ -1429,14 +1445,14 @@ var
 begin
   if Pos(command, command) then
   begin
-   if sscanf(command,"break  mod x", and break_addr)=1 then
+   if sscanf(command, 'break %x', @( break_addr )) = 1 then
    begin
     if (running) <> 0 then
      // return value of Halt() ignored
      Halt();
     break_addr := break_addr and $1FFF;
     // return value of sprintf() ignored
-    sprintf(str, 'break at address 0x%04X' + LineEnding + '', break_addr);
+    sprintf(str, 'break at address 0x%04X' + NL + '', break_addr);
     // return value of AppendMessageICD() ignored
     AppendMessageICD(str);
     // return value of SourceRemoveHilightLine() ignored
@@ -1453,29 +1469,29 @@ begin
   end
   else if Pos(command, command) then
   begin
-   if sscanf(command,"freeze  mod s",option)=1 then
+   if sscanf(command, 'freeze %s', option) = 1 then
    begin
     if (running) <> 0 then
      // return value of Halt() ignored
      Halt();
-    if  not strcmp(option,"on") then
+    if  not strcmp(option,'on') then
      freeze := 1;
-    if  not strcmp(option,"off") then
+    if  not strcmp(option,'off') then
      freeze := 0;
     // return value of WriteRegister() ignored
-    WriteRegister($18E, IfThen((break_addr shr 8)+(freeze, $40, 0)));
+    WriteRegister($18E, (break_addr shr 8)+(IfThen(freeze, $40, 0)));
    end;
    // return value of sprintf() ignored
-   sprintf(str, 'peripheral freeze is %s' + LineEnding + '', IfThen(freeze, 'on', 'off'));
+   sprintf(str, 'peripheral freeze is %s' + NL + '', IfThen(freeze, 'on', 'off'));
    // return value of AppendMessageICD() ignored
    AppendMessageICD(str);
   end
-  else if (not strcmp(command,"h")) or (not strcmp(command,"halt")) then
+  else if (not strcmp(command,'h')) or (not strcmp(command,'halt')) then
   begin
    // return value of icdHalt() ignored
    icdHalt(nil, nil);
   end
-  else if  not strcmp(command,"help") then
+  else if  not strcmp(command,'help') then
   begin
    // return value of ICDHelp() ignored
    ICDHelp(nil, nil);
@@ -1484,7 +1500,7 @@ begin
   begin
    cmd[0] := #0;
    tmp[0] := 0;
-   if sscanf(command,"list  mod x", and addr)=1 then
+   if sscanf(command, 'list %x', @( addr )) = 1 then
    begin
     addr := addr and $1FFF;
     // return value of ReadProgMemN() ignored
@@ -1492,17 +1508,17 @@ begin
     for i := 0 to (LISTLINES) - 1 do
     begin
      // return value of sprintf() ignored
-     sprintf(t2, '0x%04X: %s (0x%04X)' + LineEnding + '', i+addr, decodeCmd(progmem[i], cmd, 0), progmem[i]);
+     sprintf(t2, '0x%04X: %s (0x%04X)' + NL + '', i+addr, decodeCmd(progmem[i], cmd, 0), progmem[i]);
      // return value of strcat() ignored
      strcat(tmp, t2);
     end;
    end;
   end
-  else if Pos(command, command) then
+  else if (Pos(command, command)) or (Pos(command, command)) then
   begin
-   if Pos(command, command) then
+   if (Pos(command, command)) or (Pos(command, command)) then
    begin
-    if (sscanf(command,"print p  mod x", and addr)=1) or (sscanf(command,"p p  mod x", and addr)=1) then
+    if (sscanf(command, 'print p %x', @( addr )) = 1) or (sscanf(command, 'p p %x', @( addr )) = 1) then
     begin
      addr := addr and $1FFF;
      if (running) <> 0 then
@@ -1510,12 +1526,12 @@ begin
       Halt();
      data := ReadProgMem(addr);
      // return value of sprintf() ignored
-     sprintf(str, '0x%04X: %s (0x%04X)' + LineEnding + '', addr, decodeCmd(data, var_, $1000), data);
+     sprintf(str, '0x%04X: %s (0x%04X)' + NL + '', addr, decodeCmd(data, var_, $1000), data);
      // return value of AppendMessageICD() ignored
      AppendMessageICD(str);
     end;
    end
-   else if (not strcmp(command,"print ee")) or (not strcmp(command,"p ee")) then
+   else if (not strcmp(command,'print ee')) or (not strcmp(command,'p ee')) then
    begin
     str[0] := 0;
     t[8] := 0;
@@ -1525,13 +1541,13 @@ begin
     // return value of ReadDataMemN() ignored
     ReadDataMemN(0, 256, data);
     // return value of sprintf() ignored
-    sprintf(str, 'EEPROM:' + LineEnding + '');
+    sprintf(str, 'EEPROM:' + NL + '');
     for i := 0 to ($100) - 1 do
     begin
-     if i mod 8=0 then
+     if i mod 8 = 0 then
      begin
       // return value of sprintf() ignored
-      sprintf(s, '' + LineEnding + '0x%02X: ', i);
+      sprintf(s, '' + NL + '0x%02X: ', i);
       // return value of strcat() ignored
       strcat(str, s);
      end;
@@ -1540,7 +1556,7 @@ begin
      // return value of strcat() ignored
      strcat(str, s);
      t[i and $7] := IfThen(isprint(data[i]), data[i], #46);
-     if i mod 8=7 then
+     if i mod 8 = 7 then
      begin
       g := g_locale_to_utf8(t, -1, nil, nil, nil);
       if (g) <> 0 then
@@ -1553,7 +1569,7 @@ begin
     // return value of AppendMessageICD() ignored
     AppendMessageICD(str);
    end
-   else if (sscanf(command,"print ee  mod x", and addr)=1) or (sscanf(command,"p ee  mod x", and addr)=1) then
+   else if (sscanf(command, 'print ee %x', @( addr )) = 1) or (sscanf(command, 'p ee %x', @( addr )) = 1) then
    begin
     addr := addr and $FF;
     if (running) <> 0 then
@@ -1561,15 +1577,15 @@ begin
      Halt();
     data := ReadDataMem(addr);
     // return value of sprintf() ignored
-    sprintf(str, 'eeprom memory at 0x%02X=0x%02X (%c)' + LineEnding + '', addr, data, IfThen(isprint(data), data, #46));
+    sprintf(str, 'eeprom memory at 0x%02X=0x%02X (%c)' + NL + '', addr, data, IfThen(isprint(data), data, #46));
     // return value of AppendMessageICD() ignored
     AppendMessageICD(str);
    end
-   else if (sscanf(command,"print bank  mod x", and bank)=1) or (sscanf(command,"p bank  mod x", and bank)=1) then
+   else if (sscanf(command, 'print bank %x', @( bank )) = 1) or (sscanf(command, 'p bank %x', @( bank )) = 1) then
    begin
     str[0] := 0;
     bank := bank and $1FF;
-    if bank>3 then
+    if bank > 3 then
      bank := bank / $80;
     if (running) <> 0 then
      // return value of Halt() ignored
@@ -1579,46 +1595,46 @@ begin
     // return value of AppendMessageICD() ignored
     AppendMessageICD(str);
    end
-   else if (sscanf(command,"print 0x mod x", and print_addr)=1) or (sscanf(command,"p 0x mod x", and print_addr)=1) then
+   else if (sscanf(command, 'print 0x%x', @( print_addr )) = 1) or (sscanf(command, 'p 0x%x', @( print_addr )) = 1) then
    begin
     print_addr := print_addr and $1FF;
     if (running) <> 0 then
      // return value of Halt() ignored
      Halt();
     // return value of sprintf() ignored
-    sprintf(str, '[0x%03X]=0x%02X' + LineEnding + '', print_addr, ReadRegister(print_addr));
+    sprintf(str, '[0x%03X]=0x%02X' + NL + '', print_addr, ReadRegister(print_addr));
     // return value of AppendMessageICD() ignored
     AppendMessageICD(str);
    end
-   else if (sscanf(command,"print  mod s",var_)=1) or (sscanf(command,"p  mod s",var_)=1) then
+   else if (sscanf(command, 'print %s', var_) = 1) or (sscanf(command, 'p %s', var_) = 1) then
    begin
     str[0] := 0;
     if (running) <> 0 then
      // return value of Halt() ignored
      Halt();
-    if (not strcmp("W",var_)) or (not strcmp("w",var_)) then
+    if (not strcmp('W',var_)) or (not strcmp('w',var_)) then
      // return value of sprintf() ignored
-     sprintf(str, 'W = 0x%02X' + LineEnding + '', ReadRegister(w_temp))
-    else if  not strcmp("STATUS",var_) then
+     sprintf(str, 'W = 0x%02X' + NL + '', ReadRegister(w_temp))
+    else if  not strcmp('STATUS',var_) then
      // return value of sprintf() ignored
-     sprintf(str, '0x003: STATUS = 0x%02X' + LineEnding + '', ReadRegister(status_temp))
-    else if  not strcmp("FSR",var_) then
+     sprintf(str, '0x003: STATUS = 0x%02X' + NL + '', ReadRegister(status_temp))
+    else if  not strcmp('FSR',var_) then
      // return value of sprintf() ignored
-     sprintf(str, '0x004: FSR = 0x%02X' + LineEnding + '', ReadRegister(fsr_temp))
-    else if  not strcmp("PCLATH",var_) then
+     sprintf(str, '0x004: FSR = 0x%02X' + NL + '', ReadRegister(fsr_temp))
+    else if  not strcmp('PCLATH',var_) then
      // return value of sprintf() ignored
-     sprintf(str, '0x00A: PCLATH = 0x%02X' + LineEnding + '', ReadRegister(pclath_temp))
+     sprintf(str, '0x00A: PCLATH = 0x%02X' + NL + '', ReadRegister(pclath_temp))
     else
     begin
      i := 0;
-     while (i<nsym) and (AnsiCompareStr(var_, sym[i].name)) do
+     while (i < nsym) and (AnsiCompareStr(var_, sym[i].name)) do
      begin
       Inc(i);
      end;
-     if i<nsym then
+     if i < nsym then
      begin
       // return value of sprintf() ignored
-      sprintf(str, '0x%03X: %s = 0x%02X' + LineEnding + '', sym[i].value, sym[i].name, ReadRegister(sym[i].value));
+      sprintf(str, '0x%03X: %s = 0x%02X' + NL + '', sym[i].value, sym[i].name, ReadRegister(sym[i].value));
      end
      else
      begin
@@ -1627,7 +1643,7 @@ begin
        if (variables[i].name) and (not strcmp(var_,variables[i].name)) then
        begin
         // return value of sprintf() ignored
-        sprintf(str, '0x%03X: %s = 0x%02X' + LineEnding + '', i, variables[i].name, ReadRegister(i));
+        sprintf(str, '0x%03X: %s = 0x%02X' + NL + '', i, variables[i].name, ReadRegister(i));
         i := $200;
        end;
       end;
@@ -1637,12 +1653,12 @@ begin
     AppendMessageICD(str);
    end;
   end
-  else if (not strcmp(command,"r")) or (not strcmp(command,"run")) then
+  else if (not strcmp(command,'r')) or (not strcmp(command,'run')) then
   begin
    // return value of icdRun() ignored
    icdRun(nil, nil);
   end
-  else if (not strcmp(command,"s")) or (not strcmp(command,"step")) or (Pos(command, command)) or (Pos(command, command)) then
+  else if (not strcmp(command,'s')) or (not strcmp(command,'step')) or (Pos(command, command)) or (Pos(command, command)) then
   begin
    n := 1;
    // return value of sscanf() ignored
@@ -1658,9 +1674,9 @@ begin
     // return value of step() ignored
     step();
    end;
-   if n>1 then
+   if n > 1 then
     // return value of sprintf() ignored
-    sprintf(str, 'step %d' + LineEnding + '', n)
+    sprintf(str, 'step %d' + NL + '', n)
    else
     str[0] := 0;
    // return value of ShowContext() ignored
@@ -1668,7 +1684,7 @@ begin
    // return value of AppendMessageICD() ignored
    AppendMessageICD(str);
   end
-  else if (not strcmp(command,"ss")) or (not strcmp(command,"step over")) or (Pos(command, command)) or (Pos(command, command)) then
+  else if (not strcmp(command,'ss')) or (not strcmp(command,'step over')) or (Pos(command, command)) or (Pos(command, command)) then
   begin
    n := 1;
    // return value of sscanf() ignored
@@ -1681,25 +1697,25 @@ begin
     // return value of icdStepOver() ignored
     icdStepOver(nil, nil);
    end;
-   if n>1 then
+   if n > 1 then
     // return value of sprintf() ignored
-    sprintf(str, 'step over %d' + LineEnding + '', n);
+    sprintf(str, 'step over %d' + NL + '', n);
    // return value of AppendMessageICD() ignored
    AppendMessageICD(str);
   end
-  else if (not strcmp(command,"ver")) or (not strcmp(command,"version")) then
+  else if (not strcmp(command,'ver')) or (not strcmp(command,'version')) then
   begin
    if (running) <> 0 then
     // return value of Halt() ignored
     Halt();
    // return value of sprintf() ignored
-   sprintf(str, 'debugger version: %.1f' + LineEnding + '', version()/10.0);
+   sprintf(str, 'debugger version: %.1f' + NL + '', version()/10.0);
    // return value of AppendMessageICD() ignored
    AppendMessageICD(str);
   end
-  else if Pos(command, command) then
+  else if (Pos(command, command)) or (Pos(command, command)) then
   begin
-   if sscanf(command, 'watch 0x%x', @( var_addr ) ) or sscanf(command, 'w 0x%x', @( var_addr )) then
+   if (sscanf(command, 'watch 0x%x', @( var_addr ))) or (sscanf(command, 'w 0x%x', @( var_addr ))) then
    begin
     // return value of sprintf() ignored
     sprintf(var_, '[0x%X]', var_addr);
@@ -1711,14 +1727,14 @@ begin
      // return value of ShowContext() ignored
      ShowContext();
    end
-   else if sscanf(command, 'watch %s', var_) or sscanf(command, 'w %s', var_) then
+   else if (sscanf(command, 'watch %s', var_)) or (sscanf(command, 'w %s', var_)) then
    begin
     i := 0;
-    while (i<nsym) and (AnsiCompareStr(var_, sym[i].name)) do
+    while (i < nsym) and (AnsiCompareStr(var_, sym[i].name)) do
     begin
      Inc(i);
     end;
-    if i<nsym then
+    if i < nsym then
     begin
      // return value of addWatch() ignored
      addWatch(sym[i]);
@@ -1751,7 +1767,7 @@ begin
    if (p=strchr(command,'=')) <> 0 then
    begin
     (p^) := 0;
-    if sscanf(command, '[%x]', @( addr ) ) and sscanf(p+1, '%x', @( data )) then
+    if (sscanf(command, '[%x]', @( addr ))) and (sscanf(p+1, '%x', @( data ))) then
     begin
      if (running) <> 0 then
       // return value of Halt() ignored
@@ -1761,18 +1777,18 @@ begin
      // return value of ShowContext() ignored
      ShowContext();
      // return value of sprintf() ignored
-     sprintf(str, '[0x%x]=0x%02X' + LineEnding + '', addr, data);
+     sprintf(str, '[0x%x]=0x%02X' + NL + '', addr, data);
      // return value of AppendMessageICD() ignored
      AppendMessageICD(str);
     end
-    else if sscanf(command, '%s', var_) and sscanf(p+1, '%x', @( data )) then
+    else if (sscanf(command, '%s', var_)) and (sscanf(p+1, '%x', @( data ))) then
     begin
      i := 0;
-     while (i<nsym) and (AnsiCompareStr(var_, sym[i].name)) do
+     while (i < nsym) and (AnsiCompareStr(var_, sym[i].name)) do
      begin
       Inc(i);
      end;
-     if (i<nsym) and (sym[i].value<$400) then
+     if (i < nsym) and (sym[i].value < $400) then
      begin
       addr := sym[i].value;
      end
@@ -1787,7 +1803,7 @@ begin
        end;
       end;
      end;
-     if addr<>-1 then
+     if addr <> -1 then
      begin
       if (running) <> 0 then
        // return value of Halt() ignored
@@ -1797,7 +1813,7 @@ begin
       // return value of ShowContext() ignored
       ShowContext();
       // return value of sprintf() ignored
-      sprintf(str, '%s=0x%02X' + LineEnding + '', var_, data);
+      sprintf(str, '%s=0x%02X' + NL + '', var_, data);
       // return value of AppendMessageICD() ignored
       AppendMessageICD(str);
      end;
@@ -1814,13 +1830,13 @@ var
   i: Integer;
 begin
   i := 0;
-  while (i<nwatch) and (AnsiCompareStr(watch[i].name, name)) do
+  while (i < nwatch) and (AnsiCompareStr(watch[i].name, name)) do
   begin
    Inc(i);
   end;
-  if i<nwatch then
+  if i < nwatch then
   begin
-   while i<nwatch-1 do
+   while i < nwatch-1 do
    begin
     watch[i].name := watch[i+1].name;
     watch[i].value := watch[i+1].value;
@@ -1844,15 +1860,15 @@ var
   selection: PChar;
   line: Integer;
 begin
-  if (GTK_IS_TEXT_VIEW(widget)) and (event^.type=GDK_2BUTTON_PRESS) then
+  if (GTK_IS_TEXT_VIEW(widget)) and (event- > type = GDK_2BUTTON_PRESS) then
   begin
    // return value of gtk_text_view_window_to_buffer_coords() ignored
-   gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(widget), GTK_TEXT_WINDOW_WIDGET, event^.x, event^.y, @( x ), @( y ));
+   gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(widget), GTK_TEXT_WINDOW_WIDGET, event- > x, event- > y, @( x ), @( y ));
    // return value of gtk_text_view_get_iter_at_location() ignored
    gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(widget), @( iter ), x, y);
    iter2 := iter;
    c := gtk_text_iter_get_char(@( itx ));
-   while (isalnum(c)) or (c='_') do
+   while (isalnum(c)) or (c = #95) do
    begin
     // return value of gtk_text_iter_forward_char() ignored
     gtk_text_iter_forward_char(@( itx ));
@@ -1860,7 +1876,7 @@ begin
     iter2 := itx;
    end;
    c := gtk_text_iter_get_char(@( itx ));
-   while (isalnum(c)) or (c='_') do
+   while (isalnum(c)) or (c = #95) do
    begin
     // return value of gtk_text_iter_backward_char() ignored
     gtk_text_iter_backward_char(@( itx ));
@@ -1869,11 +1885,11 @@ begin
    end;
    selection := sourceBuf.Lines.Text;
    i := 0;
-   while (i<nsym) and (AnsiCompareStr(selection, sym[i].name)) do
+   while (i < nsym) and (AnsiCompareStr(selection, sym[i].name)) do
    begin
     Inc(i);
    end;
-   if i<nsym then
+   if i < nsym then
    begin
     // return value of addWatch() ignored
     addWatch(sym[i]);
@@ -1885,11 +1901,11 @@ begin
     line := gtk_text_iter_get_line( and iter)+1;
     for i := 0 to (LMAX) - 1 do
     begin
-     if source_info[i].src_line=line then
+     if source_info[i].src_line = line then
      begin
       break_addr := i;
       // return value of sprintf() ignored
-      sprintf(str, 'break at address 0x%x' + LineEnding + '', i);
+      sprintf(str, 'break at address 0x%x' + NL + '', i);
       // return value of AppendMessageICD() ignored
       AppendMessageICD(str);
       // return value of SourceRemoveHilightLine() ignored
@@ -1900,11 +1916,11 @@ begin
       Break;
      end;
     end;
-    if source_info[i].src_line=line then
+    if source_info[i].src_line = line then
     begin
      break_addr := i;
      // return value of sprintf() ignored
-     sprintf(str, 'break at address 0x%x' + LineEnding + '', i);
+     sprintf(str, 'break at address 0x%x' + NL + '', i);
      // return value of AppendMessageICD() ignored
      AppendMessageICD(str);
      // return value of SourceRemoveHilightLine() ignored
@@ -1929,15 +1945,15 @@ var
   c: Char;
   selection: PChar;
 begin
-  if (GTK_IS_TEXT_VIEW(widget)) and (event^.type=GDK_2BUTTON_PRESS) then
+  if (GTK_IS_TEXT_VIEW(widget)) and (event- > type = GDK_2BUTTON_PRESS) then
   begin
    // return value of gtk_text_view_window_to_buffer_coords() ignored
-   gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(widget), GTK_TEXT_WINDOW_WIDGET, event^.x, event^.y, @( x ), @( y ));
+   gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(widget), GTK_TEXT_WINDOW_WIDGET, event- > x, event- > y, @( x ), @( y ));
    // return value of gtk_text_view_get_iter_at_location() ignored
    gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(widget), @( iter ), x, y);
    iter2 := iter;
    c := gtk_text_iter_get_char(@( itx ));
-   while (isalnum(c)) or (c='_') do
+   while (isalnum(c)) or (c = #95) do
    begin
     // return value of gtk_text_iter_forward_char() ignored
     gtk_text_iter_forward_char(@( itx ));
@@ -1945,7 +1961,7 @@ begin
     iter2 := itx;
    end;
    c := gtk_text_iter_get_char(@( itx ));
-   while (isalnum(c)) or (c='_') do
+   while (isalnum(c)) or (c = #95) do
    begin
     // return value of gtk_text_iter_backward_char() ignored
     gtk_text_iter_backward_char(@( itx ));
@@ -1964,7 +1980,7 @@ function icdCommand_key_event(widget: ^TControl; event: ^TGdkEventButton; func_d
 var
   s: array[0..64-1] of Char;
 begin
-  if (event^.type=GDK_KEY_PRESS) and (((GdkEventKey*)event)^.keyval=$FF0D) then
+  if (event- > type = GDK_KEY_PRESS) and (((GdkEventKey*)event)- > keyval = $FF0D) then
   begin
    // return value of strncpy() ignored
    strncpy(s, GTK_ENTRY(icdCommand).Text, 63);
