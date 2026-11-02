@@ -1,4 +1,4 @@
-program opgui_lazarus;
+program opgui-0.12.4_lazarus;
 
 {$mode objfpc}{$H+}
 

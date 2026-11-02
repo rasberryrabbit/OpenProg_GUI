@@ -25,7 +25,6 @@ type
   DWORD = Cardinal;
   WORD  = Word;
   BYTE  = Byte;
-
 const
   _APPNAME = 'OPGUI';
   COL = 16;
@@ -40,7 +39,6 @@ const
   SYSNAME = 'Linux';
   DIMBUF = 64;
 
-type
   TDWORD = DWORD;
   TWORD = Word;
   TBYTE = Byte;
@@ -52,7 +50,7 @@ var
   bufferI0: array[0..128-1] of Byte;
   NumberOfBytesRead: DWORD;
   BytesWritten: DWORD;
-  Result: DWORD;
+  Result_: DWORD;
   WriteHandle: THandle;
   ReadHandle: THandle;
   HIDOverlapped: TOVERLAPPED;
@@ -99,6 +97,7 @@ var
   useSAFLOCK_flag: Integer;
 
 // --- function declarations ---
+function GetTickCount: DWORD;
 function StartHVReg(V: Double): Integer;
 procedure msDelay(delay: Double);
 procedure DisplayEE;

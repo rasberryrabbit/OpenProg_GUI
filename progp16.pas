@@ -71,21 +71,23 @@ var
   s: array[0..64-1] of Char;
   i: Integer;
 begin
-  for i := 0 to (sizeof(PIC16LIST)/sizeof(PIC16LIST[0])) - 1 do
+  for i := 0 to ((SizeOf(PIC16LIST)) div (SizeOf(PIC16LIST[0]))) - 1 do
   begin
-   if PIC16LIST[i].revmask and (id shr 5) = PIC16LIST[i].id then
+   if (PIC16LIST[i].revmask) and (((id) shr (5)) = (PIC16LIST[i].id)) then
    begin
-    sprintf(s, PIC16LIST[i].device, id&PIC16LIST[i].revmask);
+    sprintf(s, PIC16LIST[i].device, (id) and (PIC16LIST[i].revmask));
     PrintMessage(s);
     Exit;
    end
-   else if  not PIC16LIST[i].revmask and id = PIC16LIST[i].id then
-   begin
-    sprintf(s, PIC16LIST[i].device);
-    PrintMessage(s);
-    Exit;
-   end;
+   else
+    if (not (PIC16LIST[i].revmask)) and ((id) = (PIC16LIST[i].id)) then
+    begin
+     sprintf(s, PIC16LIST[i].device);
+     PrintMessage(s);
+     Exit;
+    end;
   end;
+  sprintf(s, "%s", strings[S_nodev]);
   PrintMessage(s);
 end;
 
@@ -107,59 +109,18 @@ begin
   valid := 0;
   empty := 1;
   lines := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:460
-    Original C:
-      for (i = 0; (i < size) && (i < sizeW); i += 16)
-      {
-        valid = 0;
-        for (j = i; ((j < (i + 16)) && (j < sizeW)) && (i < size); j++)
-        {
-          sprintf(t, "%04X ", memCODE_W[j]);
-          strcat(s, t);
-          if ((memCODE_W[j] & 0x3fff) < 0x3fff)
-            valid = 1;
-        }
-      
-        if (valid)
-        {
-          sprintf(t, "%04X: %s\r\n", i, s);
-          empty = 0;
-          strcat(aux, t);
-          lines++;
-          if (lines > 500)
-          {
-            strcat(aux, "(...)\r\n");
-            i = ((sizeW < size) ? (sizeW) : (size)) - (16 * 2);
-            lines = 490;
-          }
-        }
-        s[0] = 0;
-      }
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < (size)) and ((i) < (sizeW)) do
   begin
    valid := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:462
-     Original C:
-       for (j = i; ((j < (i + 16)) && (j < sizeW)) && (i < size); j++)
-       {
-         sprintf(t, "%04X ", memCODE_W[j]);
-         strcat(s, t);
-         if ((memCODE_W[j] & 0x3fff) < 0x3fff)
-           valid = 1;
-       }
-   *)
-   // init: j = i
+   j := i;
    while (((j) < ((i) + (16))) and ((j) < (sizeW))) and ((i) < (size)) do
    begin
     sprintf(t, "%04X ", memCODE_W[j]);
     strcat(s, t);
     if ((memCODE_W[j]) and ($3fff)) < ($3fff) then
      valid := 1;
-     // step: j++
+    Inc(j);
    end;
    if valid then
    begin
@@ -175,10 +136,10 @@ begin
     end;
    end;
    s[0] := 0;
-    // step: i += 16
+   Inc(i, 16);
   end;
   if empty then
-   PrintMessage(strings[S_Empty]);
+   PrintMessage(strings[S_Empty])
   else
    PrintMessage(aux);
   free(aux);
@@ -205,53 +166,11 @@ begin
   aux[0] := 0;
   empty := 1;
   v[0] := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:496
-    Original C:
-      for (i = 0x2100; (i < (0x2100 + size)) && (i < sizeW); i += 16)
-      {
-        valid = 0;
-        for (j = i; ((j < (i + 16)) && (j < (0x2100 + size))) && (j < sizeW); j++)
-        {
-          sprintf(t, "%02X ", memCODE_W[j] & 0xff);
-          strcat(s, t);
-          sprintf(t, "%c", (isprint(memCODE_W[j] & 0xFF) && ((memCODE_W[j] & 0xFF) < 0xFF)) ? (memCODE_W[j] & 0xFF) : ('.'));
-          g = g_locale_to_utf8(t, -1, NULL, NULL, NULL);
-          if (g)
-            strcat(v, g);
-          g_free(g);
-          if ((memCODE_W[j] & 0xFF) < 0xff)
-            valid = 1;
-        }
-      
-        if (valid)
-        {
-          sprintf(t, "%04X: %s %s\r\n", i, s, v);
-          empty = 0;
-          strcat(aux, t);
-        }...
-  *)
-  // init: i = 0x2100
+  i := $2100;
   while ((i) < (($2100) + (size))) and ((i) < (sizeW)) do
   begin
    valid := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:498
-     Original C:
-       for (j = i; ((j < (i + 16)) && (j < (0x2100 + size))) && (j < sizeW); j++)
-       {
-         sprintf(t, "%02X ", memCODE_W[j] & 0xff);
-         strcat(s, t);
-         sprintf(t, "%c", (isprint(memCODE_W[j] & 0xFF) && ((memCODE_W[j] & 0xFF) < 0xFF)) ? (memCODE_W[j] & 0xFF) : ('.'));
-         g = g_locale_to_utf8(t, -1, NULL, NULL, NULL);
-         if (g)
-           strcat(v, g);
-         g_free(g);
-         if ((memCODE_W[j] & 0xFF) < 0xff)
-           valid = 1;
-       }
-   *)
-   // init: j = i
+   j := i;
    while (((j) < ((i) + (16))) and ((j) < (($2100) + (size)))) and ((j) < (sizeW)) do
    begin
     sprintf(t, "%02X ", (memCODE_W[j]) and ($ff));
@@ -263,7 +182,7 @@ begin
     g_free(g);
     if ((memCODE_W[j]) and ($FF)) < ($ff) then
      valid := 1;
-     // step: j++
+    Inc(j);
    end;
    if valid then
    begin
@@ -273,10 +192,10 @@ begin
    end;
    s[0] := 0;
    v[0] := 0;
-    // step: i += 16
+   Inc(i, 16);
   end;
   if empty then
-   PrintMessage(strings[S_Empty]);
+   PrintMessage(strings[S_Empty])
   else
    PrintMessage(aux);
   free(aux);
@@ -393,7 +312,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_CodeReading1]);
-  while (i) < (dim) do
+  j := 0;
+  for i := 0 to (dim) - 1 do
   begin
    bufferU[Inc(j)] := $14;
    bufferU[Inc(j)] := $16;
@@ -426,7 +346,6 @@ begin
      fprintf(logfile, strings[S_Log7], i, i, k, k);
     end;
    end;
-   Inc(i);
   end;
   if (k) <> (dim) then
   begin
@@ -509,6 +428,8 @@ begin
    end;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := ($100) - (dim3);
+   k2 := 0;
+   i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     bufferU[Inc(j)] := $15;
@@ -573,24 +494,12 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, "");
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:729
-    Original C:
-      for (i = 0; i < 4; i += 2)
-      {
-        {
-          sprintf(str, "ID%d: 0x%04X\tID%d: 0x%04X\r\n", i, memCODE_W[0x2000 + i], i + 1, memCODE_W[(0x2000 + i) + 1]);
-          PrintMessage(str);
-        }
-        ;
-      }
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < (4) do
   begin
    sprintf(str, "ID%d: 0x%04X\tID%d: 0x%04X\r\n", i, memCODE_W[($2000) + (i)], (i) + (1), memCODE_W[(($2000) + (i)) + (1)]);
    PrintMessage(str);
-    // step: i += 2
+   Inc(i, 2);
   end;
   sprintf(str, strings[S_DevID], memCODE_W[$2006]);
   PrintMessage(str);
@@ -623,52 +532,18 @@ begin
    aux[0] := 0;
    empty := 1;
    PrintMessage(strings[S_ConfigResMem]);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:751
-     Original C:
-       for (i = 0x2000; i < (0x2000 + dim3); i += 16)
-       {
-         valid = 0;
-         for (j = i; (j < (i + 16)) && (j < (0x2000 + dim3)); j++)
-         {
-           sprintf(t, "%04X ", memCODE_W[j]);
-           strcat(s, t);
-           if (memCODE_W[j] < 0x3fff)
-             valid = 1;
-         }
-       
-         if (valid)
-         {
-           snprintf(t, sizeof(t), "%04X: %s\r\n", i, s);
-           empty = 0;
-           strcat(aux, t);
-         }
-         s[0] = 0;
-       }
-   *)
-   // init: i = 0x2000
+   i := $2000;
    while (i) < (($2000) + (dim3)) do
    begin
     valid := 0;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:753
-      Original C:
-        for (j = i; (j < (i + 16)) && (j < (0x2000 + dim3)); j++)
-        {
-          sprintf(t, "%04X ", memCODE_W[j]);
-          strcat(s, t);
-          if (memCODE_W[j] < 0x3fff)
-            valid = 1;
-        }
-    *)
-    // init: j = i
+    j := i;
     while ((j) < ((i) + (16))) and ((j) < (($2000) + (dim3))) do
     begin
      sprintf(t, "%04X ", memCODE_W[j]);
      strcat(s, t);
      if (memCODE_W[j]) < ($3fff) then
       valid := 1;
-      // step: j++
+     Inc(j);
     end;
     if valid then
     begin
@@ -677,10 +552,10 @@ begin
      strcat(aux, t);
     end;
     s[0] := 0;
-     // step: i += 16
+    Inc(i, 16);
    end;
    if empty then
-    PrintMessage(strings[S_Empty]);
+    PrintMessage(strings[S_Empty])
    else
     PrintMessage(aux);
    free(aux);
@@ -842,7 +717,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_CodeReading1]);
-  while (i) < (dim) do
+  j := 0;
+  for i := 0 to (dim) - 1 do
   begin
    bufferU[Inc(j)] := $14;
    bufferU[Inc(j)] := $16;
@@ -875,7 +751,6 @@ begin
      fprintf(logfile, strings[S_Log7], i, i, k, k);
     end;
    end;
-   Inc(i);
   end;
   if (k) <> (dim) then
   begin
@@ -1106,24 +981,12 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, "");
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1065
-    Original C:
-      for (i = 0; i < 4; i += 2)
-      {
-        {
-          sprintf(str, "ID%d: 0x%04X\tID%d: 0x%04X\r\n", i, memCODE_W[0x8000 + i], i + 1, memCODE_W[(0x8000 + i) + 1]);
-          PrintMessage(str);
-        }
-        ;
-      }
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < (4) do
   begin
    sprintf(str, "ID%d: 0x%04X\tID%d: 0x%04X\r\n", i, memCODE_W[($8000) + (i)], (i) + (1), memCODE_W[(($8000) + (i)) + (1)]);
    PrintMessage(str);
-    // step: i += 2
+   Inc(i, 2);
   end;
   sprintf(str, strings[S_DevID], memCODE_W[$8006]);
   PrintMessage(str);
@@ -1191,52 +1054,18 @@ begin
    aux[0] := 0;
    empty := 1;
    PrintMessage(strings[S_ConfigResMem]);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:1103
-     Original C:
-       for (i = 0x8000; i < (0x8000 + dim3); i += 16)
-       {
-         valid = 0;
-         for (j = i; (j < (i + 16)) && (j < (0x8000 + dim3)); j++)
-         {
-           sprintf(t, "%04X ", memCODE_W[j]);
-           strcat(s, t);
-           if (memCODE_W[j] < 0x3fff)
-             valid = 1;
-         }
-       
-         if (valid)
-         {
-           sprintf(t, "%04X: %s\r\n", i, s);
-           empty = 0;
-           strcat(aux, t);
-         }
-         s[0] = 0;
-       }
-   *)
-   // init: i = 0x8000
+   i := $8000;
    while (i) < (($8000) + (dim3)) do
    begin
     valid := 0;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:1105
-      Original C:
-        for (j = i; (j < (i + 16)) && (j < (0x8000 + dim3)); j++)
-        {
-          sprintf(t, "%04X ", memCODE_W[j]);
-          strcat(s, t);
-          if (memCODE_W[j] < 0x3fff)
-            valid = 1;
-        }
-    *)
-    // init: j = i
+    j := i;
     while ((j) < ((i) + (16))) and ((j) < (($8000) + (dim3))) do
     begin
      sprintf(t, "%04X ", memCODE_W[j]);
      strcat(s, t);
      if (memCODE_W[j]) < ($3fff) then
       valid := 1;
-      // step: j++
+     Inc(j);
     end;
     if valid then
     begin
@@ -1245,10 +1074,10 @@ begin
      strcat(aux, t);
     end;
     s[0] := 0;
-     // step: i += 16
+    Inc(i, 16);
    end;
    if empty then
-    PrintMessage(strings[S_Empty]);
+    PrintMessage(strings[S_Empty])
    else
     PrintMessage(aux);
    free(aux);
@@ -1382,7 +1211,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_CodeReading1]);
-  while (i) < (dim) do
+  j := 0;
+  for i := 0 to (dim) - 1 do
   begin
    bufferU[Inc(j)] := $58;
    bufferU[Inc(j)] := $FE;
@@ -1415,7 +1245,6 @@ begin
      fprintf(logfile, strings[S_Log7], i, i, k, k);
     end;
    end;
-   Inc(i);
   end;
   if (k) <> (dim) then
   begin
@@ -1668,24 +1497,12 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, "");
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1426
-    Original C:
-      for (i = 0; i < 4; i += 2)
-      {
-        {
-          sprintf(str, "ID%d: 0x%04X\tID%d: 0x%04X\r\n", i, memCODE_W[0x8000 + i], i + 1, memCODE_W[(0x8000 + i) + 1]);
-          PrintMessage(str);
-        }
-        ;
-      }
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < (4) do
   begin
    sprintf(str, "ID%d: 0x%04X\tID%d: 0x%04X\r\n", i, memCODE_W[($8000) + (i)], (i) + (1), memCODE_W[(($8000) + (i)) + (1)]);
    PrintMessage(str);
-    // step: i += 2
+   Inc(i, 2);
   end;
   sprintf(str, strings[S_DevID], memCODE_W[$8006]);
   PrintMessage(str);
@@ -1704,88 +1521,38 @@ begin
   begin
    PrintMessage("Device Information Area @0x8100\r\n");
    s[0] := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:1438
-     Original C:
-       for (i = 0; i < 0x20; i += 16)
-       {
-         sprintf(t, "%04X: ", 0x8100 + i);
-         strcat(s, t);
-         for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-         {
-           sprintf(t, "%04X ", memCODE_W[0x8100 + j]);
-           strcat(s, t);
-         }
-       
-         strcat(s, "\r\n");
-       }
-   *)
-   // init: i = 0
+   i := 0;
    while (i) < ($20) do
    begin
     sprintf(t, "%04X: ", ($8100) + (i));
     strcat(s, t);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:1441
-      Original C:
-        for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-        {
-          sprintf(t, "%04X ", memCODE_W[0x8100 + j]);
-          strcat(s, t);
-        }
-    *)
-    // init: j = i
+    j := i;
     while ((j) < ((i) + (16))) and ((j) < ($20)) do
     begin
      sprintf(t, "%04X ", memCODE_W[($8100) + (j)]);
      strcat(s, t);
-      // step: j++
+     Inc(j);
     end;
     strcat(s, "\r\n");
-     // step: i += 16
+    Inc(i, 16);
    end;
    PrintMessage(s);
    PrintMessage("Device Configuration Information @0x8200\r\n");
    s[0] := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:1450
-     Original C:
-       for (i = 0; i < 0x20; i += 16)
-       {
-         sprintf(t, "%04X: ", 0x8200 + i);
-         strcat(s, t);
-         for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-         {
-           sprintf(t, "%04X ", memCODE_W[0x8200 + j]);
-           strcat(s, t);
-         }
-       
-         strcat(s, "\r\n");
-       }
-   *)
-   // init: i = 0
+   i := 0;
    while (i) < ($20) do
    begin
     sprintf(t, "%04X: ", ($8200) + (i));
     strcat(s, t);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:1453
-      Original C:
-        for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-        {
-          sprintf(t, "%04X ", memCODE_W[0x8200 + j]);
-          strcat(s, t);
-        }
-    *)
-    // init: j = i
+    j := i;
     while ((j) < ((i) + (16))) and ((j) < ($20)) do
     begin
      sprintf(t, "%04X ", memCODE_W[($8200) + (j)]);
      strcat(s, t);
-      // step: j++
+     Inc(j);
     end;
     strcat(s, "\r\n");
-     // step: i += 16
+    Inc(i, 16);
    end;
    PrintMessage(s);
    sprintf(str, "Erase row size: %d words\r\n", memCODE_W[$8200]);
@@ -1848,10 +1615,10 @@ begin
   if load_calibword then
   begin
    if (sizeW) > ($2009) then
-    load_calibword := 2;
+    load_calibword := 2
    else
     if (sizeW) > ($2008) then
-     load_calibword := 1;
+     load_calibword := 1
     else
     begin
      PrintMessage(strings[S_NoCalibW]);
@@ -1874,17 +1641,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write12F6xx(%d,%d)\n", dim, dim2);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1521
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -1930,31 +1691,19 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1562
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1566
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   calib1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   if (calib1) < ($3fff) then
@@ -1962,16 +1711,10 @@ begin
    sprintf(str, strings[S_CalibWord1], calib1);
    PrintMessage(str);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1571
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   calib2 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   if (calib2) < ($3fff) then
@@ -2000,7 +1743,7 @@ begin
    begin
     bufferU[Inc(j)] := $17;
     if (load_calibword) = (2) then
-     bufferU[Inc(j)] := $09;
+     bufferU[Inc(j)] := $09
     else
      bufferU[Inc(j)] := $08;
    end;
@@ -2042,6 +1785,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -2074,7 +1819,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -2130,6 +1875,8 @@ begin
    bufferU[Inc(j)] := 1;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := ($2100) - ($2001);
+   w := 2;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -2161,7 +1908,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -2270,28 +2017,8 @@ begin
    Inc(j);
   end;
   PacketIO(35);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1803
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -2306,7 +2033,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   if ICDenable then
   begin
@@ -2335,16 +2062,10 @@ begin
   end;
   if load_calibword then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:1827
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (memCODE_W[$2008]) <> (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -2355,16 +2076,10 @@ begin
    end;
    if (load_calibword) = (2) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:1834
-      Original C:
-        for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-    *)
-    // init: z += 6
+    z := 6;
     while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     if (memCODE_W[$2009]) <> (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
     begin
@@ -2451,17 +2166,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write16F8x(%d,%d)\n", dim, dim2);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1914
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -2514,31 +2223,19 @@ begin
    Inc(j);
   end;
   PacketIO(140);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1962
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:1966
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   config := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_ConfigWord], config);
@@ -2660,6 +2357,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -2692,7 +2391,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -2741,6 +2440,8 @@ begin
    bufferU[Inc(j)] := $FF;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := 1;
+   w := 0;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -2772,7 +2473,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -2850,28 +2551,8 @@ begin
    Inc(j);
   end;
   PacketIO(IfThen(programID, 125, 35));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2211
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -2886,7 +2567,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
@@ -2974,17 +2655,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write16F62x(%d,%d)\n", dim, dim2);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2294
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -3029,31 +2704,19 @@ begin
    Inc(j);
   end;
   PacketIO(12);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2334
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2338
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   config := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_ConfigWord], config);
@@ -3135,6 +2798,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -3167,7 +2832,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -3218,6 +2883,8 @@ begin
    bufferU[Inc(j)] := $FF;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := $2;
+   w := 0;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -3249,7 +2916,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -3328,27 +2995,8 @@ begin
    Inc(j);
   end;
   PacketIO(IfThen(programID, 125, 35));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2550
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -3362,7 +3010,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
@@ -3470,21 +3118,12 @@ begin
   bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
   bufferU[Inc(j)] := $00;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2643
-    Original C:
-      for (i = 0; i < (dim - 0xff); i += 0xff)
-      {
-        bufferU[j++] = 0x17;
-        bufferU[j++] = 0xff;
-      }
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < ((dim) - ($ff)) do
   begin
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := $ff;
-    // step: i += 0xff
+   Inc(i, $ff);
   end;
   bufferU[Inc(j)] := $17;
   bufferU[Inc(j)] := ((dim) - (1)) - (i);
@@ -3516,40 +3155,22 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2673
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   osccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2675
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2677
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   config := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (1)]);
   sprintf(str, strings[S_DevID], devID);
@@ -3608,6 +3229,8 @@ begin
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
   if not (load_osccal) then
    memCODE_W[(dim) - (1)] := osccal;
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -3640,7 +3263,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -3696,6 +3319,8 @@ begin
    bufferU[Inc(j)] := $1B;
    bufferU[Inc(j)] := $0A;
    bufferU[Inc(j)] := $0A;
+   w := 3;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -3727,7 +3352,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -3806,27 +3431,8 @@ begin
    Inc(j);
   end;
   PacketIO(35);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2871
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -3840,7 +3446,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
@@ -3981,31 +3587,19 @@ begin
    Inc(j);
   end;
   PacketIO(60);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:2996
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3000
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   config := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_ConfigWord], config);
@@ -4119,6 +3713,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -4151,7 +3747,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -4208,6 +3804,8 @@ begin
     bufferU[Inc(j)] := $17;
     bufferU[Inc(j)] := 1;
    end;
+   w := 0;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -4239,7 +3837,7 @@ begin
      for z := 0 to (64) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -4331,27 +3929,8 @@ begin
    Inc(j);
   end;
   PacketIO(IfThen(programID, 125, 35));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3259
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -4365,7 +3944,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   if ICDenable then
   begin
@@ -4520,31 +4099,19 @@ begin
    Inc(j);
   end;
   PacketIO(IfThen((seq) = (0), 90, 40));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3388
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3392
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   config := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_ConfigWord], config);
@@ -4594,6 +4161,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -4628,7 +4197,7 @@ begin
     for z := 0 to ((64) - (6)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (4)]) = ($14)) then
       begin
@@ -4682,6 +4251,8 @@ begin
    bufferU[Inc(j)] := $FF;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := 1;
+   w := 0;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -4713,7 +4284,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -4820,27 +4391,8 @@ begin
   if ICDenable then
    i := i + 13;
   PacketIO(i);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3603
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -4854,7 +4406,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   if ICDenable then
   begin
@@ -4882,16 +4434,10 @@ begin
   end;
   if ((sizeW) > ($2008)) and ((memCODE_W[$2008]) <> ($3fff)) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:3625
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (not (memCODE_W[$2008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -5026,31 +4572,19 @@ begin
    Inc(j);
   end;
   PacketIO(40);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3738
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3742
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   config := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_ConfigWord], config);
@@ -5114,6 +4648,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -5148,7 +4684,7 @@ begin
     for z := 0 to ((64) - (6)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (4)]) = ($14)) then
       begin
@@ -5217,6 +4753,8 @@ begin
    end;
    PacketIO(5);
    j := 0;
+   w := 0;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -5250,7 +4788,7 @@ begin
      for z := 0 to ((64) - (5)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (4)]) = ($15)) then
        begin
@@ -5356,27 +4894,8 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:3979
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 7;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -5390,7 +4909,7 @@ begin
     Inc(err_c);
    end;
    z := z + 7;
-    // step: i++
+   Inc(i);
   end;
   if ICDenable then
   begin
@@ -5418,16 +4937,10 @@ begin
   end;
   if ((sizeW) > ($2008)) and ((memCODE_W[$2008]) <> ($3fff)) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:4001
-     Original C:
-       for (z += 7; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 7
+   z := 7;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (not (memCODE_W[$2008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -5503,7 +5016,7 @@ begin
   if load_calibword then
   begin
    if (sizeW) > ($2008) then
-    load_calibword := 1;
+    load_calibword := 1
    else
    begin
     PrintMessage(strings[S_NoCalibW]);
@@ -5515,17 +5028,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write12F61x(%d)\n", dim);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4069
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -5575,28 +5082,16 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4114
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devREV := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4116
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
@@ -5607,28 +5102,16 @@ begin
    PrintMessage(str);
   end;
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4121
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   calib1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4123
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   calib2 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   if (calib1) < ($3fff) then
@@ -5697,6 +5180,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -5731,7 +5216,7 @@ begin
     for z := 0 to ((64) - (7)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (5)]) = ($14)) then
       begin
@@ -5823,28 +5308,8 @@ begin
    Inc(j);
   end;
   PacketIO(35);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4271
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 8;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -5859,7 +5324,7 @@ begin
     Inc(err_c);
    end;
    z := z + 8;
-    // step: i++
+   Inc(i);
   end;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
@@ -5874,16 +5339,10 @@ begin
   end;
   if load_calibword then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:4287
-     Original C:
-       for (z += 8; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 8
+   z := 8;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (memCODE_W[$2008]) <> (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -5958,7 +5417,7 @@ begin
   if load_calibword then
   begin
    if (sizeW) > ($200A) then
-    load_calibword := 1;
+    load_calibword := 1
    else
    begin
     PrintMessage(strings[S_NoCalibW]);
@@ -5981,17 +5440,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write16F88x(%d,%d)\n", dim, dim2);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4365
-    Original C:
-      for (i = 0; (i < 0x200A) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($200A)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -6038,31 +5491,19 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4407
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
   PrintMessage(str);
   PIC16_ID(devID);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4411
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   calib1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   if (calib1) < ($3fff) then
@@ -6124,6 +5565,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -6156,7 +5599,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -6211,6 +5654,8 @@ begin
    bufferU[Inc(j)] := $FF;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := 1;
+   w := 2;
+   k := $2100; i := $2100;
    while (i) < (($2100) + (dim2)) do
    begin
     if (memCODE_W[i]) < ($ff) then
@@ -6242,7 +5687,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -6350,28 +5795,8 @@ begin
    Inc(j);
   end;
   PacketIO(35);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4634
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -6386,7 +5811,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   if ICDenable then
   begin
@@ -6413,16 +5838,10 @@ begin
    PrintMessage(str);
    Inc(err_c);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4657
-    Original C:
-      for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 6
+  z := 6;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (not (memCODE_W[$2008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
   begin
@@ -6433,16 +5852,10 @@ begin
   end;
   if load_calibword then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:4664
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (memCODE_W[$2009]) <> (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -6513,17 +5926,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write16F7x(%d,%d)\n", dim, vdd);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4722
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -6573,16 +5980,10 @@ begin
    Inc(j);
   end;
   PacketIO(IfThen(vdd, 20, 70));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4766
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
@@ -6650,6 +6051,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -6683,7 +6086,7 @@ begin
     for z := 0 to ((64) - (6)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (4)]) = ($14)) then
       begin
@@ -6774,28 +6177,8 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4916
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -6810,7 +6193,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
@@ -6825,16 +6208,10 @@ begin
   end;
   if ((sizeW) > ($2008)) and ((memCODE_W[$2008]) < ($3fff)) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:4932
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (not (memCODE_W[$2008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -6908,17 +6285,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write16F71x(%d,%d)\n", dim, vdd);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:4992
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -6968,16 +6339,10 @@ begin
    Inc(j);
   end;
   PacketIO(IfThen(vdd, 20, 70));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5036
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
@@ -7045,6 +6410,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -7079,7 +6446,7 @@ begin
     for z := 0 to ((64) - (7)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (5)]) = ($14)) then
       begin
@@ -7171,28 +6538,8 @@ begin
    Inc(j);
   end;
   PacketIO(15);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5191
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -7207,7 +6554,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
@@ -7222,16 +6569,10 @@ begin
   end;
   if ((sizeW) > ($2008)) and ((memCODE_W[$2008]) < ($3fff)) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5207
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (not (memCODE_W[$2008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -7316,17 +6657,11 @@ begin
    OpenLogFile();
    fprintf(logfile, "Write16F72x(%d)\n", dim);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5276
-    Original C:
-      for (i = 0; (i < 0x2009) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($2009)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -7364,16 +6699,10 @@ begin
    Inc(j);
   end;
   PacketIO(3);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5309
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
@@ -7414,6 +6743,8 @@ begin
    fprintf(logfile, strings[S_sepLine]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_StartCodeProg]);
+  k := 0; i := 0; w := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    if (memCODE_W[i]) < ($3fff) then
@@ -7446,7 +6777,7 @@ begin
     for z := 0 to ((64) - (5)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($3fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
       begin
@@ -7546,28 +6877,8 @@ begin
    Inc(j);
   end;
   PacketIO(45);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5442
-    Original C:
-      for (i = 0, z = 0; programID && (i < 4); i++)
-      {
-        for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-      
-        if (memCODE_W[0x2000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-        {
-          PrintMessage("\r\n");
-          {
-            sprintf(str, strings[S_IDErr], i, memCODE_W[0x2000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-            PrintMessage(str);
-          }
-          ;
-          err_c++;
-        }
-        z += 6;
-      }
-  *)
-  // init: i = 0, z = 0
+  i := 0;
+  z := 0;
   while (programID) and ((i) < (4)) do
   begin
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -7582,7 +6893,7 @@ begin
     Inc(err_c);
    end;
    z := z + 6;
-    // step: i++
+   Inc(i);
   end;
   if ICDenable then
   begin
@@ -7611,16 +6922,10 @@ begin
   end;
   if (sizeW) > ($2008) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5466
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (not (memCODE_W[$2008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -7745,17 +7050,11 @@ begin
   end
   else
    StartHVReg(-(1));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5564
-    Original C:
-      for (i = 0; (i < 0x800C) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($800C)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -7833,28 +7132,16 @@ begin
   end;
   PacketIO(5);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5634
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devREV := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:5636
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
@@ -7869,16 +7156,10 @@ begin
    PrintMessage(strings[S_DevMismatch]);
   if not (F18x) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5643
-     Original C:
-       for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 3
+   z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    calib1 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
    if (calib1) < ($3fff) then
@@ -7886,16 +7167,10 @@ begin
     sprintf(str, strings[S_CalibWordX], 1, calib1);
     PrintMessage(str);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5646
-     Original C:
-       for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 3
+   z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    calib2 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
    if (calib2) < ($3fff) then
@@ -7903,16 +7178,10 @@ begin
     sprintf(str, strings[S_CalibWordX], 2, calib2);
     PrintMessage(str);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5649
-     Original C:
-       for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 3
+   z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    calib3 := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
    if (calib3) < ($3fff) then
@@ -7943,19 +7212,8 @@ begin
    begin
     fprintf(logfile, "Calibration area @0xE000\n");
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5666
-     Original C:
-       for (z = 0, i = 0; (z < (64 - 2)) && (i < 4); z++)
-       {
-         if (bufferI[z] == 0x52)
-         {
-           calib[i++] = (bufferI[z + 1] << 8) + bufferI[z + 2];
-           z += 2;
-         }
-       }
-   *)
-   // init: z = 0, i = 0
+   z := 0;
+   i := 0;
    while ((z) < ((64) - (2))) and ((i) < (4)) do
    begin
     if (bufferI[z]) = ($52) then
@@ -7963,7 +7221,7 @@ begin
      calib[Inc(i)] := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
      z := z + 2;
     end;
-     // step: z++
+    Inc(z);
    end;
    if (i) <> (4) then
    begin
@@ -8051,78 +7309,11 @@ begin
   begin
    if (dim) mod (8) then
     dim := dim + (8) - ((dim) mod (8));
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5735
-     Original C:
-       for (i = (k = 0), j = 0; i < dim; i += 8)
-       {
-         valid = (inc = 0);
-         for (; (i < dim) && (!valid);)
-         {
-           valid = 0;
-           for (k = 0; k < 8; k++)
-             if (memCODE_W[i + k] < 0x3fff)
-             valid = 1;
-       
-           if (!valid)
-           {
-             inc += 8;
-             i += 8;
-           }
-           if (inc && (valid || (inc == 248)))
-           {
-             bufferU[j++] = 0x17;
-             bufferU[j++] = (k = inc);
-             inc = 0;
-           }
-           if ((j > (64 - 4)) || (valid && (j > 1)))
-           {
-             bufferU[j++] = 0x04;
-             for (; j < 64; j++)
-               bufferU[j] = 0x0;
-       
-             PacketIO(3 + (k / 2));
-             j = 0;
-           }
-       ... (truncated)
-   *)
-   // init: i = (k = 0), j = 0
+   j := 0;
+   i := (k := 0);
    while (i) < (dim) do
    begin
-    valid := (inc := 0);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:5737
-      Original C:
-        for (; (i < dim) && (!valid);)
-        {
-          valid = 0;
-          for (k = 0; k < 8; k++)
-            if (memCODE_W[i + k] < 0x3fff)
-            valid = 1;
-        
-          if (!valid)
-          {
-            inc += 8;
-            i += 8;
-          }
-          if (inc && (valid || (inc == 248)))
-          {
-            bufferU[j++] = 0x17;
-            bufferU[j++] = (k = inc);
-            inc = 0;
-          }
-          if ((j > (64 - 4)) || (valid && (j > 1)))
-          {
-            bufferU[j++] = 0x04;
-            for (; j < 64; j++)
-              bufferU[j] = 0x0;
-        
-            PacketIO(3 + (k / 2));
-            j = 0;
-          }
-        }
-    *)
-    // init: 
+    inc := 0; valid := 0;
     while ((i) < (dim)) and (not (valid)) do
     begin
      valid := 0;
@@ -8139,7 +7330,7 @@ begin
      if (inc) and ((valid) or ((inc) = (248))) then
      begin
       bufferU[Inc(j)] := $17;
-      bufferU[Inc(j)] := (k := inc);
+      k := inc; bufferU[Inc(j)] := inc;
       inc := 0;
      end;
      if ((j) > ((64) - (4))) or ((valid) and ((j) > (1))) then
@@ -8189,59 +7380,18 @@ begin
       gtk_main_iteration();
      end;
     end;
-     // step: i += 8
+    Inc(i, 8);
    end;
   end
   else
   begin
    if (dim) mod (32) then
     dim := dim + (32) - ((dim) mod (32));
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5783
-     Original C:
-       for (i = (k = 0), j = 0; i < dim; i += 32)
-       {
-         for (valid = 0; (i < dim) && (!valid); i += (valid) ? (0) : (32))
-         {
-           valid = 0;
-           for (k = 0; k < 32; k++)
-             if (memCODE_W[i + k] < 0x3fff)
-             valid = 1;
-       
-         }
-       
-         bufferU[j++] = 0x50;
-         bufferU[j++] = i >> 8;
-         bufferU[j++] = i & 0xFF;
-         for (k = 0; (k < 32) && (i < dim); k++)
-         {
-           bufferU[j++] = (k < 31) ? (0x51) : (0x12);
-           bufferU[j++] = memCODE_W[i + k] >> 8;
-           bufferU[j++] = memCODE_W[i + k] & 0xff;
-           if (j > (64 - 4))
-           {
-             bufferU[j++] = 0x04;
-             for (; j < 64; j++)
-               bufferU[j] = 0x0;
-       
-             PacketIO(3)...
-   *)
-   // init: i = (k = 0), j = 0
+   j := 0;
+   i := (k := 0);
    while (i) < (dim) do
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:5784
-      Original C:
-        for (valid = 0; (i < dim) && (!valid); i += (valid) ? (0) : (32))
-        {
-          valid = 0;
-          for (k = 0; k < 32; k++)
-            if (memCODE_W[i + k] < 0x3fff)
-            valid = 1;
-        
-        }
-    *)
-    // init: valid = 0
+    valid := 0;
     while ((i) < (dim)) and (not (valid)) do
     begin
      valid := 0;
@@ -8250,31 +7400,12 @@ begin
       if (memCODE_W[(i) + (k)]) < ($3fff) then
        valid := 1;
      end;
-      // step: i += (valid) ? (0) : (32)
+     Inc(i, IfThen(valid, 0, 32));
     end;
     bufferU[Inc(j)] := $50;
     bufferU[Inc(j)] := (i) shr (8);
     bufferU[Inc(j)] := (i) and ($FF);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:5791
-      Original C:
-        for (k = 0; (k < 32) && (i < dim); k++)
-        {
-          bufferU[j++] = (k < 31) ? (0x51) : (0x12);
-          bufferU[j++] = memCODE_W[i + k] >> 8;
-          bufferU[j++] = memCODE_W[i + k] & 0xff;
-          if (j > (64 - 4))
-          {
-            bufferU[j++] = 0x04;
-            for (; j < 64; j++)
-              bufferU[j] = 0x0;
-        
-            PacketIO(3);
-            j = 0;
-          }
-        }
-    *)
-    // init: k = 0
+    k := 0;
     while ((k) < (32)) and ((i) < (dim)) do
     begin
      bufferU[Inc(j)] := IfThen((k) < (31), $51, $12);
@@ -8291,7 +7422,7 @@ begin
       PacketIO(3);
       j := 0;
      end;
-      // step: k++
+     Inc(k);
     end;
     if (i) < (dim) then
     begin
@@ -8316,7 +7447,7 @@ begin
       gtk_main_iteration();
      end;
     end;
-     // step: i += 32
+    Inc(i, 32);
    end;
   end;
   PrintMessage(strings[S_Compl]);
@@ -8349,49 +7480,15 @@ begin
   begin
    if (j) = (0) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:5839
-      Original C:
-        for (valid = 0; (i < dim) && (!valid);)
-        {
-          for (k2 = 0; (k2 < 255) && (!valid); k2++)
-            if (memCODE_W[i + k2] < 0x3fff)
-            valid = 1;
-        
-          if (k2 > 16)
-          {
-            bufferU[j++] = 0x17;
-            bufferU[j++] = k2;
-            i += k2;
-            k += k2;
-          }
-          if ((j > (64 - 4)) || (valid && (j > 1)))
-          {
-            bufferU[j++] = 0x04;
-            for (; j < 64; j++)
-              bufferU[j] = 0x0;
-        
-            PacketIO(3 + ((j / 2) * 0.1));
-            j = 0;
-          }
-        }
-    *)
-    // init: valid = 0
+    valid := 0;
     while ((i) < (dim)) and (not (valid)) do
     begin
-     (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-       Source: /tmp/opgui-0.12.4/progP16.c:5840
-       Original C:
-         for (k2 = 0; (k2 < 255) && (!valid); k2++)
-           if (memCODE_W[i + k2] < 0x3fff)
-           valid = 1;
-     *)
-     // init: k2 = 0
+     k2 := 0;
      while ((k2) < (255)) and (not (valid)) do
      begin
       if (memCODE_W[(i) + (k2)]) < ($3fff) then
        valid := 1;
-       // step: k2++
+      Inc(k2);
      end;
      if (k2) > (16) then
      begin
@@ -8428,7 +7525,7 @@ begin
     for z := 0 to ((64) - (2)) - 1 do
     begin
      if (bufferI[z]) = ($16) then
-      Inc(k);
+      Inc(k)
      else
       if (bufferI[z]) = ($14) then
       begin
@@ -8493,38 +7590,7 @@ begin
    end;
    PacketIO(7);
    j := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:5907
-     Original C:
-       for (w = (i = (k = 0)); i < dim2; i++)
-       {
-         if (memEE[i] < 0xff)
-         {
-           bufferU[j++] = 0x13;
-           bufferU[j++] = memEE[i];
-           bufferU[j++] = 0x18;
-           bufferU[j++] = 0x0A;
-           bufferU[j++] = 0x15;
-           w++;
-         }
-         bufferU[j++] = 0x16;
-         if ((j > (64 - 12)) || (i == (dim2 - 1)))
-         {
-           {
-             sprintf(str, strings[S_CodeWriting], ((i + dim) * 100) / (dim + dim2), i);
-             gtk_statusbar_push((GtkStatusbar * ) status_bar, statusID, str);
-             while (gtk_events_pending())
-               gtk_main_iteration();
-       
-           }
-           ;
-           bufferU[j++] = 0x04;
-           for (; j < 64; j++)
-             bufferU[j] = 0x0;
-       
-           Packet...
-   *)
-   // init: w = (i = (k = 0))
+   k := 0; i := 0; w := 0;
    while (i) < (dim2) do
    begin
     if (memEE[i]) < ($ff) then
@@ -8556,7 +7622,7 @@ begin
      for z := 0 to ((64) - (4)) - 1 do
      begin
       if ((bufferI[z]) = ($16)) and ((memEE[k]) >= ($ff)) then
-       Inc(k);
+       Inc(k)
       else
        if ((bufferI[z]) = ($13)) and ((bufferI[(z) + (3)]) = ($15)) then
        begin
@@ -8585,7 +7651,7 @@ begin
       fprintf(logfile, strings[S_Log8], i, i, k, k, errEE);
      end;
     end;
-     // step: i++
+    Inc(i);
    end;
    errEE := errEE + (i) - (k);
    sprintf(str, strings[S_ComplErr], errEE);
@@ -8617,37 +7683,7 @@ begin
     end;
     PacketIO(7);
     j := 0;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:5970
-      Original C:
-        for (w = (i = (k = 0)); i < dim2; i++)
-        {
-          if (memEE[i] < 0xff)
-          {
-            bufferU[j++] = 0x12;
-            bufferU[j++] = 0;
-            bufferU[j++] = memEE[i];
-            bufferU[j++] = 0x18;
-            bufferU[j++] = 0x0A;
-            bufferU[j++] = 0x14;
-            w++;
-          }
-          bufferU[j++] = 0x16;
-          if ((j > (64 - 12)) || (i == (dim2 - 1)))
-          {
-            {
-              sprintf(str, strings[S_CodeWriting], ((i + dim) * 100) / (dim + dim2), i);
-              gtk_statusbar_push((GtkStatusbar * ) status_bar, statusID, str);
-              while (gtk_events_pending())
-                gtk_main_iteration();
-        
-            }
-            ;
-            bufferU[j++] = 0x04;
-            for (; j < 64; j++)
-              bufferU...
-    *)
-    // init: w = (i = (k = 0))
+    k := 0; i := 0; w := 0;
     while (i) < (dim2) do
     begin
      if (memEE[i]) < ($ff) then
@@ -8680,7 +7716,7 @@ begin
       for z := 0 to ((64) - (4)) - 1 do
       begin
        if ((bufferI[z]) = ($16)) and ((memEE[k]) >= ($ff)) then
-        Inc(k);
+        Inc(k)
        else
         if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (3)]) = ($14)) then
         begin
@@ -8709,7 +7745,7 @@ begin
        fprintf(logfile, strings[S_Log8], i, i, k, k, errEE);
       end;
      end;
-      // step: i++
+     Inc(i);
     end;
     errEE := errEE + (i) - (k);
     sprintf(str, strings[S_ComplErr], errEE);
@@ -8798,28 +7834,8 @@ begin
    end;
    j := (IfThen(programID, 22, 0)) + (IfThen((options) and ($C), 10, 0));
    PacketIO((18) + (j));
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:6086
-     Original C:
-       for (i = 0, z = 0; programID && (i < 4); i++)
-       {
-         for (; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-           ;
-       
-         if (memCODE_W[0x8000 + i] != ((bufferI[z + 1] << 8) + bufferI[z + 2]))
-         {
-           PrintMessage("\r\n");
-           {
-             sprintf(str, strings[S_IDErr], i, memCODE_W[0x8000 + i], (bufferI[z + 1] << 8) + bufferI[z + 2]);
-             PrintMessage(str);
-           }
-           ;
-           err_c++;
-         }
-         z += 6;
-       }
-   *)
-   // init: i = 0, z = 0
+   i := 0;
+   z := 0;
    while (programID) and ((i) < (4)) do
    begin
     while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
@@ -8834,7 +7850,7 @@ begin
      Inc(err_c);
     end;
     z := z + 6;
-     // step: i++
+    Inc(i);
    end;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
@@ -8847,16 +7863,10 @@ begin
     PrintMessage(str);
     Inc(err_c);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:6101
-     Original C:
-       for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 6
+   z := 6;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (not (memCODE_W[$8008])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
    begin
@@ -8867,16 +7877,10 @@ begin
    end;
    if (options) and ($C) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:6108
-      Original C:
-        for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-    *)
-    // init: z += 6
+    z := 6;
     while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     if (not (memCODE_W[$8009])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
     begin
@@ -8888,16 +7892,10 @@ begin
    end;
    if (options) and (8) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:6116
-      Original C:
-        for (z += 6; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-          ;
-    *)
-    // init: z += 6
+    z := 6;
     while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     if (not (memCODE_W[$800A])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
     begin
@@ -9018,17 +8016,11 @@ begin
   end
   else
    StartHVReg(-(1));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:6212
-    Original C:
-      for (i = 0; (i < 0x800C) && (i < sizeW); i++)
-        memCODE_W[i] &= 0x3FFF;
-  *)
-  // init: i = 0
+  i := 0;
   while ((i) < ($800C)) and ((i) < (sizeW)) do
   begin
    memCODE_W[i] := memCODE_W[i] and $3FFF;
-    // step: i++
+   Inc(i);
   end;
   start := GetTickCount();
   j := 0;
@@ -9104,28 +8096,16 @@ begin
   end;
   PacketIO(5);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:6277
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x58); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($58)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devREV := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:6279
-    Original C:
-      for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x58); z++)
-        ;
-  *)
-  // init: z += 3
+  z := 3;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($58)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   devID := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
   sprintf(str, strings[S_DevID], devID);
@@ -9175,45 +8155,20 @@ begin
    end;
    PrintMessage("Device Information Area @0x8100\r\n");
    s[0] := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:6314
-     Original C:
-       for (i = 0; i < 0x20; i += 16)
-       {
-         sprintf(t, "%04X: ", 0x8100 + i);
-         strcat(s, t);
-         for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-         {
-           sprintf(t, "%04X ", DIA[j]);
-           strcat(s, t);
-         }
-       
-         strcat(s, "\r\n");
-       }
-   *)
-   // init: i = 0
+   i := 0;
    while (i) < ($20) do
    begin
     sprintf(t, "%04X: ", ($8100) + (i));
     strcat(s, t);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:6317
-      Original C:
-        for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-        {
-          sprintf(t, "%04X ", DIA[j]);
-          strcat(s, t);
-        }
-    *)
-    // init: j = i
+    j := i;
     while ((j) < ((i) + (16))) and ((j) < ($20)) do
     begin
      sprintf(t, "%04X ", DIA[j]);
      strcat(s, t);
-      // step: j++
+     Inc(j);
     end;
     strcat(s, "\r\n");
-     // step: i += 16
+    Inc(i, 16);
    end;
    PrintMessage(s);
    if saveLog then
@@ -9250,45 +8205,20 @@ begin
    end;
    PrintMessage("Device Configuration Information @0x8200\r\n");
    s[0] := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:6350
-     Original C:
-       for (i = 0; i < 0x20; i += 16)
-       {
-         sprintf(t, "%04X: ", 0x8200 + i);
-         strcat(s, t);
-         for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-         {
-           sprintf(t, "%04X ", DCI[j]);
-           strcat(s, t);
-         }
-       
-         strcat(s, "\r\n");
-       }
-   *)
-   // init: i = 0
+   i := 0;
    while (i) < ($20) do
    begin
     sprintf(t, "%04X: ", ($8200) + (i));
     strcat(s, t);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:6353
-      Original C:
-        for (j = i; (j < (i + 16)) && (j < 0x20); j++)
-        {
-          sprintf(t, "%04X ", DCI[j]);
-          strcat(s, t);
-        }
-    *)
-    // init: j = i
+    j := i;
     while ((j) < ((i) + (16))) and ((j) < ($20)) do
     begin
      sprintf(t, "%04X ", DCI[j]);
      strcat(s, t);
-      // step: j++
+     Inc(j);
     end;
     strcat(s, "\r\n");
-     // step: i += 16
+    Inc(i, 16);
    end;
    PrintMessage(s);
    sprintf(str, "Erase row size: %d words\r\n", DCI[0]);
@@ -9404,51 +8334,11 @@ begin
   end;
   if (dim) mod (rowN) then
    dim := dim + (rowN) - ((dim) mod (rowN));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP16.c:6448
-    Original C:
-      for (i = (k = 0), j = 0; i < dim; i += rowN)
-      {
-        for (valid = 0; (i < dim) && (!valid); i += (valid) ? (0) : (rowN))
-        {
-          valid = 0;
-          for (k = 0; k < rowN; k++)
-            if (memCODE_W[i + k] < 0x3fff)
-            valid = 1;
-      
-        }
-      
-        bufferU[j++] = 0x59;
-        bufferU[j++] = 0x80;
-        bufferU[j++] = i >> 8;
-        bufferU[j++] = i & 0xFF;
-        for (k = 0; (k < rowN) && (i < dim); k++)
-        {
-          bufferU[j++] = 0x59;
-          bufferU[j++] = (k < (rowN - 1)) ? (0x02) : (0x00);
-          bufferU[j++] = memCODE_W[i + k] >> 8;
-          bufferU[j++] = memCODE_W[i + k] & 0xff;
-          if (j > (64 - 5))
-          {
-            bufferU[j++] = 0x04;
-            ...
-  *)
-  // init: i = (k = 0), j = 0
+  j := 0;
+  i := (k := 0);
   while (i) < (dim) do
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:6449
-     Original C:
-       for (valid = 0; (i < dim) && (!valid); i += (valid) ? (0) : (rowN))
-       {
-         valid = 0;
-         for (k = 0; k < rowN; k++)
-           if (memCODE_W[i + k] < 0x3fff)
-           valid = 1;
-       
-       }
-   *)
-   // init: valid = 0
+   valid := 0;
    while ((i) < (dim)) and (not (valid)) do
    begin
     valid := 0;
@@ -9457,33 +8347,13 @@ begin
      if (memCODE_W[(i) + (k)]) < ($3fff) then
       valid := 1;
     end;
-     // step: i += (valid) ? (0) : (rowN)
+    Inc(i, IfThen(valid, 0, rowN));
    end;
    bufferU[Inc(j)] := $59;
    bufferU[Inc(j)] := $80;
    bufferU[Inc(j)] := (i) shr (8);
    bufferU[Inc(j)] := (i) and ($FF);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP16.c:6457
-     Original C:
-       for (k = 0; (k < rowN) && (i < dim); k++)
-       {
-         bufferU[j++] = 0x59;
-         bufferU[j++] = (k < (rowN - 1)) ? (0x02) : (0x00);
-         bufferU[j++] = memCODE_W[i + k] >> 8;
-         bufferU[j++] = memCODE_W[i + k] & 0xff;
-         if (j > (64 - 5))
-         {
-           bufferU[j++] = 0x04;
-           for (; j < 64; j++)
-             bufferU[j] = 0x0;
-       
-           PacketIO(3);
-           j = 0;
-         }
-       }
-   *)
-   // init: k = 0
+   k := 0;
    while ((k) < (rowN)) and ((i) < (dim)) do
    begin
     bufferU[Inc(j)] := $59;
@@ -9501,7 +8371,7 @@ begin
      PacketIO(3);
      j := 0;
     end;
-     // step: k++
+    Inc(k);
    end;
    if (i) < (dim) then
    begin
@@ -9527,7 +8397,7 @@ begin
      gtk_main_iteration();
     end;
    end;
-    // step: i += rowN
+   Inc(i, rowN);
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_CodeV]);
@@ -9552,16 +8422,10 @@ begin
   begin
    if (j) = (0) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:6501
-      Original C:
-        for (k2 = i; (k2 < dim) && (memCODE_W[k2] >= 0x3fff); k2++)
-          ;
-    *)
-    // init: k2 = i
+    k2 := i;
     while ((k2) < (dim)) and ((memCODE_W[k2]) >= ($3fff)) do
     begin
-      // step: k2++
+     Inc(k2);
     end;
     if (k2) > ((i) + (10)) then
     begin
@@ -9638,37 +8502,7 @@ begin
     bufferU[Inc(j)] := $80;
     bufferU[Inc(j)] := $F0;
     bufferU[Inc(j)] := $00;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP16.c:6556
-      Original C:
-        for (w = (i = (k = 0)); i < dim2; i++)
-        {
-          if (memEE[i] < 0xff)
-          {
-            bufferU[j++] = 0x59;
-            bufferU[j++] = 0x00;
-            bufferU[j++] = 0;
-            bufferU[j++] = memEE[i] & 0xff;
-            bufferU[j++] = 0x57;
-            bufferU[j++] = 0xE0;
-            bufferU[j++] = 0x0A;
-            bufferU[j++] = 0x58;
-            bufferU[j++] = 0xFE;
-            w++;
-          }
-          else
-          {
-            bufferU[j++] = 0x57;
-            bufferU[j++] = 0xF8;
-          }
-          if ((j > (64 - 10)) || (i == (dim2 - 1)))
-          {
-            {
-              sprintf(str, strings[S_CodeWriting], ((i + dim) * 100) / (dim + dim2), i);
-              gtk_statusbar_push((GtkStatusbar * ) status_bar, statusID, str);
-              while (gtk...
-    *)
-    // init: w = (i = (k = 0))
+    k := 0; i := 0; w := 0;
     while (i) < (dim2) do
     begin
      if (memEE[i]) < ($ff) then
@@ -9709,7 +8543,7 @@ begin
       for z := 0 to ((64) - (5)) - 1 do
       begin
        if ((bufferI[z]) = ($57)) and ((memEE[k]) >= ($ff)) then
-        Inc(k);
+        Inc(k)
        else
         if ((bufferI[z]) = ($59)) and ((bufferI[(z) + (3)]) = ($58)) then
         begin
@@ -9737,7 +8571,7 @@ begin
        fprintf(logfile, strings[S_Log8], i, i, k, k, errEE);
       end;
      end;
-      // step: i++
+     Inc(i);
     end;
     errEE := errEE + (i) - (k);
     sprintf(str, strings[S_ComplErr], errEE);
@@ -9788,7 +8622,8 @@ begin
      Inc(j);
     end;
     PacketIO(50);
-    while (i) < (4) do
+    z := 0;
+    for i := 0 to (4) - 1 do
     begin
      while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($58)) do
      begin
@@ -9801,7 +8636,6 @@ begin
       Inc(err_c);
      end;
      z := z + 6;
-     Inc(i);
     end;
     j := 0;
    end;
@@ -9828,7 +8662,8 @@ begin
     Inc(j);
    end;
    PacketIO(60);
-   while (i) < (5) do
+   z := 0;
+   for i := 0 to (5) - 1 do
    begin
     while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($58)) do
     begin
@@ -9842,7 +8677,6 @@ begin
      Inc(err_c);
     end;
     z := z + 6;
-    Inc(i);
    end;
    err := err + err_c;
    sprintf(str, strings[S_ComplErr], err_c);

@@ -58,16 +58,17 @@ var
   s: array[0..64-1] of Char;
   i: Integer;
 begin
-  for i := 0 to (sizeof(PIC32LIST)/sizeof(PIC32LIST[0])) - 1 do
+  for i := 0 to ((SizeOf(PIC32LIST)) div (SizeOf(PIC32LIST[0]))) - 1 do
   begin
-   if (id&0x0FFFFFFF) = PIC32LIST[i].id then
+   if ((id) and ($0FFFFFFF)) = (PIC32LIST[i].id) then
    begin
     strcpy(s, PIC32LIST[i].device);
-    strcat(s, '\r' + LineEnding + '');
+    strcat(s, "\r\n");
     PrintMessage(s);
     Exit;
    end;
   end;
+  PrintMessage(strings[S_nodev]);
 end;
 
 function XferInstruction(j: ^Integer; instruction: Integer): Pointer;
@@ -111,16 +112,10 @@ begin
    for i := 0 to (20) - 1 do
    begin
     PacketIO(5);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP32.c:409
-      Original C:
-        for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-          ;
-    *)
-    // init: z = 0
+    z := 0;
     while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     if (z) < ((64) - (4)) then
      w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
@@ -245,16 +240,10 @@ begin
   end;
   PacketIO(25);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:512
-    Original C:
-      for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
@@ -270,37 +259,18 @@ begin
    Inc(j);
   end;
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:523
-    Original C:
-      for (i = 0; ((w0 & 0xC) != 0x8) && (i < 20); i++)
-      {
-        PacketIO(5);
-        for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-          ;
-      
-        if (z < (64 - 4))
-          w0 = (((bufferI[z + 1] << 24) + (bufferI[z + 2] << 16)) + (bufferI[z + 3] << 8)) + bufferI[z + 4];
-      }
-  *)
-  // init: i = 0
+  i := 0;
   while (((w0) and ($C)) <> ($8)) and ((i) < (20)) do
   begin
    PacketIO(5);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP32.c:525
-     Original C:
-       for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-         ;
-   *)
-   // init: z = 0
+   z := 0;
    while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (4)) then
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-    // step: i++
+   Inc(i);
   end;
   sprintf(str, "Device status: CFGRDY=%d FCBUSY=%d (0x%02X)\r\n", IfThen((w0) and ($8), 1, 0), IfThen((w0) and ($4), 1, 0), (w0) and ($FF));
   PrintMessage(str);
@@ -314,16 +284,10 @@ begin
   bufferU[Inc(j)] := $04;
   PacketIO(5);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:540
-    Original C:
-      for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
@@ -379,16 +343,10 @@ begin
   for i := 0 to (20) - 1 do
   begin
    PacketIO(5);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP32.c:632
-     Original C:
-       for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-         ;
-   *)
-   // init: z = 0
+   z := 0;
    while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (4)) then
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
@@ -397,35 +355,7 @@ begin
   end;
   sprintf(str, "ECR=0x%08X\r\n", w0);
   PrintMessage(str);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:638
-    Original C:
-      for (i = 0xbFC00BF0; i < 0xbFC00C10; i += 4)
-      {
-        XferInstruction(-1, 0x3C13FF20);
-        XferInstruction(-1, 0x3C080000 + (i >> 16));
-        XferInstruction(-1, 0x35080000 + (i & 0xFFFF));
-        XferInstruction(-1, 0x8d090000);
-        XferInstruction(-1, 0xae690000);
-        XferInstruction(-1, 0);
-        j = 0;
-        bufferU[j++] = 0x54;
-        bufferU[j++] = 0x0E;
-        bufferU[j++] = 0x56;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(5);
-        j = 0;
-        w0 = -10;
-        for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++...
-  *)
-  // init: i = 0xbFC00BF0
+  i := $bFC00BF0;
   while (i) < ($bFC00C10) do
   begin
    XferInstruction(-(1), $3C13FF20);
@@ -451,22 +381,16 @@ begin
    PacketIO(5);
    j := 0;
    w0 := -(10);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP32.c:671
-     Original C:
-       for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-         ;
-   *)
-   // init: z = 0
+   z := 0;
    while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (4)) then
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
    sprintf(str, "[0x%08X]=0x%08X\r\n", i, w0);
    PrintMessage(str);
-    // step: i += 4
+   Inc(i, 4);
   end;
   i := $BF80F230;
   XferInstruction(-(1), $3C13FF20);
@@ -492,80 +416,50 @@ begin
   PacketIO(5);
   j := 0;
   w0 := -(10);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:709
-    Original C:
-      for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   sprintf(str, "DEVID=0x%08X\r\n", w0);
   PrintMessage(str);
   PacketIO(5);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:713
-    Original C:
-      for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   sprintf(str, "DEVID=0x%08X\r\n", w0);
   PrintMessage(str);
   PacketIO(5);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:717
-    Original C:
-      for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   sprintf(str, "DEVID=0x%08X\r\n", w0);
   PrintMessage(str);
   PacketIO(5);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:721
-    Original C:
-      for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   sprintf(str, "DEVID=0x%08X\r\n", w0);
   PrintMessage(str);
   PacketIO(5);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:725
-    Original C:
-      for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
@@ -594,52 +488,16 @@ begin
   PacketIO(5);
   j := 0;
   w0 := -(10);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:749
-    Original C:
-      for (z = 0; (bufferI[z] != 0x56) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (4)) then
    w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   sprintf(str, "DEVID=0x%08X\r\n", w0);
   PrintMessage(str);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP32.c:754
-    Original C:
-      for (i = 0x1FC00000; (i < 0x1FC00BF0) && 0; i += 4)
-      {
-        XferInstruction(&j, 0x3C13FF20);
-        XferInstruction(&j, 0x3C080000 + (i >> 16));
-        XferInstruction(&j, 0x35080000 + (i % 0xFFFF));
-        XferInstruction(&j, 0x8d090000);
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(5);
-        j = 0;
-        XferInstruction(&j, 0xae690000);
-        bufferU[j++] = 0x54;
-        bufferU[j++] = 0x0E;
-        bufferU[j++] = 0x56;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x00;
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(5);
-        j = 0;...
-  *)
-  // init: i = 0x1FC00000
+  i := $1FC00000;
   while ((i) < ($1FC00BF0)) and (0) do
   begin
    XferInstruction(@(j), $3C13FF20);
@@ -670,44 +528,26 @@ begin
    end;
    PacketIO(5);
    j := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP32.c:775
-     Original C:
-       for (z = 0; (bufferI[z] != 0x55) && (z < 64); z++)
-         ;
-   *)
-   // init: z = 0
+   z := 0;
    while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
    begin
-     // step: z++
+    Inc(z);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP32.c:776
-     Original C:
-       for (z += 4; (bufferI[z] != 0x55) && (z < 64); z++)
-         ;
-   *)
-   // init: z += 4
+   z := 4;
    while ((bufferI[z]) <> ($55)) and ((z) < (64)) do
    begin
-     // step: z++
+    Inc(z);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP32.c:777
-     Original C:
-       for (z += 4; (bufferI[z] != 0x56) && (z < 64); z++)
-         ;
-   *)
-   // init: z += 4
+   z := 4;
    while ((bufferI[z]) <> ($56)) and ((z) < (64)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (4)) then
     w0 := ((((bufferI[(z) + (1)]) shl (24)) + ((bufferI[(z) + (2)]) shl (16))) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
    sprintf(str, "[0x%08X]=0x%08X\r\n", i, w0);
    PrintMessage(str);
-    // step: i += 4
+   Inc(i, 4);
   end;
   bufferU[Inc(j)] := $07;
   bufferU[Inc(j)] := 1;

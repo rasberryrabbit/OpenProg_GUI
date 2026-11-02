@@ -128,42 +128,12 @@ begin
   end;
   PacketIO(5);
   PrintMessage(strings[S_ReadEE]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:62
-    Original C:
-      for (i = 0, j = 0; i < dim; i += inc)
-      {
-        if ((i < 0x10000) && (i > (0x10000 - (64 - 4))))
-          inc = 0x10000 - i;
-        else
-          inc = (i < (dim - (64 - 4))) ? (64 - 4) : (dim - i);
-        if (!addr)
-        {
-          bufferU[j++] = 0x2C;
-          bufferU[j++] = inc;
-          bufferU[j++] = 0xA0 + ((i >> 7) & 0x0E);
-          bufferU[j++] = i & 0xFF;
-        }
-        else
-        {
-          bufferU[j++] = 0x2E;
-          bufferU[j++] = inc;
-          bufferU[j++] = 0xA0 + ((i > 0xFFFF) ? (addr17) : (0));
-          bufferU[j++] = (i >> 8) & 0xFF;
-          bufferU[j++] = i & 0xFF;
-        }
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(8);
-        for (...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    if ((i) < ($10000)) and ((i) > (($10000) - ((64) - (4)))) then
-    inc := ($10000) - (i);
+    inc := ($10000) - (i)
    else
     inc := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
    if not (addr) then
@@ -188,30 +158,18 @@ begin
     Inc(j);
    end;
    PacketIO(8);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:81
-     Original C:
-       for (j = 0; ((j < (64 - 1)) && (bufferI[j] != 0x2C)) && (bufferI[j] != 0x2E); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while (((j) < ((64) - (1))) and ((bufferI[j]) <> ($2C))) and ((bufferI[j]) <> ($2E)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((j) < ((64) - (1))) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:83
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-          memEE[k++] = bufferI[z];
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      memEE[Inc(k)] := bufferI[z];
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
@@ -227,7 +185,7 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-    // step: i += inc
+   Inc(i, inc);
   end;
   if (k) <> (dim) then
   begin
@@ -330,41 +288,10 @@ begin
   PrintMessage(strings[S_EEAreaW]);
   while (page) >= ((64) - (6)) do
   begin
-   (page := 1);
+   page := page shr 1;
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:166
-    Original C:
-      for (i = 0, j = 0; i < dim; i += page)
-      {
-        bufferU[j++] = 0x2D;
-        if (!addr)
-        {
-          bufferU[j++] = page;
-          bufferU[j++] = 0xA0 + ((i >> 7) & 0x0E);
-          bufferU[j++] = i & 0xFF;
-        }
-        else
-        {
-          bufferU[j++] = page + 1;
-          bufferU[j++] = 0xA0 + ((i > 0xFFFF) ? (addr17) : (0));
-          bufferU[j++] = (i >> 8) & 0xFF;
-          bufferU[j++] = i & 0xFF;
-        }
-        for (k = 0; k < page; k++)
-          bufferU[j++] = memEE[i + k];
-      
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(3);
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x2D); j++)
-          ;
-      
-        if ((bufferI[j] != 0x2D) || (buffe...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $2D;
@@ -392,16 +319,10 @@ begin
     Inc(j);
    end;
    PacketIO(3);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:183
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x2D); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($2D)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) <> ($2D)) or ((bufferI[(j) + (1)]) >= ($FA)) then
     i := (dim) + (10);
@@ -429,84 +350,33 @@ begin
     Inc(j);
    end;
    ack := $FD;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:198
-     Original C:
-       for (j = 0; (ack == 0xFD) && (j < 20); j++)
-       {
-         PacketIO(2);
-         for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x2D); j++)
-           ;
-       
-         if ((bufferI[j] != 0x2D) || (bufferI[j + 1] >= 0xFA))
-           ack = 0xFD;
-         else
-           ack = bufferI[j + 1];
-       }
-   *)
-   // init: j = 0
+   j := 0;
    while ((ack) = ($FD)) and ((j) < (20)) do
    begin
     PacketIO(2);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:200
-      Original C:
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x2D); j++)
-          ;
-    *)
-    // init: j = 0
+    j := 0;
     while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($2D)) do
     begin
-      // step: j++
+     Inc(j);
     end;
     if ((bufferI[j]) <> ($2D)) or ((bufferI[(j) + (1)]) >= ($FA)) then
-     ack := $FD;
+     ack := $FD
     else
      ack := bufferI[(j) + (1)];
-     // step: j++
+    Inc(j);
    end;
    j := 0;
-    // step: i += page
+   Inc(i, page);
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   k := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:213
-    Original C:
-      for (i = 0, j = 0; i < dim; i += inc)
-      {
-        if ((i < 0x10000) && (i > (0x10000 - (64 - 4))))
-          inc = 0x10000 - i;
-        else
-          inc = (i < (dim - (64 - 4))) ? (64 - 4) : (dim - i);
-        if (!addr)
-        {
-          bufferU[j++] = 0x2C;
-          bufferU[j++] = inc;
-          bufferU[j++] = 0xA0 + ((i >> 7) & 0x0E);
-          bufferU[j++] = i & 0xFF;
-        }
-        else
-        {
-          bufferU[j++] = 0x2E;
-          bufferU[j++] = inc;
-          bufferU[j++] = 0xA0 + ((i > 0xFFFF) ? (addr17) : (0));
-          bufferU[j++] = (i >> 8) & 0xFF;
-          bufferU[j++] = i & 0xFF;
-        }
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(8);
-        for (...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    if ((i) < ($10000)) and ((i) > (($10000) - ((64) - (4)))) then
-    inc := ($10000) - (i);
+    inc := ($10000) - (i)
    else
     inc := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
    if not (addr) then
@@ -531,37 +401,14 @@ begin
     Inc(j);
    end;
    PacketIO(8);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:232
-     Original C:
-       for (j = 0; ((j < (64 - 1)) && (bufferI[j] != 0x2C)) && (bufferI[j] != 0x2E); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while (((j) < ((64) - (1))) and ((bufferI[j]) <> ($2C))) and ((bufferI[j]) <> ($2E)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if (((bufferI[j]) = ($2C)) or ((bufferI[j]) = ($2E))) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:234
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-        {
-          if (memEE[k++] != bufferI[z])
-          {
-            PrintMessage("\r\n");
-            {
-              sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k - 1], bufferI[z]);
-              PrintMessage(str);
-            }
-            ;
-            err++;
-          }
-        }
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      if (memEE[Inc(k)]) <> (bufferI[z]) then
@@ -571,7 +418,7 @@ begin
       PrintMessage(str);
       Inc(err);
      end;
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
@@ -589,7 +436,7 @@ begin
    end;
    if (err) >= (max_err) then
     Break;
-    // step: i += inc
+   Inc(i, inc);
   end;
   if (k) <> (dim) then
   begin
@@ -669,60 +516,10 @@ begin
   PacketIO(5);
   PrintMessage(strings[S_ReadEE]);
   dim2 := IfThen(x8, dim, (dim) div (2));
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:314
-    Original C:
-      for (i = 0; i < dim2;)
-      {
-        for (j = 0; (j < (64 - 14)) && (i < dim2);)
-        {
-          bufferU[j++] = 0x3C;
-          bufferU[j++] = na + 3;
-          bufferU[j++] = 0xC0 + ((i >> (na - 5)) & 0x1F);
-          bufferU[j++] = (i << (13 - na)) & 0xFF;
-          bufferU[j++] = 0x3D;
-          bufferU[j++] = (x8) ? (8) : (16);
-          bufferU[j++] = 0x32;
-          bufferU[j++] = (x8) ? (0) : (0x20);
-          bufferU[j++] = 0;
-          bufferU[j++] = 0x32;
-          bufferU[j++] = (x8) ? (0x10) : (0x10 + 0x20);
-          bufferU[j++] = 0;
-          i++;
-        }
-      
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(2);
-        for (z = 0; z < (64 - 3); z++)
-      ...
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < (dim2) do
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:315
-     Original C:
-       for (j = 0; (j < (64 - 14)) && (i < dim2);)
-       {
-         bufferU[j++] = 0x3C;
-         bufferU[j++] = na + 3;
-         bufferU[j++] = 0xC0 + ((i >> (na - 5)) & 0x1F);
-         bufferU[j++] = (i << (13 - na)) & 0xFF;
-         bufferU[j++] = 0x3D;
-         bufferU[j++] = (x8) ? (8) : (16);
-         bufferU[j++] = 0x32;
-         bufferU[j++] = (x8) ? (0) : (0x20);
-         bufferU[j++] = 0;
-         bufferU[j++] = 0x32;
-         bufferU[j++] = (x8) ? (0x10) : (0x10 + 0x20);
-         bufferU[j++] = 0;
-         i++;
-       }
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (14))) and ((i) < (dim2)) do
    begin
     bufferU[Inc(j)] := $3C;
@@ -755,7 +552,7 @@ begin
     if (bufferI[z]) = ($3D) then
     begin
      if x8 then
-      memEE[Inc(k)] := bufferI[(z) + (2)];
+      memEE[Inc(k)] := bufferI[(z) + (2)]
      else
      begin
       memEE[(k) + (1)] := bufferI[(z) + (2)];
@@ -936,37 +733,8 @@ begin
   PacketIO(5);
   PrintMessage(strings[S_EEAreaW]);
   addr := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:481
-    Original C:
-      for (i = 0, j = 0; i < dim; i += page, addr += ((0x10000 >> na) * page) / 2)
-      {
-        bufferU[j++] = 0x32;
-        bufferU[j++] = 0x20;
-        bufferU[j++] = 0;
-        bufferU[j++] = 0x32;
-        bufferU[j++] = 0x10 + 0x20;
-        bufferU[j++] = 0;
-        bufferU[j++] = 0x3C;
-        bufferU[j++] = 3;
-        bufferU[j++] = 0xE0;
-        bufferU[j++] = 0x3C;
-        bufferU[j++] = na;
-        bufferU[j++] = addr >> 8;
-        if (na > 8)
-          bufferU[j++] = addr & 0xFF;
-        bufferU[j++] = 0x3C;
-        bufferU[j++] = 8 * page;
-        for (k = 0; k < page; k += 2)
-        {
-          bufferU[j++] = memEE[(i + k) + 1];
-          bufferU[j++] = memEE[i + k];
-        }
-      
-        bufferU[j++] = 0x32;
-        bufferU[j+...
-  *)
-  // init: i = 0, j = 0
+  i := 0;
+  j := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $32;
@@ -985,21 +753,12 @@ begin
     bufferU[Inc(j)] := (addr) and ($FF);
    bufferU[Inc(j)] := $3C;
    bufferU[Inc(j)] := (8) * (page);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:497
-     Original C:
-       for (k = 0; k < page; k += 2)
-       {
-         bufferU[j++] = memEE[(i + k) + 1];
-         bufferU[j++] = memEE[i + k];
-       }
-   *)
-   // init: k = 0
+   k := 0;
    while (k) < (page) do
    begin
     bufferU[Inc(j)] := memEE[((i) + (k)) + (1)];
     bufferU[Inc(j)] := memEE[(i) + (k)];
-     // step: k += 2
+    Inc(k, 2);
    end;
    bufferU[Inc(j)] := $32;
    bufferU[Inc(j)] := $20;
@@ -1015,16 +774,10 @@ begin
    end;
    PacketIO(2);
    j := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:511
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3C); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3C)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) <> ($3C)) or ((bufferI[(j) + (1)]) >= ($FA)) then
     i := (dim) + (10);
@@ -1036,37 +789,19 @@ begin
     bufferU[j] := $0;
     Inc(j);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:517
-     Original C:
-       for (z = 0, k = 0; (z < 30) && (!k); z++)
-       {
-         PacketIO(2);
-         for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3D); j++)
-           ;
-       
-         if (bufferI[j] == 0x3D)
-           k = bufferI[j + 2];
-       }
-   *)
-   // init: z = 0, k = 0
+   z := 0;
+   k := 0;
    while ((z) < (30)) and (not (k)) do
    begin
     PacketIO(2);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:519
-      Original C:
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3D); j++)
-          ;
-    *)
-    // init: j = 0
+    j := 0;
     while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3D)) do
     begin
-      // step: j++
+     Inc(j);
     end;
     if (bufferI[j]) = ($3D) then
      k := bufferI[(j) + (2)];
-     // step: z++
+    Inc(z);
    end;
    j := 0;
    sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
@@ -1081,7 +816,8 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-    // step: i += page, addr += ((0x10000 >> na) * page) / 2
+   Inc(i, page);
+   Inc(addr, ((($10000) shr (na)) * (page)) div (2));
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
@@ -1104,33 +840,8 @@ begin
   n := (64) - (2);
   if (n) > (30) then
    n := 30;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:548
-    Original C:
-      for (i = 0, j = 0; i < dim; i += n)
-      {
-        bufferU[j++] = 0x3D;
-        bufferU[j++] = (i < (dim - n)) ? (n * 8) : ((dim - i) * 8);
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(2);
-        for (j = 0; (bufferI[j] != 0x3D) && (j < (64 - 1)); j++)
-          ;
-      
-        if (bufferI[j] == 0x3D)
-        {
-          for (z = j + 2; (z < ((j + 2) + (bufferI[j + 1] / 8))) && (z < 64); z += 2, k += 2)
-          {
-            if (memEE[k + 1] != bufferI[z])
-            {
-              PrintMessage("\r\n");
-              {
-                sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k + 1], bufferI[z]);
-                PrintMess...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $3D;
@@ -1142,47 +853,14 @@ begin
     Inc(j);
    end;
    PacketIO(2);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:554
-     Original C:
-       for (j = 0; (bufferI[j] != 0x3D) && (j < (64 - 1)); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((bufferI[j]) <> ($3D)) and ((j) < ((64) - (1))) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if (bufferI[j]) = ($3D) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:556
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + (bufferI[j + 1] / 8))) && (z < 64); z += 2, k += 2)
-        {
-          if (memEE[k + 1] != bufferI[z])
-          {
-            PrintMessage("\r\n");
-            {
-              sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k + 1], bufferI[z]);
-              PrintMessage(str);
-            }
-            ;
-            err++;
-          }
-          if (memEE[k] != bufferI[z + 1])
-          {
-            PrintMessage("\r\n");
-            {
-              sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k], bufferI[z + 1]);
-              PrintMessage(str);
-            }
-            ;
-            err++;
-          }
-        }
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + ((bufferI[(j) + (1)]) div (8)))) and ((z) < (64)) do
     begin
      if (memEE[(k) + (1)]) <> (bufferI[z]) then
@@ -1199,7 +877,8 @@ begin
       PrintMessage(str);
       Inc(err);
      end;
-      // step: z += 2, k += 2
+     Inc(z, 2);
+     Inc(k, 2);
     end;
    end;
    sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
@@ -1217,7 +896,7 @@ begin
    end;
    if (err) >= (max_err) then
     Break;
-    // step: i += n
+   Inc(i, n);
   end;
   if (k) <> (dim) then
   begin
@@ -1345,65 +1024,24 @@ begin
    bufferU[j] := $0;
    Inc(j);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:673
-    Original C:
-      for (i = 0, k = 0; (i < 30) && (!k); i++)
-      {
-        PacketIO(2);
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3D); j++)
-          ;
-      
-        if (bufferI[j] == 0x3D)
-          k = bufferI[j + 2];
-      }
-  *)
-  // init: i = 0, k = 0
+  i := 0;
+  k := 0;
   while ((i) < (30)) and (not (k)) do
   begin
    PacketIO(2);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:675
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3D); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3D)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if (bufferI[j]) = ($3D) then
     k := bufferI[(j) + (2)];
-    // step: i++
+   Inc(i);
   end;
   PrintMessage(strings[S_EEAreaW]);
   addr := 0;
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:683
-    Original C:
-      for (i = 0; i < dim; i += (options == 0) ? (2) : (1), addr += 0x10000 >> na)
-      {
-        if ((memEE[i] < 0xFF) || ((options == 0) && (memEE[i + 1] < 0xFF)))
-        {
-          bufferU[j++] = 0x32;
-          bufferU[j++] = (options == 0) ? (0x20 + 0x08) : (0x08);
-          bufferU[j++] = 0;
-          bufferU[j++] = 0x32;
-          bufferU[j++] = (options == 0) ? ((0x10 + 0x20) + 0x08) : (0x10 + 0x08);
-          bufferU[j++] = 0;
-          bufferU[j++] = 0x3C;
-          bufferU[j++] = 3;
-          bufferU[j++] = 0xA0;
-          bufferU[j++] = 0x3C;
-          bufferU[j++] = na;
-          bufferU[j++] = addr >> 8;
-          if (na > 8)
-            bufferU[j++] = addr & 0xFF;
-          bufferU[j++] ...
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < (dim) do
   begin
    if ((memEE[i]) < ($FF)) or (((options) = (0)) and ((memEE[(i) + (1)]) < ($FF))) then
@@ -1470,41 +1108,24 @@ begin
      bufferU[j] := $0;
      Inc(j);
     end;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:729
-      Original C:
-        for (z = 0, k = 0; (z < 30) && (!k); z++)
-        {
-          PacketIO(2);
-          for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3D); j++)
-            ;
-        
-          if (bufferI[j] == 0x3D)
-            k = bufferI[j + 2];
-        }
-    *)
-    // init: z = 0, k = 0
+    z := 0;
+    k := 0;
     while ((z) < (30)) and (not (k)) do
     begin
      PacketIO(2);
-     (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-       Source: /tmp/opgui-0.12.4/progEEPROM.c:731
-       Original C:
-         for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x3D); j++)
-           ;
-     *)
-     // init: j = 0
+     j := 0;
      while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3D)) do
      begin
-       // step: j++
+      Inc(j);
      end;
      if (bufferI[j]) = ($3D) then
       k := bufferI[(j) + (2)];
-      // step: z++
+     Inc(z);
     end;
     j := 0;
    end;
-    // step: i += (options == 0) ? (2) : (1), addr += 0x10000 >> na
+   Inc(i, IfThen((options) = (0), 2, 1));
+   Inc(addr, ($10000) shr (na));
   end;
   msDelay(2);
   if (i) <> (dim) then
@@ -1531,59 +1152,10 @@ begin
   PacketIO(2);
   k := 0;
   dim2 := IfThen((options) = (0), (dim) div (2), dim);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:758
-    Original C:
-      for (i = 0; i < dim2;)
-      {
-        for (j = 0; (j < (64 - 14)) && (i < dim2);)
-        {
-          bufferU[j++] = 0x3C;
-          bufferU[j++] = na + 3;
-          bufferU[j++] = 0xC0 + ((i >> (na - 5)) & 0x1F);
-          bufferU[j++] = (i << (13 - na)) & 0xFF;
-          bufferU[j++] = 0x3D;
-          bufferU[j++] = (options == 0) ? (16) : (8);
-          bufferU[j++] = 0x32;
-          bufferU[j++] = (options == 0) ? (0x20) : (0);
-          bufferU[j++] = 0;
-          bufferU[j++] = 0x32;
-          bufferU[j++] = (options == 0) ? (0x10 + 0x20) : (0x10);
-          bufferU[j++] = 0;
-          i++;
-        }
-      
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(2);
-        f...
-  *)
-  // init: i = 0
+  i := 0;
   while (i) < (dim2) do
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:759
-     Original C:
-       for (j = 0; (j < (64 - 14)) && (i < dim2);)
-       {
-         bufferU[j++] = 0x3C;
-         bufferU[j++] = na + 3;
-         bufferU[j++] = 0xC0 + ((i >> (na - 5)) & 0x1F);
-         bufferU[j++] = (i << (13 - na)) & 0xFF;
-         bufferU[j++] = 0x3D;
-         bufferU[j++] = (options == 0) ? (16) : (8);
-         bufferU[j++] = 0x32;
-         bufferU[j++] = (options == 0) ? (0x20) : (0);
-         bufferU[j++] = 0;
-         bufferU[j++] = 0x32;
-         bufferU[j++] = (options == 0) ? (0x10 + 0x20) : (0x10);
-         bufferU[j++] = 0;
-         i++;
-       }
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (14))) and ((i) < (dim2)) do
    begin
     bufferU[Inc(j)] := $3C;
@@ -1777,16 +1349,10 @@ begin
    Inc(j);
   end;
   PacketIO(5);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:908
-    Original C:
-      for (z = 0; (z < (64 - 4)) && (bufferI[z] != 0x30); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (4))) and ((bufferI[z]) <> ($30)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   ID := (((bufferI[(z) + (2)]) shl (16)) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   if ((ID) > (0)) and ((ID) <> ($FFFFFF)) then
@@ -1795,33 +1361,8 @@ begin
    PrintMessage(str);
   end;
   PrintMessage(strings[S_ReadEE]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:914
-    Original C:
-      for (i = 0, j = 0; i < dim; i += 64 - 4)
-      {
-        bufferU[j++] = 0x30;
-        bufferU[j++] = (i < (dim - (64 - 4))) ? (64 - 4) : (dim - i);
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(4);
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x30); j++)
-          ;
-      
-        if ((bufferI[j] == 0x30) && (bufferI[j + 1] < 0xFA))
-        {
-          for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-            memEE[k++] = bufferI[z];
-      
-        }
-        {
-          sprintf(str, strings[S_CodeReading2], (i * 100) / dim, i);
-          gtk_statusbar_push((GtkStatusbar * ) status_bar, statusID, str);
-          while (gtk_event...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $30;
@@ -1833,30 +1374,18 @@ begin
     Inc(j);
    end;
    PacketIO(4);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:920
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x30); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($30)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) = ($30)) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:922
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-          memEE[k++] = bufferI[z];
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      memEE[Inc(k)] := bufferI[z];
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
@@ -1872,7 +1401,7 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-    // step: i += 64 - 4
+   Inc(i, (64) - (4));
   end;
   if (k) <> (dim) then
   begin
@@ -2017,16 +1546,10 @@ begin
   end;
   PacketIO(5);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1204
-    Original C:
-      for (z = 0; (z < (64 - 4)) && (bufferI[z] != 0x30); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (4))) and ((bufferI[z]) <> ($30)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   ID := (((bufferI[(z) + (2)]) shl (16)) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
   if ((ID) > (0)) and ((ID) <> ($FFFFFF)) then
@@ -2159,42 +1682,16 @@ begin
     bufferU[j] := $0;
     Inc(j);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1317
-     Original C:
-       for (pp = 1, j = 0; pp && (j < 400); j++)
-       {
-         PacketIO(2);
-         msDelay(100);
-         for (z = 0; (z < (64 - 1)) && (bufferI[z] != 0x30); z++)
-           ;
-       
-         pp = bufferI[z + 2] & 1;
-         {
-           sprintf(str, strings[S_StartErase], 0, 0);
-           gtk_statusbar_push((GtkStatusbar * ) status_bar, statusID, str);
-           while (gtk_events_pending())
-             gtk_main_iteration();
-       
-         }
-         ;
-       }
-   *)
-   // init: pp = 1, j = 0
+   pp := 1;
+   j := 0;
    while (pp) and ((j) < (400)) do
    begin
     PacketIO(2);
     msDelay(100);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1320
-      Original C:
-        for (z = 0; (z < (64 - 1)) && (bufferI[z] != 0x30); z++)
-          ;
-    *)
-    // init: z = 0
+    z := 0;
     while ((z) < ((64) - (1))) and ((bufferI[z]) <> ($30)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     pp := (bufferI[(z) + (2)]) and (1);
     sprintf(str, strings[S_StartErase], 0, 0);
@@ -2203,7 +1700,7 @@ begin
     begin
      gtk_main_iteration();
     end;
-     // step: j++
+    Inc(j);
    end;
    if saveLog then
     fprintf(logfile, "Erase time %d ms\n", (j) * (100));
@@ -2218,62 +1715,13 @@ begin
   PrintMessage(strings[S_EEAreaW]);
   if saveLog then
    fprintf(logfile, "%s\n", strings[S_EEAreaW]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1333
-    Original C:
-      for (i = 0, j = 0; i < dim; i += page)
-      {
-        if (options & 0x1000)
-        {
-          for (k = page; (k == page) && (i < (dim - page));)
-          {
-            for (k = 0; k < page; k++)
-            {
-              if (memEE[i + k] < 0xFF)
-                k = page;
-            }
-      
-            if (k == page)
-              i += page;
-          }
-      
-        }
-        bufferU[j++] = 0x32;
-        bufferU[j++] = 16;
-        bufferU[j++] = 0x40;
-        bufferU[j++] = 0x31;
-        bufferU[j++] = 1;
-        bufferU[j++] = 6;
-        bufferU[j++] = 0x32;
-        bufferU[j++] = 8 + 16;
-        bufferU[j++] = 0x40;
-        bufferU[j++] = 0x32;
-        bufferU[j++] = 16;
-        bufferU[j++] = 0x40;
-        bufferU[j++] = 0x31;
-      ... (truncated)
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    if (options) and ($1000) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1335
-      Original C:
-        for (k = page; (k == page) && (i < (dim - page));)
-        {
-          for (k = 0; k < page; k++)
-          {
-            if (memEE[i + k] < 0xFF)
-              k = page;
-          }
-        
-          if (k == page)
-            i += page;
-        }
-    *)
-    // init: k = page
+    k := page;
     while ((k) = (page)) and ((i) < ((dim) - (page))) do
     begin
      for k := 0 to (page) - 1 do
@@ -2321,31 +1769,7 @@ begin
      bufferU[Inc(j)] := (i) and ($FF);
     end;
    pp := IfThen((page) < (((64) - (j)) - (4)), page, ((64) - (j)) - (4));
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1372
-     Original C:
-       for (k = 0; k < page;)
-       {
-         bufferU[j++] = 0x31;
-         bufferU[j++] = pp;
-         for (; (k < page) && pp; k++, pp--)
-           bufferU[j++] = memEE[i + k];
-       
-         bufferU[j++] = 0x04;
-         for (; j < 64; j++)
-           bufferU[j] = 0x0;
-       
-         PacketIO(2);
-         for (z = 0; (z < (64 - 1)) && (bufferI[z] != 0x31); z++)
-           ;
-       
-         if (bufferI[z + 1] >= 0xFA)
-           k = (i = dim + 10);
-         pp = ((page - k) < (64 - 4)) ? (page - k) : (64 - 4);
-         j = 0;
-       }
-   *)
-   // init: k = 0
+   k := 0;
    while (k) < (page) do
    begin
     bufferU[Inc(j)] := $31;
@@ -2353,7 +1777,8 @@ begin
     while ((k) < (page)) and (pp) do
     begin
      bufferU[Inc(j)] := memEE[(i) + (k)];
-     Inc(k), Dec(pp);
+     Inc(k);
+     Dec(pp);
     end;
     bufferU[Inc(j)] := $04;
     while (j) < (64) do
@@ -2362,19 +1787,13 @@ begin
      Inc(j);
     end;
     PacketIO(2);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1379
-      Original C:
-        for (z = 0; (z < (64 - 1)) && (bufferI[z] != 0x31); z++)
-          ;
-    *)
-    // init: z = 0
+    z := 0;
     while ((z) < ((64) - (1))) and ((bufferI[z]) <> ($31)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     if (bufferI[(z) + (1)]) >= ($FA) then
-     k := (i := (dim) + (10));
+     i := (dim) + (10); k := (dim) + (10);
     pp := IfThen(((page) - (k)) < ((64) - (4)), (page) - (k), (64) - (4));
     j := 0;
    end;
@@ -2417,35 +1836,18 @@ begin
     bufferU[j] := $0;
     Inc(j);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1416
-     Original C:
-       for (pp = 1, j = 0; pp && (j < 50); j++)
-       {
-         PacketIO(2);
-         for (z = 0; (z < (64 - 1)) && (bufferI[z] != 0x30); z++)
-           ;
-       
-         pp = bufferI[z + 2] & 1;
-       }
-   *)
-   // init: pp = 1, j = 0
+   pp := 1;
+   j := 0;
    while (pp) and ((j) < (50)) do
    begin
     PacketIO(2);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1418
-      Original C:
-        for (z = 0; (z < (64 - 1)) && (bufferI[z] != 0x30); z++)
-          ;
-    *)
-    // init: z = 0
+    z := 0;
     while ((z) < ((64) - (1))) and ((bufferI[z]) <> ($30)) do
     begin
-      // step: z++
+     Inc(z);
     end;
     pp := (bufferI[(z) + (2)]) and (1);
-     // step: j++
+    Inc(j);
    end;
    sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
    gtk_statusbar_push(status_bar, statusID, str);
@@ -2460,7 +1862,7 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, 0, 0);
    end;
-    // step: i += page
+   Inc(i, page);
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
@@ -2501,73 +1903,24 @@ begin
   end;
   PacketIO(2);
   k := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1462
-    Original C:
-      for (i = 0, j = 0; i < dim; i += 64 - 4)
-      {
-        if (options & 0x1000)
-        {
-          i0 = i;
-          for (valid = 0; (!valid) && (i < dim); i += (valid) ? (0) : (64 - 4))
-          {
-            for (k2 = 0; ((k2 < (64 - 4)) && (!valid)) && ((i + k2) < dim); k2++)
-              if (memEE[i + k2] < 0xFF)
-              valid = 1;
-      
-          }
-      
-          if (i >= dim)
-            break;
-          if (i > i0)
-          {
-            j = 0;
-            bufferU[j++] = 0x32;
-            bufferU[j++] = 8 + 16;
-            bufferU[j++] = 0x40;
-            bufferU[j++] = 0x32;
-            bufferU[j++] = 16;
-            bufferU[j++] = 0;
-            bufferU[j++] = 0x31;
-            if (dim > 0x10000)
-            {
-              bufferU...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    if (options) and ($1000) then
    begin
     i0 := i;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1465
-      Original C:
-        for (valid = 0; (!valid) && (i < dim); i += (valid) ? (0) : (64 - 4))
-        {
-          for (k2 = 0; ((k2 < (64 - 4)) && (!valid)) && ((i + k2) < dim); k2++)
-            if (memEE[i + k2] < 0xFF)
-            valid = 1;
-        
-        }
-    *)
-    // init: valid = 0
+    valid := 0;
     while (not (valid)) and ((i) < (dim)) do
     begin
-     (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-       Source: /tmp/opgui-0.12.4/progEEPROM.c:1466
-       Original C:
-         for (k2 = 0; ((k2 < (64 - 4)) && (!valid)) && ((i + k2) < dim); k2++)
-           if (memEE[i + k2] < 0xFF)
-           valid = 1;
-     *)
-     // init: k2 = 0
+     k2 := 0;
      while (((k2) < ((64) - (4))) and (not (valid))) and (((i) + (k2)) < (dim)) do
      begin
       if (memEE[(i) + (k2)]) < ($FF) then
        valid := 1;
-       // step: k2++
+      Inc(k2);
      end;
-      // step: i += (valid) ? (0) : (64 - 4)
+     Inc(i, IfThen(valid, 0, (64) - (4)));
     end;
     if (i) >= (dim) then
      Break;
@@ -2622,36 +1975,14 @@ begin
     Inc(j);
    end;
    PacketIO(4);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1507
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x30); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($30)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) = ($30)) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1509
-      Original C:
-        for (z = 0; (z < bufferI[j + 1]) && (z < 64); z++)
-        {
-          if (memEE[i + z] != bufferI[(z + j) + 2])
-          {
-            {
-              sprintf(str, strings[S_CodeVError], i + z, i + z, memEE[i + z], bufferI[z + 3]);
-              PrintMessage(str);
-            }
-            ;
-            err++;
-          }
-        }
-    *)
-    // init: z = 0
+    z := 0;
     while ((z) < (bufferI[(j) + (1)])) and ((z) < (64)) do
     begin
      if (memEE[(i) + (z)]) <> (bufferI[((z) + (j)) + (2)]) then
@@ -2660,7 +1991,7 @@ begin
       PrintMessage(str);
       Inc(err);
      end;
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
@@ -2678,7 +2009,7 @@ begin
    end;
    if (err) >= (max_err) then
     Break;
-    // step: i += 64 - 4
+   Inc(i, (64) - (4));
   end;
   if (i) < (dim) then
   begin
@@ -2713,15 +2044,16 @@ var
   s: array[0..64-1] of Char;
   i: Integer;
 begin
-  for i := 0 to (sizeof(OW_LIST)/sizeof(OW_LIST[0])) - 1 do
+  for i := 0 to ((SizeOf(OW_LIST)) div (SizeOf(OW_LIST[0]))) - 1 do
   begin
-   if id = OW_LIST[i].id then
+   if (id) = (OW_LIST[i].id) then
    begin
     sprintf(s, OW_LIST[i].device, id);
     PrintMessage(s);
     Exit;
    end;
   end;
+  sprintf(s, "%s", strings[S_nodev]);
   PrintMessage(s);
 end;
 
@@ -2794,16 +2126,10 @@ begin
   end;
   PacketIO(12);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1640
-    Original C:
-      for (z = 0; (bufferI[z] != 0x40) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($40)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if ((bufferI[z]) = ($40)) and ((bufferI[(z) + (1)]) = (0)) then
   begin
@@ -2835,33 +2161,8 @@ begin
    sprintf(str, "\r\nCRC: 0x%02X\r\n", bufferI[(z) + (9)]);
    PrintMessage(str);
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1660
-    Original C:
-      for (i = 0, j = 0; i < dim; i += 64 - 4)
-      {
-        bufferU[j++] = 0x42;
-        bufferU[j++] = (i < (dim - (64 - 4))) ? (64 - 4) : (dim - i);
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(37);
-        for (j = 0; (bufferI[j] != 0x42) && (j < 64); j++)
-          ;
-      
-        if ((bufferI[j] == 0x42) && (bufferI[j + 1] < 0xFA))
-        {
-          for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-            memEE[k++] = bufferI[z];
-      
-        }
-        {
-          sprintf(str, strings[S_CodeReading2], (i * 100) / dim, i);
-          gtk_statusbar_push((GtkStatusbar * ) status_bar, statusID, str);
-          while (gtk_events_pen...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $42;
@@ -2873,30 +2174,18 @@ begin
     Inc(j);
    end;
    PacketIO(37);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1666
-     Original C:
-       for (j = 0; (bufferI[j] != 0x42) && (j < 64); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((bufferI[j]) <> ($42)) and ((j) < (64)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) = ($42)) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1668
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-          memEE[k++] = bufferI[z];
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      memEE[Inc(k)] := bufferI[z];
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
@@ -2912,7 +2201,7 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-    // step: i += 64 - 4
+   Inc(i, (64) - (4));
   end;
   if (options) = (1) then
   begin
@@ -2940,49 +2229,28 @@ begin
    end;
    PacketIO(15);
    j := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1698
-     Original C:
-       for (z = 0; (bufferI[z] != 0x42) && (z < (64 - 2)); z++)
-         ;
-   *)
-   // init: z = 0
+   z := 0;
    while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (2))) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (2)) then
    begin
     sprintf(str, "Status register: 0x%02X\r\n", bufferI[(z) + (2)]);
     PrintMessage(str);
    end;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1700
-     Original C:
-       for (z += 2; (bufferI[z] != 0x42) && (z < (64 - 10)); z++)
-         ;
-   *)
-   // init: z += 2
+   z := 2;
    while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (10))) do
    begin
-     // step: z++
+    Inc(z);
    end;
    PrintMessage("Application register: 0x");
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1702
-     Original C:
-       for (i = z + 2; (i < (z + 10)) && (i < 64); i++)
-       {
-         sprintf(str, "%02X", bufferI[i]);
-         PrintMessage(str);
-       }
-   *)
-   // init: i = z + 2
+   i := (z) + (2);
    while ((i) < ((z) + (10))) and ((i) < (64)) do
    begin
     sprintf(str, "%02X", bufferI[i]);
     PrintMessage(str);
-     // step: i++
+    Inc(i);
    end;
    PrintMessage("\r\n");
   end
@@ -2991,7 +2259,7 @@ begin
    begin
     bufferU[Inc(j)] := $42;
     if (dim) = ($A00) then
-     bufferU[Inc(j)] := $24;
+     bufferU[Inc(j)] := $24
     else
      bufferU[Inc(j)] := 8;
     bufferU[Inc(j)] := $04;
@@ -3002,16 +2270,10 @@ begin
     end;
     PacketIO(25);
     j := 0;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1713
-      Original C:
-        for (z = 0; (bufferI[z] != 0x42) && (z < (64 - 2)); z++)
-          ;
-    *)
-    // init: z = 0
+    z := 0;
     while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (2))) do
     begin
-      // step: z++
+     Inc(z);
     end;
     if ((bufferI[z]) = ($42)) and ((bufferI[(z) + (1)]) < ($FA)) then
     begin
@@ -3167,16 +2429,10 @@ begin
   end;
   PacketIO(12);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1813
-    Original C:
-      for (z = 0; (bufferI[z] != 0x40) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($40)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if ((bufferI[z]) = ($40)) and ((bufferI[(z) + (1)]) = (0)) then
   begin
@@ -3195,16 +2451,10 @@ begin
     CloseLogFile();
    Exit;
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1825
-    Original C:
-      for (z = 0; (bufferI[z] != 0x42) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($42)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (bufferI[z]) = ($42) then
   begin
@@ -3220,38 +2470,8 @@ begin
   end;
   PrintMessage(strings[S_EEAreaW]);
   page := IfThen((options) = (0), 8, 32);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1836
-    Original C:
-      for (i = 0, j = 0; i < dim; i += page)
-      {
-        bufferU[j++] = 0x40;
-        bufferU[j++] = 0x41;
-        bufferU[j++] = page + ((dim <= 32) ? (3) : (4));
-        bufferU[j++] = 0xCC;
-        bufferU[j++] = 0x0F;
-        bufferU[j++] = i & 0xFF;
-        if (dim > 32)
-          bufferU[j++] = i >> 8;
-        for (k = 0; k < page; k++)
-          bufferU[j++] = memEE[i + k];
-      
-        bufferU[j++] = 0x40;
-        bufferU[j++] = 0x41;
-        bufferU[j++] = (dim <= 32) ? (3) : (5);
-        bufferU[j++] = 0xCC;
-        bufferU[j++] = 0x55;
-        if (dim <= 32)
-          bufferU[j++] = 0xA5;
-        else
-        {
-          bufferU[j++] = i & 0xFF;
-          bufferU[j++] = i >> 8;
-          bufferU[j++] = page - 1;
-        }
-        buffe...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $40;
@@ -3272,7 +2492,7 @@ begin
    bufferU[Inc(j)] := $CC;
    bufferU[Inc(j)] := $55;
    if (dim) <= (32) then
-    bufferU[Inc(j)] := $A5;
+    bufferU[Inc(j)] := $A5
    else
    begin
     bufferU[Inc(j)] := (i) and ($FF);
@@ -3300,7 +2520,7 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, 0, 0);
    end;
-    // step: i += page
+   Inc(i, page);
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
@@ -3334,32 +2554,8 @@ begin
   end;
   PacketIO(10);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1895
-    Original C:
-      for (i = 0, j = 0; i < dim; i += 64 - 4)
-      {
-        bufferU[j++] = 0x42;
-        bufferU[j++] = (i < (dim - (64 - 4))) ? (64 - 4) : (dim - i);
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(37);
-        for (j = 0; (bufferI[j] != 0x42) && (j < 64); j++)
-          ;
-      
-        if ((bufferI[j] == 0x42) && (bufferI[j + 1] < 0xFA))
-        {
-          for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-          {
-            if (memEE[k++] != bufferI[z])
-            {
-              PrintMessage("\r\n");
-              {
-                sprintf(str, strings[S_CodeVError], (i + z) - (j + 2), (i + z) - (j + 2), memEE[k - 1], bufferI[...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $42;
@@ -3371,37 +2567,14 @@ begin
     Inc(j);
    end;
    PacketIO(37);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:1901
-     Original C:
-       for (j = 0; (bufferI[j] != 0x42) && (j < 64); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((bufferI[j]) <> ($42)) and ((j) < (64)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) = ($42)) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:1903
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-        {
-          if (memEE[k++] != bufferI[z])
-          {
-            PrintMessage("\r\n");
-            {
-              sprintf(str, strings[S_CodeVError], (i + z) - (j + 2), (i + z) - (j + 2), memEE[k - 1], bufferI[z]);
-              PrintMessage(str);
-            }
-            ;
-            err++;
-          }
-        }
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      if (memEE[Inc(k)]) <> (bufferI[z]) then
@@ -3411,7 +2584,7 @@ begin
       PrintMessage(str);
       Inc(err);
      end;
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
@@ -3429,7 +2602,7 @@ begin
    end;
    if (err) >= (max_err) then
     Break;
-    // step: i += 64 - 4
+   Inc(i, (64) - (4));
   end;
   if (k) <> (dim) then
   begin
@@ -3509,16 +2682,10 @@ begin
   end;
   PacketIO(16);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1983
-    Original C:
-      for (z = 0; (bufferI[z] != 0x40) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($40)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if ((bufferI[z]) = ($40)) and ((bufferI[(z) + (1)]) = (0)) then
   begin
@@ -3536,16 +2703,10 @@ begin
     CloseLogFile();
    Exit;
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:1994
-    Original C:
-      for (z = 0; (bufferI[z] != 0x42) && (z < 64); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($42)) and ((z) < (64)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (9)) then
   begin
@@ -3553,7 +2714,7 @@ begin
    PrintMessage(str);
    OW_ID(bufferI[(z) + (2)]);
    if (bufferI[(z) + (2)]) = ($10) then
-    TLSB := 0.5;
+    TLSB := 0.5
    else
     if (bufferI[(z) + (2)]) = ($28) then
      TLSB := 0.0625;
@@ -3580,16 +2741,10 @@ begin
   end;
   PacketIO(10);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:2017
-    Original C:
-      for (z = 0; (bufferI[z] != 0x42) && (z < (64 - 2)); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (2))) do
   begin
-    // step: z++
+   Inc(z);
   end;
   T := (bufferI[(z) + (2)]) + ((bufferI[(z) + (3)]) shl (8));
   if (T) > ($F000) then
@@ -3667,36 +2822,8 @@ begin
   end;
   PacketIO(5);
   PrintMessage(strings[S_ReadEE]);
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:2092
-    Original C:
-      for (i = 0, j = 0; i < dim; i += 64 - 5)
-      {
-        bufferU[j++] = 0x44;
-        bufferU[j++] = 4;
-        bufferU[j++] = (i < (dim - (64 - 5))) ? (64 - 5) : (dim - i);
-        bufferU[j++] = 0xA0;
-        bufferU[j++] = 0x03;
-        bufferU[j++] = i >> 8;
-        bufferU[j++] = i & 0xFF;
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(14);
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-          ;
-      
-        if ((bufferI[j] == 0x44) && (bufferI[j + 1] < 0xFA))
-        {
-          for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-            memEE[k++] = bufferI[z];
-      
-        }
-        {
-          sprintf(str, strings[S_CodeR...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $44;
@@ -3713,30 +2840,18 @@ begin
     Inc(j);
    end;
    PacketIO(14);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:2103
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) = ($44)) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:2105
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-          memEE[k++] = bufferI[z];
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      memEE[Inc(k)] := bufferI[z];
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
@@ -3752,7 +2867,7 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-    // step: i += 64 - 5
+   Inc(i, (64) - (5));
   end;
   if (k) <> (dim) then
   begin
@@ -3886,38 +3001,10 @@ begin
   PrintMessage(strings[S_EEAreaW]);
   while (page) >= ((64) - (8)) do
   begin
-   (page := 1);
+   page := page shr 1;
   end;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:2216
-    Original C:
-      for (i = 0, j = 0; i < dim; i += page)
-      {
-        bufferU[j++] = 0x44;
-        bufferU[j++] = 4 + page;
-        bufferU[j++] = 0;
-        bufferU[j++] = 0xA0;
-        bufferU[j++] = 0x6C;
-        bufferU[j++] = i >> 8;
-        bufferU[j++] = i & 0xFF;
-        for (k = 0; k < page; k++)
-          bufferU[j++] = memEE[i + k];
-      
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(((5 + page) * 0.2) + 2);
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-          ;
-      
-        if ((bufferI[j] != 0x44) || (bufferI[j + 1] >= 0xFA))
-          i = dim + 10;
-        {
-          sprintf(str, strings[S_CodeWriting2], (i * 100) / dim, i);
-          gtk_statusbar...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $44;
@@ -3938,16 +3025,10 @@ begin
     Inc(j);
    end;
    PacketIO((((5) + (page)) * (0.2)) + (2));
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:2228
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) <> ($44)) or ((bufferI[(j) + (1)]) >= ($FA)) then
     i := (dim) + (10);
@@ -3981,73 +3062,27 @@ begin
     Inc(j);
    end;
    status := 1;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:2249
-     Original C:
-       for (k = 0; status && (k < 20); k++)
-       {
-         PacketIO(2);
-         for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-           ;
-       
-         if (bufferI[j] == 0x44)
-           status = bufferI[j + 2] & 1;
-       }
-   *)
-   // init: k = 0
+   k := 0;
    while (status) and ((k) < (20)) do
    begin
     PacketIO(2);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:2251
-      Original C:
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-          ;
-    *)
-    // init: j = 0
+    j := 0;
     while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
     begin
-      // step: j++
+     Inc(j);
     end;
     if (bufferI[j]) = ($44) then
      status := (bufferI[(j) + (2)]) and (1);
-     // step: k++
+    Inc(k);
    end;
    j := 0;
-    // step: i += page
+   Inc(i, page);
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   k := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progEEPROM.c:2262
-    Original C:
-      for (i = 0, j = 0; i < dim; i += 64 - 4)
-      {
-        bufferU[j++] = 0x44;
-        bufferU[j++] = 4;
-        bufferU[j++] = (i < (dim - (64 - 4))) ? (64 - 4) : (dim - i);
-        bufferU[j++] = 0xA0;
-        bufferU[j++] = 0x03;
-        bufferU[j++] = i >> 8;
-        bufferU[j++] = i & 0xFF;
-        bufferU[j++] = 0x04;
-        for (; j < 64; j++)
-          bufferU[j] = 0x0;
-      
-        PacketIO(14);
-        for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-          ;
-      
-        if ((bufferI[j] == 0x44) && (bufferI[j + 1] < 0xFA))
-        {
-          for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-          {
-            if (memEE[k++] != bufferI[z])
-            {
-              PrintMessage("...
-  *)
-  // init: i = 0, j = 0
+  j := 0;
+  i := 0;
   while (i) < (dim) do
   begin
    bufferU[Inc(j)] := $44;
@@ -4064,37 +3099,14 @@ begin
     Inc(j);
    end;
    PacketIO(14);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progEEPROM.c:2273
-     Original C:
-       for (j = 0; (j < (64 - 1)) && (bufferI[j] != 0x44); j++)
-         ;
-   *)
-   // init: j = 0
+   j := 0;
    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
    begin
-     // step: j++
+    Inc(j);
    end;
    if ((bufferI[j]) = ($44)) and ((bufferI[(j) + (1)]) < ($FA)) then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progEEPROM.c:2275
-      Original C:
-        for (z = j + 2; (z < ((j + 2) + bufferI[j + 1])) && (z < 64); z++)
-        {
-          if (memEE[k++] != bufferI[z])
-          {
-            PrintMessage("\r\n");
-            {
-              sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k - 1], bufferI[z]);
-              PrintMessage(str);
-            }
-            ;
-            err++;
-          }
-        }
-    *)
-    // init: z = j + 2
+    z := (j) + (2);
     while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
     begin
      if (memEE[Inc(k)]) <> (bufferI[z]) then
@@ -4104,7 +3116,7 @@ begin
       PrintMessage(str);
       Inc(err);
      end;
-      // step: z++
+     Inc(z);
     end;
    end;
    sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
@@ -4122,7 +3134,7 @@ begin
    end;
    if (err) >= (max_err) then
     Break;
-    // step: i += 64 - 4
+   Inc(i, (64) - (4));
   end;
   if (k) <> (dim) then
   begin

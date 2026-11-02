@@ -147,7 +147,7 @@ begin
      str := "";
      t := "";
      if (mode) = (0) then
-      sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3]);
+      sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3])
      else
       if (mode) = (1) then
        sprintf(str, "> %02X %02X\r\n", bufferU[2], bufferU[3]);

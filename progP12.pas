@@ -41,78 +41,65 @@ var
   j: Integer;
   s: array[0..256-1] of Char;
   t: array[0..256-1] of Char;
-  PrintMessage(strings[S_WDTOFF]): Telse;
-  PrintMessage(strings[S_CPON]): Telse;
-  PrintMessage(strings[S_MCLROFF]): Telse;
+  start: Cardinal;
   stop: Cardinal;
   valid: Integer;
   empty: Integer;
   aux: PChar;
-  PrintMessage(aux): Telse;
-  PrintMessage(aux): Telse;
 begin
   k := 0;
   z := 0;
-  if dim2<4 then
+  if (dim2) < (4) then
    dim2 := 4;
   sizeW := $1000;
   if memCODE_W then
-   FreeMem(memCODE_W);
-  memCODE_W := malloc(sizeof(WORD)*sizeW);
+   free(memCODE_W);
+  memCODE_W := malloc((SizeOf(WORD)) * (sizeW));
   if saveLog then
   begin
    OpenLogFile();
-   fprintf(logfile, 'Read12F5xx(%d,%d)' + LineEnding + '', dim, dim2);
+   fprintf(logfile, "Read12F5xx(%d,%d)\n", dim, dim2);
   end;
+  start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T1T2;
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 0;
   bufferU[Inc(j)] := 1;
   bufferU[Inc(j)] := 100;
-  bufferU[Inc(j)] := SET_PARAMETER;
-  bufferU[Inc(j)] := SET_T3;
-  bufferU[Inc(j)] := 2000 shr 8;
-  bufferU[Inc(j)] := 2000&0xff;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $07;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := (2000) shr (8);
+  bufferU[Inc(j)] := (2000) and ($ff);
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := READ_DATA_PROG;
-  bufferU[Inc(j)] := INC_ADDR;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP12.c:63
-    Original C:
-      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
-  *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $14;
+  bufferU[Inc(j)] := $16;
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement
-     Source: /tmp/opgui-0.12.4/progP12.c:1
-     Original C:
-       /**
-        * \file progP12.c - algorithms to program the PIC12 (12 bit word) family of microcontrollers
-        * Copyright (C) 2009-2016 Alberto Maccioni
-        *
-        * This program is free software; you can redistribute it and/or modify
-   *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(2);
-  for z := 0 to (DIMBUF-2 and bufferI[z] not =READ_DATA_PROG) - 1 do
+  z := 0;
+  while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
+   Inc(z);
   end;
-  if z<DIMBUF-2 then
+  if (z) < ((64) - (2)) then
   begin
-   memCODE_W[0xfff] := (bufferI[z+1] shl 8)+bufferI[z+2];
-   PrintMessage('\r' + LineEnding + '');
-   PrintMessage1(strings[S_ConfigWord], memCODE_W[0xfff]);
-   case memCODE_W[0xfff]&0x03 of
+   memCODE_W[$fff] := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
+   PrintMessage("\r\n");
+   sprintf(str, strings[S_ConfigWord], memCODE_W[$fff]);
+   PrintMessage(str);
+   case (memCODE_W[$fff]) and ($03) of
     0:
     begin
      PrintMessage(strings[S_LPOsc]);
@@ -130,48 +117,49 @@ begin
      PrintMessage(strings[S_RCOsc]);
     end;
    end;
-   if memCODE_W[0xfff]&0x08 then
-    PrintMessage(strings[S_CPOFF]);
-   if memCODE_W[0xfff]&0x10 then
-    PrintMessage(strings[S_MCLRON]);
+   if (memCODE_W[$fff]) and ($04) then
+    PrintMessage(strings[S_WDTON])
+   else
+    PrintMessage(strings[S_WDTOFF]);
+   if (memCODE_W[$fff]) and ($08) then
+    PrintMessage(strings[S_CPOFF])
+   else
+    PrintMessage(strings[S_CPON]);
+   if (memCODE_W[$fff]) and ($10) then
+    PrintMessage(strings[S_MCLRON])
+   else
+    PrintMessage(strings[S_MCLROFF]);
   end
   else
    PrintMessage(strings[S_NoConfigW]);
   PrintMessage(strings[S_CodeReading1]);
-  PrintStatusSetup();
-  for i := 0,j=0 to (dim+dim2) - 1 do
+  j := 0;
+  for i := 0 to ((dim) + (dim2)) - 1 do
   begin
-   bufferU[Inc(j)] := READ_DATA_PROG;
-   bufferU[Inc(j)] := INC_ADDR;
-   if j>DIMBUF*2/4-3 or i = dim+dim2-1 then
+   bufferU[Inc(j)] := $14;
+   bufferU[Inc(j)] := $16;
+   if ((j) > ((((64) * (2)) div (4)) - (3))) or ((i) = (((dim) + (dim2)) - (1))) then
    begin
-    bufferU[Inc(j)] := FLUSH;
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP12.c:63
-      Original C:
-        	for(;j<DIMBUF;j++) bufferU[j]=0x0;
-    *)
-    // init: 
-    while j<DIMBUF do
+    bufferU[Inc(j)] := $04;
+    while (j) < (64) do
     begin
-     (* TODO gtk2laz: unrecognised statement
-       Source: /tmp/opgui-0.12.4/progP12.c:1
-       Original C:
-         /**
-          * \file progP12.c - algorithms to program the PIC12 (12 bit word) family of microcontrollers
-          * Copyright (C) 2009-2016 Alberto Maccioni
-          *
-          * This program is free software; you can redistribute it and/or modify
-     *)
+     bufferU[j] := $0;
+     Inc(j);
     end;
     PacketIO(5);
-    for z := 0 to (DIMBUF-2) - 1 do
+    for z := 0 to ((64) - (2)) - 1 do
     begin
-     if bufferI[z] = READ_DATA_PROG then
+     if (bufferI[z]) = ($14) then
      begin
-      memCODE_W[Inc(k)] := (bufferI[z+1] shl 8)+bufferI[z+2];
+      memCODE_W[Inc(k)] := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
       z := z + 2;
      end;
+    end;
+    sprintf(str, strings[S_CodeReading], ((i) * (100)) div ((dim) + (dim2)), i);
+    gtk_statusbar_push(status_bar, statusID, str);
+    while gtk_events_pending() do
+    begin
+     gtk_main_iteration();
     end;
     j := 0;
     if saveLog then
@@ -180,94 +168,121 @@ begin
     end;
    end;
   end;
-  bufferU[Inc(j)] := NOP;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $00;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := SET_CK_D;
+  bufferU[Inc(j)] := $0F;
   bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := FLUSH;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP12.c:63
-    Original C:
-      	for(;j<DIMBUF;j++) bufferU[j]=0x0;
-  *)
-  // init: 
-  while j<DIMBUF do
+  bufferU[Inc(j)] := $04;
+  while (j) < (64) do
   begin
-   (* TODO gtk2laz: unrecognised statement
-     Source: /tmp/opgui-0.12.4/progP12.c:1
-     Original C:
-       /**
-        * \file progP12.c - algorithms to program the PIC12 (12 bit word) family of microcontrollers
-        * Copyright (C) 2009-2016 Alberto Maccioni
-        *
-        * This program is free software; you can redistribute it and/or modify
-   *)
+   bufferU[j] := $0;
+   Inc(j);
   end;
   PacketIO(1);
   stop := GetTickCount();
   for i := k to ($fff) - 1 do
   begin
+   memCODE_W[i] := $fff;
   end;
-  if k not =dim+dim2 then
+  if (k) <> ((dim) + (dim2)) then
   begin
-   PrintMessage('\r' + LineEnding + '');
-   PrintMessage2(strings[S_ReadErr], dim+dim2, k);
+   PrintMessage("\r\n");
+   sprintf(str, strings[S_ReadErr], (dim) + (dim2), k);
+   PrintMessage(str);
   end
   else
    PrintMessage(strings[S_Compl]);
-  for i := 0 to (4) - 1 do
+  i := 0;
+  while (i) < (4) do
   begin
-   PrintMessage4(strings[S_ChipID], i, memCODE_W[dim+i], i+1, memCODE_W[dim+i+1]);
-   i := i + 2;
+   sprintf(str, strings[S_ChipID], i, memCODE_W[(dim) + (i)], (i) + (1), memCODE_W[((dim) + (i)) + (1)]);
+   PrintMessage(str);
+   Inc(i, 2);
   end;
+  if (dim2) > (4) then
+  begin
+   sprintf(str, strings[S_BKOsccal], memCODE_W[(dim) + (4)]);
+   PrintMessage(str);
+  end;
+  PrintMessage(strings[S_CodeMem]);
   s[0] := 0;
   valid := 0;
   empty := 1;
-  aux := malloc((dim/COL+1)*(16+COL*5));
+  aux := malloc((((dim) div (16)) + (1)) * ((16) + ((16) * (5))));
   aux[0] := 0;
-  for i := 0 to (dim) - 1 do
+  i := 0;
+  while (i) < (dim) do
   begin
    valid := 0;
-   for j := i to (i+COL and j<dim) - 1 do
+   j := i;
+   while ((j) < ((i) + (16))) and ((j) < (dim)) do
    begin
-    sprintf(t, '%03X ', memCODE_W[j]);
+    sprintf(t, "%03X ", memCODE_W[j]);
     strcat(s, t);
-    if memCODE_W[j]<0xfff then
+    if (memCODE_W[j]) < ($fff) then
      valid := 1;
+    Inc(j);
    end;
-   i := i + COL;
+   if valid then
+   begin
+    sprintf(t, "%04X: %s\r\n", i, s);
+    empty := 0;
+    strcat(aux, t);
+   end;
+   s[0] := 0;
+   Inc(i, 16);
   end;
-  FreeMem(aux);
-  if dim2>5 then
+  if empty then
+   PrintMessage(strings[S_Empty])
+  else
+   PrintMessage(aux);
+  free(aux);
+  if (dim2) > (5) then
   begin
-   aux := malloc((dim2/COL+1)*(16+COL*5));
+   aux := malloc((((dim2) div (16)) + (1)) * ((16) + ((16) * (5))));
    aux[0] := 0;
    s[0] := 0;
    PrintMessage(strings[S_ConfigResMem]);
    empty := 1;
-   for i := dim to (dim+dim2) - 1 do
+   i := dim;
+   while (i) < ((dim) + (dim2)) do
    begin
     valid := 0;
-    for j := i to (i+COL and j<dim+64) - 1 do
+    j := i;
+    while ((j) < ((i) + (16))) and ((j) < ((dim) + (64))) do
     begin
-     sprintf(t, '%03X ', memCODE_W[j]);
+     sprintf(t, "%03X ", memCODE_W[j]);
      strcat(s, t);
-     if memCODE_W[j]<0xfff then
+     if (memCODE_W[j]) < ($fff) then
       valid := 1;
+     Inc(j);
     end;
-    i := i + COL;
+    if valid then
+    begin
+     sprintf(t, "%04X: %s\r\n", i, s);
+     empty := 0;
+     strcat(aux, t);
+    end;
+    s[0] := 0;
+    Inc(i, 16);
    end;
-   FreeMem(aux);
+   if empty then
+    PrintMessage(strings[S_Empty])
+   else
+    PrintMessage(aux);
+   free(aux);
   end;
+  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
   PrintMessage(str);
   if saveLog then
   begin
    fprintf(logfile, str);
    CloseLogFile();
   end;
+  gtk_statusbar_push(status_bar, statusID, "");
 end;
 
 function Write12F5xx(dim: Integer; OscAddr: Integer): Pointer;
@@ -293,7 +308,7 @@ begin
   if (OscAddr) > (dim) then
    OscAddr := (dim) - (1);
   if (OscAddr) = (-(1)) then
-   use_BKosccal := (use_osccal := 0);
+   use_osccal := 0; use_BKosccal := 0;
   if (sizeW) < ($1000) then
   begin
    PrintMessage(strings[S_NoConfigW2]);
@@ -326,21 +341,12 @@ begin
   bufferU[Inc(j)] := $00;
   if (OscAddr) <> (-(1)) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP12.c:236
-     Original C:
-       for (i = -1; i < (OscAddr - 0xff); i += 0xff)
-       {
-         bufferU[j++] = 0x17;
-         bufferU[j++] = 0xff;
-       }
-   *)
-   // init: i = -1
+   i := -(1);
    while (i) < ((OscAddr) - ($ff)) do
    begin
     bufferU[Inc(j)] := $17;
     bufferU[Inc(j)] := $ff;
-     // step: i += 0xff
+    Inc(i, $ff);
    end;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := (OscAddr) - (i);
@@ -375,29 +381,17 @@ begin
   PacketIO(15);
   if (OscAddr) <> (-(1)) then
   begin
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP12.c:267
-     Original C:
-       for (z = 4; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z = 4
+   z := 4;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (2)) then
     osccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP12.c:269
-     Original C:
-       for (z += 3; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-         ;
-   *)
-   // init: z += 3
+   z := 3;
    while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
    begin
-     // step: z++
+    Inc(z);
    end;
    if (z) < ((64) - (2)) then
     BKosccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
@@ -423,21 +417,12 @@ begin
   begin
    bufferU[Inc(j)] := $19;
    bufferU[Inc(j)] := $0A;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/progP12.c:290
-     Original C:
-       for (i = -1; i < (dim - 0xff); i += 0xff)
-       {
-         bufferU[j++] = 0x17;
-         bufferU[j++] = 0xff;
-       }
-   *)
-   // init: i = -1
+   i := -(1);
    while (i) < ((dim) - ($ff)) do
    begin
     bufferU[Inc(j)] := $17;
     bufferU[Inc(j)] := $ff;
-     // step: i += 0xff
+    Inc(i, $ff);
    end;
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := ((dim) - (i)) - (1);
@@ -454,21 +439,12 @@ begin
   begin
    if programID then
    begin
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/progP12.c:306
-      Original C:
-        for (i = -1; i < (dim - 0xff); i += 0xff)
-        {
-          bufferU[j++] = 0x17;
-          bufferU[j++] = 0xff;
-        }
-    *)
-    // init: i = -1
+    i := -(1);
     while (i) < ((dim) - ($ff)) do
     begin
      bufferU[Inc(j)] := $17;
      bufferU[Inc(j)] := $ff;
-      // step: i += 0xff
+     Inc(i, $ff);
     end;
     bufferU[Inc(j)] := $17;
     bufferU[Inc(j)] := (dim) - (i);
@@ -511,11 +487,12 @@ begin
   if (memCODE_W[(dim) + (4)]) >= ($FFF) then
    memCODE_W[(dim) + (4)] := BKosccal;
   if use_BKosccal then
-   memCODE_W[OscAddr] := BKosccal;
+   memCODE_W[OscAddr] := BKosccal
   else
    if use_osccal then
     memCODE_W[OscAddr] := osccal;
-  while (i) < (dim1) do
+  j := 0;
+  for i := (k := (w := 0)) to (dim1) - 1 do
   begin
    if (memCODE_W[i]) < ($fff) then
    begin
@@ -549,7 +526,7 @@ begin
     for z := 0 to ((64) - (7)) - 1 do
     begin
      if ((bufferI[z]) = ($16)) and ((memCODE_W[k]) >= ($fff)) then
-      Inc(k);
+      Inc(k)
      else
       if ((bufferI[z]) = ($12)) and ((bufferI[(z) + (5)]) = ($14)) then
       begin
@@ -578,7 +555,6 @@ begin
      fprintf(logfile, strings[S_Log8], i, i, k, k, err);
     end;
    end;
-   Inc(i);
   end;
   err := err + (i) - (k);
   sprintf(str, strings[S_ComplErr], err);
@@ -625,16 +601,10 @@ begin
   end;
   PacketIO(20);
   stop := GetTickCount();
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP12.c:432
-    Original C:
-      for (z = 0; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 0
+  z := 0;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (not (memCODE_W[$fff])) and (((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)])) then
   begin
@@ -729,21 +699,12 @@ begin
   bufferU[Inc(j)] := $0E;
   bufferU[Inc(j)] := $5;
   bufferU[Inc(j)] := $00;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP12.c:501
-    Original C:
-      for (i = -1; i < (OscAddr - 0xff); i += 0xff)
-      {
-        bufferU[j++] = 0x17;
-        bufferU[j++] = 0xff;
-      }
-  *)
-  // init: i = -1
+  i := -(1);
   while (i) < ((OscAddr) - ($ff)) do
   begin
    bufferU[Inc(j)] := $17;
    bufferU[Inc(j)] := $ff;
-    // step: i += 0xff
+   Inc(i, $ff);
   end;
   bufferU[Inc(j)] := $17;
   bufferU[Inc(j)] := (OscAddr) - (i);
@@ -768,16 +729,10 @@ begin
   end;
   PacketIO(15);
   j := 0;
-  (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-    Source: /tmp/opgui-0.12.4/progP12.c:524
-    Original C:
-      for (z = 4; (z < (64 - 2)) && (bufferI[z] != 0x14); z++)
-        ;
-  *)
-  // init: z = 4
+  z := 4;
   while ((z) < ((64) - (2))) and ((bufferI[z]) <> ($14)) do
   begin
-    // step: z++
+   Inc(z);
   end;
   if (z) < ((64) - (2)) then
    osccal := ((bufferI[(z) + (1)]) shl (8)) + (bufferI[(z) + (2)]);
@@ -814,7 +769,8 @@ begin
    dim1 := (dim) + (5);
   if use_osccal then
    memCODE_W[OscAddr] := osccal;
-  while (i) < (dim1) do
+  j := 0;
+  for i := (k := 0) to (dim1) - 1 do
   begin
    if (memCODE_W[i]) < ($fff) then
    begin
@@ -887,7 +843,6 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   Inc(i);
   end;
   err := err + (i) - (k);
   sprintf(str, strings[S_ComplErr], err);

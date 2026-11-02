@@ -4,7 +4,7 @@
     <Version Value="12"/>
     <General>
       <SessionStorage Value="InProjectDir"/>
-      <Title Value="opgui_lazarus"/>
+      <Title Value="opgui-0.12.4_lazarus"/>
       <ResourceType Value="res"/>
     </General>
     <BuildModes>
@@ -245,7 +245,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="opgui_lazarus"/>
+      <Filename Value="opgui-0.12.4_lazarus"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

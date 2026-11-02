@@ -28,6 +28,7 @@ type
   DWORD = Cardinal;
   WORD  = Word;
   BYTE  = Byte;
+  TS = (S_NL, S_sepLine, S_noprog, S_prog, S_progDev, S_DevPermission, S_nodev_r, S_nodev_w, S_nodev, S_DevMismatch, S_noV33reg, S_progver, S_progid, S_FWver2old, S_lowUsbV, S_HiVPP, S_LowVPP, S_reg, S_dev_det, S_file, S_file2, S_fileEEP, S_noDLL, S_openEEfile, S_saveEEfile, S_IhexShort, S_IhexChecksum, S_InvHandle, S_LogFile, S_FileSaved, S_HVICSP, S_StartRead, S_Read, S_CodeReading1, S_CodeReading, S_CodeReading2, S_ReadEnd, S_ReadID_CONFIG, S_Read_CONFIG_A, S_Read_EXE_A, S_ReadEE, S_StartErase, S_Writing, S_StartCodeProg, S_CodeWriting, S_CodeWriting2, S_IDW, S_ConfigW, S_ConfigAreaW, S_EEAreaW, S_FuseAreaW, S_CodeV, S_CodeV2, S_IDV, S_ConfigV, S_EEV, S_IntW, S_TotErr, S_ComplErr, S_Compl, S_Ready, S_End, S_EndErr, S_ProtErase, S_Inohex, S_ReadErr, S_ReadCodeErr, S_ReadCodeErr2, S_ReadEEErr, S_ConfigErr, S_ReadConfigErr, S_ErrOsccal, S_CodeWError, S_CodeWError2, S_CodeWError3, S_CodeWError4, S_ConfigWErr, S_ConfigWErr2, S_ConfigWErr3, S_WErr1, S_WErr2, S_IDErr, S_ICDErr, S_Calib1Err, S_Calib2Err, S_CodeVError, S_CodeVError2, S_CodeVError3, S_ErrSing, S_ErrPlur, S_MaxErr, S_I2CInitErr, S_I2CAckErr, S_ComErr, S_InsErr, S_SyncErr, S_HVregErr, S_Log1, S_Log2, S_Log3, S_Log4, S_Log5, S_Log6, S_Log7, S_Log8, S_Log9, S_comTimeout, S_EraseTimeout, S_ConfigTimeout, S_ConfigTimeout2, S_CodeTimeout, S_CodeTimeout2, S_OsccalTimeout, S_EETimeout, S_ConfigWTimeout, S_CodeWTimeout, S_ConfigWTimeout2, S_EEWTimeout, S_IDWTimeout, S_ConfigNWTimeout, S_CodeVTimeout, S_ConfigVTimeout, S_ProgModeTimeout, S_ProgModeXTimeout, S_LogTimeout, S_CodeMem, S_EEMem, S_IDMem, S_ConfigMem, S_ConfigResMem, S_CodeMem2, S_ExeMem, S_LPOsc, S_XTOsc, S_IntOsc, S_RCOsc, S_WDTON, S_WDTOFF, S_CPOFF, S_CPON, S_MCLRON, S_MCLROFF, S_ChipID, S_ChipID2, S_BKOsccal, S_Osccal, S_DevID, S_DevID2, S_DevREV, S_ConfigWord, S_ConfigWord2, S_ConfigWordX, S_Config2Cal1, S_ConfigWordH, S_ConfigWordL, S_CalibWord1, S_Calib1_2, S_CalibWord2, S_CalibWordX, S_Protected, S_CodeLim, S_EELim, S_ConfigLim, S_WbufLim, S_MaxRetry, S_NoCode, S_NoCode2, S_NoCalibW, S_NoEEMem, S_NoConfigW, S_NoConfigW2, S_NoConfigW3, S_NoConfigW4, S_NoConfigW5, S_NoConfigW6, S_Empty, S_NextIns, S_ForceConfigW, S_ForceConfigWx, S_WaitS1W, S_WaitS1R, S_WarnFlashSize, S_SkipSaflock, I_CANCEL, I_OPEN, I_SAVE, I_Fopen, I_Fsave, I_DevR, I_DevW, I_Info, I_Data, I_Opt, I_Dev, I_Type, I_TypeFilt, I_Filt, I_Speed, I_ReadRes, I_ID_BKo_W, I_EE, I_CalW, I_Saflock, I_OSCW, I_OSC, I_BKOSC, I_OSCF, I_CONN, I_LOG, I_CK_V33, I_LANG, I_MAXERR, I_ADDR, I_USBD, I_I2CDATAOUT, I_I2CDATATR, I_I2C_NB, I_I2CMode, I_I2CSend, I_I2CReceive, I_TestHW, I_TestHWB, I_TestMSG, I_IO_Enable, I_IO_Commands, I_SPIMEM, I_I2CMEM, I_UWMEM, I_OWMEM, I_OWDEV, I_UNIOMEM, I_3V3REQUIRED, I_PIC_FORCECW, I_AT_FUSE, I_AT_FUSEH, I_AT_FUSEX, I_AT_LOCK, I_AT_FUSELF, I_AT_COMM, I_W_LANGFILE, I_WAITS1, I_PRESSS1, I_ICD_ENABLE, I_ICD_ADDRESS, I_LOAD_COFF, I_SHOW_PC, I_SHOW_STATUS, I_SHOW_BANK0, I_SHOW_BANK1, I_SHOW_BANK2, I_SHOW_BANK3, I_SHOW_EE, I_STOP, I_ICD_RUN, I_ICD_HALT, I_ICD_STEP, I_ICD_STEPOVER, I_ICD_STOP, I_ICD_REFRESH, I_ICD_CMD, I_ICD_HELP, I_ICD_SOURCE, I_ICD_STATUS, I_ICD_HELP_TXT, I_GUI_CMD_HELP, L_HELP, L_OPTERR, L_INFO1, L_INFO2, L_UNKNOWN, L_NAME, L_DEV_RO, L_DEV_RW, DIM);
 
 var
   STR_ID: array[0..DIM-1] of PChar;
@@ -46,7 +47,7 @@ var
   f: ^TextFile;
   line: array[0..4096-1] of Char;
   id: PChar;
-  string: PChar;
+  string_: PChar;
   p: PChar;
   temp: array[0..32-1] of Char;
   i: Integer;
@@ -56,33 +57,6 @@ begin
   if f then
   begin
    temp[0] := 0;
-   (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-     Source: /tmp/opgui-0.12.4/strings.c:19
-     Original C:
-       for (; fgets(line, sizeof(line), f);)
-       {
-         if (sscanf(line, "[%[^]]", temp) && (!strncmp(langid, temp, sizeof(temp))))
-         {
-           strings = malloc(DIM * (sizeof(char * )));
-           for (i = 0; i < DIM; i++)
-             strings[i] = 0;
-       
-           for (; fgets(line, sizeof(line), f);)
-           {
-             if ((strlen(line) > 0) && (line[0] == '['))
-               break;
-             id = strtok(line, " \t");
-             string = strtok(0, "\n");
-             for (i = 0; string && (i < DIM); i++)
-             {
-               if (!strcmp(id, STR_ID[i]))
-               {
-                 for (; (string && string[0]) && (string[0] == '\t'); string++)
-                   ;
-       
-                 for (;...
-   *)
-   // init: 
    while fgets(line, SizeOf(line), f) do
    begin
     if (sscanf(line, "[%[^]]", temp)) and (not (strncmp(langid, temp, SizeOf(temp)))) then
@@ -92,142 +66,44 @@ begin
      begin
       strings[i] := 0;
      end;
-     (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-       Source: /tmp/opgui-0.12.4/strings.c:23
-       Original C:
-         for (; fgets(line, sizeof(line), f);)
-         {
-           if ((strlen(line) > 0) && (line[0] == '['))
-             break;
-           id = strtok(line, " \t");
-           string = strtok(0, "\n");
-           for (i = 0; string && (i < DIM); i++)
-           {
-             if (!strcmp(id, STR_ID[i]))
-             {
-               for (; (string && string[0]) && (string[0] == '\t'); string++)
-                 ;
-         
-               for (; p = strstr(string, "\\n");)
-               {
-                 for (p[0] = '\n'; p[1]; p++)
-                   p[1] = p[2];
-         
-               }
-         
-               for (; p = strstr(string, "\\r");)
-               {
-                 for (p[0] = '\r'; p[1]; p++)
-                   p[1] = p[2];
-         
-               }
-         
-               strings[i] = malloc(strlen(string) + 1);
-         ...
-     *)
-     // init: 
      while fgets(line, SizeOf(line), f) do
      begin
       if ((strlen(line)) > (0)) and ((line[0]) = (#91)) then
        Break;
       id := strtok(line, " \t");
-      string := strtok(0, "\n");
-      (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-        Source: /tmp/opgui-0.12.4/strings.c:27
-        Original C:
-          for (i = 0; string && (i < DIM); i++)
-          {
-            if (!strcmp(id, STR_ID[i]))
-            {
-              for (; (string && string[0]) && (string[0] == '\t'); string++)
-                ;
-          
-              for (; p = strstr(string, "\\n");)
-              {
-                for (p[0] = '\n'; p[1]; p++)
-                  p[1] = p[2];
-          
-              }
-          
-              for (; p = strstr(string, "\\r");)
-              {
-                for (p[0] = '\r'; p[1]; p++)
-                  p[1] = p[2];
-          
-              }
-          
-              strings[i] = malloc(strlen(string) + 1);
-              strcpy(strings[i], string);
-              i = DIM;
-            }
-          }
-      *)
-      // init: i = 0
-      while (string) and ((i) < (DIM)) do
+      string_ := strtok(0, "\n");
+      i := 0;
+      while (string_) and ((i) < (DIM)) do
       begin
        if not (strcmp(id, STR_ID[i])) then
        begin
-        while ((string) and (string[0])) and ((string[0]) = (#9)) do
+        while ((string_) and (string_[0])) and ((string_[0]) = (#9)) do
         begin
-         Inc(string);
+         Inc(string_);
         end;
-        (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-          Source: /tmp/opgui-0.12.4/strings.c:30
-          Original C:
-            for (; p = strstr(string, "\\n");)
-            {
-              for (p[0] = '\n'; p[1]; p++)
-                p[1] = p[2];
-            
-            }
-        *)
-        // init: 
-        while (p := strstr(string, "\\n")) do
+        while (p := strstr(string_, "\\n")) do
         begin
-         (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-           Source: /tmp/opgui-0.12.4/strings.c:31
-           Original C:
-             for (p[0] = '\n'; p[1]; p++)
-               p[1] = p[2];
-         *)
-         // init: p[0] = '\n'
+         p[0] := #10;
          while p[1] do
          begin
           p[1] := p[2];
-           // step: p++
+          Inc(p);
          end;
         end;
-        (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-          Source: /tmp/opgui-0.12.4/strings.c:33
-          Original C:
-            for (; p = strstr(string, "\\r");)
-            {
-              for (p[0] = '\r'; p[1]; p++)
-                p[1] = p[2];
-            
-            }
-        *)
-        // init: 
-        while (p := strstr(string, "\\r")) do
+        while (p := strstr(string_, "\\r")) do
         begin
-         (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-           Source: /tmp/opgui-0.12.4/strings.c:34
-           Original C:
-             for (p[0] = '\r'; p[1]; p++)
-               p[1] = p[2];
-         *)
-         // init: p[0] = '\r'
+         p[0] := '\r';
          while p[1] do
          begin
           p[1] := p[2];
-           // step: p++
+          Inc(p);
          end;
         end;
-        strings[i] := malloc((strlen(string)) + (1));
-        strcpy(strings[i], string);
+        strings[i] := malloc((strlen(string_)) + (1));
+        strcpy(strings[i], string_);
         i := DIM;
        end;
-        // step: i++
+       Inc(i);
       end;
      end;
      for i := 0 to (DIM) - 1 do
@@ -258,31 +134,17 @@ begin
    for i := 1 to (DIM) - 1 do
    begin
     fprintf(f, "%s\t\t", STR_ID[i]);
-    (* TODO gtk2laz: for loop with non-standard form; rewritten as while
-      Source: /tmp/opgui-0.12.4/strings.c:62
-      Original C:
-        for (j = 0; strings_en[i][j]; j++)
-        {
-          if (strings_en[i][j] == '\n')
-            fprintf(f, "%s", "\\n");
-          else
-            if (strings_en[i][j] == '\r')
-            fprintf(f, "%s", "\\r");
-          else
-            fprintf(f, "%c", strings_en[i][j]);
-        }
-    *)
-    // init: j = 0
+    j := 0;
     while strings_en[i][j] do
     begin
      if (strings_en[i][j]) = (#10) then
-      fprintf(f, "%s", "\\n");
+      fprintf(f, "%s", "\\n")
      else
       if (strings_en[i][j]) = ('\r') then
-       fprintf(f, "%s", "\\r");
+       fprintf(f, "%s", "\\r")
       else
        fprintf(f, "%c", strings_en[i][j]);
-      // step: j++
+     Inc(j);
     end;
     fprintf(f, "\n");
    end;

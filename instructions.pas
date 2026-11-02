@@ -23,7 +23,6 @@ type
   DWORD = Cardinal;
   WORD  = Word;
   BYTE  = Byte;
-
 const
   NOP = $00;
   PROG_RST = $01;
@@ -122,6 +121,7 @@ const
   REPEAT = $F5;
   REPEAT_END = $F6;
   MAX_INS = $59;
+
 
 implementation
 

@@ -34,8 +34,8 @@ type
 var
   resources_resource_data: Tstatic SECTION union;
   static_resource: Tstatic GStaticResource;
-  GResource *resources_get_resource (void): TG_MODULE_EXPORT;
-  _func(void): Tstatic void;
+  GResource__resources_get_resource__void_: TG_MODULE_EXPORT;
+  _func_void_: Tstatic void;
 
 // --- function declarations ---
 procedure _func(void: Tvoid); \
@@ -83,9 +83,10 @@ procedure _func(void: Tvoid); \
   int _func ## _ructor(void);              \
   int _func ## _ructor();
 var
-  (_func): Tatexit;
-  (NULL,  _array ## _func): Tg_slist_find;
+  // (no local variables detected)
 begin
+  atexit(_func);
+  g_slist_find(nil, _array ## _func);
   Exit;
 end;
 
@@ -122,16 +123,16 @@ G_DEFINE_DESTRUCTOR(resourcesresource_destructor)
 
 static void resourcesresource_ructor ();
 var
-  (&static_resource): Tg_static_resource_init;
+  // (no local variables detected)
 begin
-  // empty body
+  g_static_resource_init(@( static_resource ));
 end;
 
 procedure resourcesresource_destructor;
 var
-  (&static_resource): Tg_static_resource_fini;
+  // (no local variables detected)
 begin
-  // empty body
+  g_static_resource_fini(@( static_resource ));
 end;
 
 end.
