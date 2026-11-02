@@ -1,0 +1,1514 @@
+object MainForm: TMainForm
+  Position = poScreenCenter
+  ClientWidth = 850
+  ClientHeight = 250
+  OnClose = @Xclose
+  object Tpanel1: TPanel
+    Name = 'Tpanel1'
+    Align = alClient
+    Visible = True
+    object StatusB: TStatusBar
+      Name = 'StatusB'
+      Align = alBottom
+      Visible = True
+      BorderSpacing.Top = 6
+      BorderSpacing.Bottom = 6
+      BorderSpacing.Around = 2
+    end
+    object Ttoolbar2: TToolBar
+      Name = 'Ttoolbar2'
+      Align = alTop
+      Visible = True
+      object OpenT: TToolButton
+        Name = 'OpenT'
+        Visible = True
+      end
+      object SaveT: TToolButton
+        Name = 'SaveT'
+        Visible = True
+      end
+      object Ttoolbutton3: TToolButton
+        Name = 'Ttoolbutton3'
+        Visible = True
+        Style = tbsSeparator
+      end
+      object ReadT: TToolButton
+        Name = 'ReadT'
+        Visible = True
+      end
+      object WriteT: TToolButton
+        Name = 'WriteT'
+        Visible = True
+      end
+      object Ttoolbutton4: TToolButton
+        Name = 'Ttoolbutton4'
+        Visible = True
+        Style = tbsSeparator
+      end
+      object StopT: TToolButton
+        Name = 'StopT'
+        Visible = True
+        Enabled = False
+        Caption = 'stop'
+      end
+      object ConnectT: TToolButton
+        Name = 'ConnectT'
+        Visible = True
+        Caption = 'reconn'
+      end
+      object InfoT: TToolButton
+        Name = 'InfoT'
+        Visible = True
+        Caption = 'info'
+      end
+    end
+    object Notebook: TPageControl
+      Name = 'Notebook'
+      Align = alClient
+      Visible = True
+      object Notebook_Tab1: TTabSheet
+        Caption = 'dati'
+        object Tscrollbox5: TScrollBox
+          Name = 'Tscrollbox5'
+          Align = alClient
+          Visible = True
+          object Data: TMemo
+            Name = 'Data'
+            Align = alClient
+            Visible = True
+            BorderSpacing.Top = 5
+            ReadOnly = True
+          end
+        end
+      end
+      object Notebook_Tab2: TTabSheet
+        Caption = '_dev'
+        object DeviceTab: TPanel
+          Name = 'DeviceTab'
+          Align = alClient
+          Visible = True
+          BorderSpacing.Top = 5
+          BorderSpacing.Around = 5
+          object Tpanel6: TPanel
+            Name = 'Tpanel6'
+            Width = 250
+            Visible = True
+            object Tpanel7: TPanel
+              Name = 'Tpanel7'
+              Visible = True
+              object TypeL: TLabel
+                Name = 'TypeL'
+                Visible = True
+                Caption = '_tipo'
+              end
+              object TypeC: TComboBox
+                Name = 'TypeC'
+                Visible = True
+              end
+            end
+            object Tpanel8: TPanel
+              Name = 'Tpanel8'
+              Visible = True
+              object DevSrcL: TLabel
+                Name = 'DevSrcL'
+                Visible = True
+                Caption = 'label'
+              end
+              object DevSrcE: TEdit
+                Name = 'DevSrcE'
+                Visible = True
+              end
+            end
+            object Tscrollbox9: TScrollBox
+              Name = 'Tscrollbox9'
+              Align = alClient
+              Visible = True
+              object DevTree: TListView
+                Name = 'DevTree'
+                Align = alClient
+                Visible = True
+                Anchors = [akLeft]
+              end
+            end
+          end
+          object Tgroupbox10: TGroupBox
+            Name = 'Tgroupbox10'
+            Visible = True
+            Anchors = [akTop]
+            object Tpanel11: TPanel
+              Name = 'Tpanel11'
+              Align = alClient
+              Visible = True
+              BorderSpacing.Top = 3
+              BorderSpacing.Bottom = 6
+              object DevInfo: TLabel
+                Name = 'DevInfo'
+                Visible = True
+              end
+              object EeRw: TCheckBox
+                Name = 'EeRw'
+                Caption = 'ee'
+                Visible = True
+                Anchors = [akLeft]
+                ItemIndex = 0
+              end
+              object PicOpt: TPanel
+                Name = 'PicOpt'
+                BorderSpacing.Around = 1
+                object Tpanel12: TPanel
+                  Name = 'Tpanel12'
+                  Visible = True
+                  object Tpanel13: TPanel
+                    Name = 'Tpanel13'
+                    Visible = True
+                    BorderSpacing.Around = 5
+                    object ResRead: TCheckBox
+                      Name = 'ResRead'
+                      Caption = '_reserved'
+                      Visible = True
+                    end
+                    object ProgId: TCheckBox
+                      Name = 'ProgId'
+                      Caption = '_progID'
+                      Visible = True
+                    end
+                    object ProgCal12: TCheckBox
+                      Name = 'ProgCal12'
+                      Caption = '_progCal'
+                      Visible = True
+                    end
+                    object UseSaflock: TCheckBox
+                      Name = 'UseSaflock'
+                      Caption = '_useSaflock'
+                      Visible = True
+                    end
+                    object OscOpt: TGroupBox
+                      Name = 'OscOpt'
+                      Visible = True
+                      object Tpanel14: TPanel
+                        Name = 'Tpanel14'
+                        Align = alClient
+                        Visible = True
+                        BorderSpacing.Bottom = 5
+                        object Osccal: TRadioButton
+                          Name = 'Osccal'
+                          Caption = '_osccal'
+                          Visible = True
+                        end
+                        object Bkosccal: TRadioButton
+                          Name = 'Bkosccal'
+                          Caption = '_bkosccal'
+                          Visible = True
+                        end
+                        object Filecal: TRadioButton
+                          Name = 'Filecal'
+                          Caption = '_file'
+                          Visible = True
+                        end
+                      end
+                      object OsccalL: TLabel
+                        Name = 'OsccalL'
+                        Align = alClient
+                        Visible = True
+                        Caption = '__osccal'
+                      end
+                    end
+                  end
+                  object CwOpt: TGroupBox
+                    Name = 'CwOpt'
+                    Visible = True
+                    object Tpanel15: TPanel
+                      Name = 'Tpanel15'
+                      Align = alClient
+                      Visible = True
+                      BorderSpacing.Bottom = 5
+                      BorderSpacing.Around = 5
+                      object ForceCw: TCheckBox
+                        Name = 'ForceCw'
+                        Caption = '_forcecw'
+                        Visible = True
+                      end
+                      object Tpanel16: TPanel
+                        Name = 'Tpanel16'
+                        Visible = True
+                        object Cw1Opt: TPanel
+                          Name = 'Cw1Opt'
+                          Visible = True
+                          object Tlabel17: TLabel
+                            Name = 'Tlabel17'
+                            Visible = True
+                            Caption = 'CW1'
+                          end
+                          object Cw1: TEdit
+                            Name = 'Cw1'
+                            Visible = True
+                          end
+                        end
+                        object Cw2Opt: TPanel
+                          Name = 'Cw2Opt'
+                          Visible = True
+                          object Tlabel18: TLabel
+                            Name = 'Tlabel18'
+                            Visible = True
+                            Caption = 'CW2'
+                          end
+                          object Cw2: TEdit
+                            Name = 'Cw2'
+                            Visible = True
+                          end
+                        end
+                        object Cw3Opt: TPanel
+                          Name = 'Cw3Opt'
+                          Visible = True
+                          object Tlabel19: TLabel
+                            Name = 'Tlabel19'
+                            Visible = True
+                            Caption = 'CW3'
+                          end
+                          object Cw3: TEdit
+                            Name = 'Cw3'
+                            Visible = True
+                          end
+                        end
+                        object Cw4Opt: TPanel
+                          Name = 'Cw4Opt'
+                          Visible = True
+                          object Tlabel20: TLabel
+                            Name = 'Tlabel20'
+                            Visible = True
+                            Caption = 'CW4'
+                          end
+                          object Cw4: TEdit
+                            Name = 'Cw4'
+                            Visible = True
+                          end
+                        end
+                      end
+                      object Tpanel21: TPanel
+                        Name = 'Tpanel21'
+                        Visible = True
+                        object Cw5Opt: TPanel
+                          Name = 'Cw5Opt'
+                          Visible = True
+                          object Tlabel22: TLabel
+                            Name = 'Tlabel22'
+                            Visible = True
+                            Caption = 'CW5'
+                          end
+                          object Cw5: TEdit
+                            Name = 'Cw5'
+                            Visible = True
+                          end
+                        end
+                        object Cw6Opt: TPanel
+                          Name = 'Cw6Opt'
+                          Visible = True
+                          object Tlabel23: TLabel
+                            Name = 'Tlabel23'
+                            Visible = True
+                            Caption = 'CW6'
+                          end
+                          object Cw6: TEdit
+                            Name = 'Cw6'
+                            Visible = True
+                          end
+                        end
+                        object Cw7Opt: TPanel
+                          Name = 'Cw7Opt'
+                          Visible = True
+                          object Tlabel24: TLabel
+                            Name = 'Tlabel24'
+                            Visible = True
+                            Caption = 'CW7'
+                          end
+                          object Cw7: TEdit
+                            Name = 'Cw7'
+                            Visible = True
+                          end
+                        end
+                        object Cw8Opt: TPanel
+                          Name = 'Cw8Opt'
+                          Visible = True
+                          object Tlabel25: TLabel
+                            Name = 'Tlabel25'
+                            Visible = True
+                            Caption = 'CW8'
+                          end
+                          object Cw8: TEdit
+                            Name = 'Cw8'
+                            Visible = True
+                          end
+                        end
+                      end
+                    end
+                    object Tlabel26: TLabel
+                      Name = 'Tlabel26'
+                      Align = alClient
+                      Visible = True
+                      Caption = 'Config Word'
+                    end
+                  end
+                end
+                object IcdOpt: TGroupBox
+                  Name = 'IcdOpt'
+                  Visible = True
+                  Anchors = [akLeft]
+                  object Tpanel27: TPanel
+                    Name = 'Tpanel27'
+                    Align = alClient
+                    Visible = True
+                    BorderSpacing.Bottom = 5
+                    BorderSpacing.Around = 48
+                    object Icd: TCheckBox
+                      Name = 'Icd'
+                      Caption = '_icd'
+                      Visible = True
+                    end
+                    object Tpanel28: TPanel
+                      Name = 'Tpanel28'
+                      Visible = True
+                      object IcdAddrL: TLabel
+                        Name = 'IcdAddrL'
+                        Visible = True
+                        Caption = '_address'
+                      end
+                      object IcdAddr: TEdit
+                        Name = 'IcdAddr'
+                        Visible = True
+                      end
+                    end
+                  end
+                  object Tlabel29: TLabel
+                    Name = 'Tlabel29'
+                    Align = alClient
+                    Visible = True
+                    Caption = 'ICD'
+                  end
+                end
+              end
+              object AvrOpt: TPanel
+                Name = 'AvrOpt'
+                BorderSpacing.Around = 5
+                object Tpanel30: TPanel
+                  Name = 'Tpanel30'
+                  Visible = True
+                  object Fusel: TEdit
+                    Name = 'Fusel'
+                    Visible = True
+                  end
+                  object FuselC: TCheckBox
+                    Name = 'FuselC'
+                    Caption = '_fuselow'
+                    Visible = True
+                  end
+                end
+                object Tpanel31: TPanel
+                  Name = 'Tpanel31'
+                  Visible = True
+                  object Fuseh: TEdit
+                    Name = 'Fuseh'
+                    Visible = True
+                  end
+                  object FusehC: TCheckBox
+                    Name = 'FusehC'
+                    Caption = '_fusehigh'
+                    Visible = True
+                  end
+                end
+                object Tpanel32: TPanel
+                  Name = 'Tpanel32'
+                  Visible = True
+                  object Fusex: TEdit
+                    Name = 'Fusex'
+                    Visible = True
+                  end
+                  object FusexC: TCheckBox
+                    Name = 'FusexC'
+                    Caption = '_fuseext'
+                    Visible = True
+                  end
+                end
+                object Tpanel33: TPanel
+                  Name = 'Tpanel33'
+                  Visible = True
+                  object Fuselck: TEdit
+                    Name = 'Fuselck'
+                    Visible = True
+                  end
+                  object FuselckC: TCheckBox
+                    Name = 'FuselckC'
+                    Caption = '_fuselock'
+                    Visible = True
+                  end
+                end
+                object FuselW3k: TButton
+                  Name = 'FuselW3k'
+                  Caption = '_writefuselow3k'
+                  Visible = True
+                  Anchors = [akLeft]
+                end
+              end
+            end
+            object DeviceName: TLabel
+              Name = 'DeviceName'
+              Align = alClient
+              Visible = True
+              Caption = '_dev'
+            end
+          end
+        end
+      end
+      object Notebook_Tab3: TTabSheet
+        Caption = '_options'
+        object OptionsTab: TPanel
+          Name = 'OptionsTab'
+          Align = alClient
+          Visible = True
+          BorderSpacing.Top = 5
+          BorderSpacing.Around = 5
+          object Connect: TButton
+            Name = 'Connect'
+            Caption = '_connect'
+            Visible = True
+            Anchors = [akLeft]
+          end
+          object Tpanel34: TPanel
+            Name = 'Tpanel34'
+            Visible = True
+            object Tpanel35: TPanel
+              Name = 'Tpanel35'
+              Visible = True
+              object Tlabel36: TLabel
+                Name = 'Tlabel36'
+                Visible = True
+                Caption = 'VID'
+              end
+              object Vid: TEdit
+                Name = 'Vid'
+                Visible = True
+              end
+            end
+            object Tpanel37: TPanel
+              Name = 'Tpanel37'
+              Visible = True
+              object Tlabel38: TLabel
+                Name = 'Tlabel38'
+                Visible = True
+                Caption = 'PID'
+              end
+              object Pid: TEdit
+                Name = 'Pid'
+                Visible = True
+              end
+            end
+          end
+          object Test: TButton
+            Name = 'Test'
+            Caption = '_test'
+            Visible = True
+            Anchors = [akLeft]
+          end
+          object Log: TCheckBox
+            Name = 'Log'
+            Caption = '_log'
+            Visible = True
+            Anchors = [akLeft]
+          end
+          object W3vcheck: TCheckBox
+            Name = 'W3vcheck'
+            Caption = '3v3nocheck'
+            Visible = True
+            Anchors = [akLeft]
+          end
+          object S1: TCheckBox
+            Name = 'S1'
+            Caption = '_s1'
+            Visible = True
+            Anchors = [akLeft]
+          end
+          object Tpanel39: TPanel
+            Name = 'Tpanel39'
+            Visible = True
+            object MaxerrL: TLabel
+              Name = 'MaxerrL'
+              Visible = True
+              Caption = '_maxerr'
+            end
+            object Maxerr: TEdit
+              Name = 'Maxerr'
+              Visible = True
+            end
+          end
+        end
+      end
+      object Notebook_Tab4: TTabSheet
+        Caption = 'I2C/SPI'
+        object I2cspiTab: TPanel
+          Name = 'I2cspiTab'
+          Align = alClient
+          Visible = True
+          BorderSpacing.Top = 5
+          BorderSpacing.Around = 15
+          object Tgroupbox40: TGroupBox
+            Name = 'Tgroupbox40'
+            Visible = True
+            Anchors = [akTop]
+            object Tpanel41: TPanel
+              Name = 'Tpanel41'
+              Align = alClient
+              Visible = True
+              BorderSpacing.Around = 5
+              object I2c8bit: TRadioButton
+                Name = 'I2c8bit'
+                Caption = 'I2C 8 Bit'
+                Visible = True
+                ItemIndex = 0
+              end
+              object I2c16bit: TRadioButton
+                Name = 'I2c16bit'
+                Caption = 'I2C 16 Bit'
+                Visible = True
+                ItemIndex = 0
+              end
+              object Tbevel42: TBevel
+                Name = 'Tbevel42'
+                Visible = True
+              end
+              object Spi00: TRadioButton
+                Name = 'Spi00'
+                Caption = 'SPI(00)'
+                Visible = True
+                ItemIndex = 0
+              end
+              object Spi01: TRadioButton
+                Name = 'Spi01'
+                Caption = 'SPI(01)'
+                Visible = True
+                ItemIndex = 0
+              end
+              object Spi10: TRadioButton
+                Name = 'Spi10'
+                Caption = 'SPI(10)'
+                Visible = True
+                ItemIndex = 0
+              end
+              object Spi11: TRadioButton
+                Name = 'Spi11'
+                Caption = 'SPI(11)'
+                Visible = True
+                ItemIndex = 0
+              end
+            end
+            object I2cmode: TLabel
+              Name = 'I2cmode'
+              Align = alClient
+              Visible = True
+              Caption = '_mode'
+            end
+          end
+          object Tpanel43: TPanel
+            Name = 'Tpanel43'
+            Visible = True
+            BorderSpacing.Around = 5
+            object Tpanel44: TPanel
+              Name = 'Tpanel44'
+              Visible = True
+              BorderSpacing.Around = 5
+              object NbyteL: TLabel
+                Name = 'NbyteL'
+                Visible = True
+                Caption = '_byte'
+              end
+              object NbyteS: TSpinEdit
+                Name = 'NbyteS'
+                Visible = True
+                MaxLength = 3
+                Value = 1.0
+              end
+            end
+            object Tpanel45: TPanel
+              Name = 'Tpanel45'
+              Visible = True
+              BorderSpacing.Around = 5
+              object SpeedL: TLabel
+                Name = 'SpeedL'
+                Visible = True
+                Caption = '_speed'
+              end
+              object SpeedC: TComboBox
+                Name = 'SpeedC'
+                Visible = True
+                ItemIndex = 0
+              end
+            end
+            object Tpanel46: TPanel
+              Name = 'Tpanel46'
+              Visible = True
+              BorderSpacing.Around = 5
+              object SendB: TButton
+                Name = 'SendB'
+                Caption = '_send'
+                Visible = True
+              end
+              object ReceiveB: TButton
+                Name = 'ReceiveB'
+                Caption = '_receive'
+                Visible = True
+              end
+            end
+            object DatasendL: TLabel
+              Name = 'DatasendL'
+              Visible = True
+              Caption = '_datasend'
+            end
+            object Datasend: TEdit
+              Name = 'Datasend'
+              Visible = True
+            end
+            object DatatrL: TLabel
+              Name = 'DatatrL'
+              Visible = True
+              Caption = '_datatransferred'
+            end
+            object Tgroupbox47: TGroupBox
+              Name = 'Tgroupbox47'
+              Visible = True
+              object Datatr: TMemo
+                Name = 'Datatr'
+                Align = alClient
+                Width = 250
+                Height = 60
+                Visible = True
+                ReadOnly = True
+              end
+              object Tlabel48: TLabel
+                Name = 'Tlabel48'
+                Align = alClient
+                Visible = True
+              end
+            end
+          end
+        end
+      end
+      object Notebook_Tab5: TTabSheet
+        Caption = 'ICD'
+        object IcdTab: TPanel
+          Name = 'IcdTab'
+          Align = alClient
+          Visible = True
+          object Ttoolbar50: TToolBar
+            Name = 'Ttoolbar50'
+            Align = alTop
+            Visible = True
+            object IcdRun: TToolButton
+              Name = 'IcdRun'
+              Visible = True
+            end
+            object IcdHalt: TToolButton
+              Name = 'IcdHalt'
+              Visible = True
+            end
+            object IcdStep: TToolButton
+              Name = 'IcdStep'
+              Visible = True
+            end
+            object IcdStepover: TToolButton
+              Name = 'IcdStepover'
+              Visible = True
+            end
+            object Ttoolbutton51: TToolButton
+              Name = 'Ttoolbutton51'
+              Visible = True
+              Style = tbsSeparator
+            end
+            object IcdStop: TToolButton
+              Name = 'IcdStop'
+              Visible = True
+            end
+            object Ttoolbutton52: TToolButton
+              Name = 'Ttoolbutton52'
+              Visible = True
+              Style = tbsSeparator
+            end
+            object IcdRefresh: TToolButton
+              Name = 'IcdRefresh'
+              Visible = True
+            end
+            object Ttoolbutton53: TToolButton
+              Name = 'Ttoolbutton53'
+              Visible = True
+              Style = tbsSeparator
+            end
+            object LoadcoffB: TToolButton
+              Name = 'LoadcoffB'
+              Visible = True
+              Caption = '_loadcoff'
+            end
+            object Ttoolbutton54: TToolButton
+              Name = 'Ttoolbutton54'
+              Visible = True
+              Style = tbsSeparator
+            end
+            object Ttoolbutton55: TToolButton
+              Name = 'Ttoolbutton55'
+              Visible = True
+            end
+            object Ttoolbutton56: TToolButton
+              Name = 'Ttoolbutton56'
+              Visible = True
+              Style = tbsSeparator
+            end
+            object IcdHelp: TToolButton
+              Name = 'IcdHelp'
+              Visible = True
+              Caption = 'help'
+            end
+          end
+          object Tpanel57: TPanel
+            Name = 'Tpanel57'
+            Align = alClient
+            Visible = True
+            object Tpanel58: TPanel
+              Name = 'Tpanel58'
+              Visible = True
+              object IcdSourceL: TLabel
+                Name = 'IcdSourceL'
+                Visible = True
+                Caption = '_source'
+              end
+              object Tscrollbox59: TScrollBox
+                Name = 'Tscrollbox59'
+                Align = alClient
+                Visible = True
+                object IcdSource: TMemo
+                  Name = 'IcdSource'
+                  Align = alClient
+                  Visible = True
+                  ReadOnly = True
+                end
+              end
+            end
+            object Tpanel60: TPanel
+              Name = 'Tpanel60'
+              Visible = True
+              object Tpanel61: TPanel
+                Name = 'Tpanel61'
+                Visible = True
+                object IcdStatL: TLabel
+                  Name = 'IcdStatL'
+                  Visible = True
+                  Caption = '_status'
+                end
+                object Tmainmenu62: TMainMenu
+                  Name = 'Tmainmenu62'
+                  object ItemOptionsM: TMenuItem
+                    Caption = '_opt'
+                    object ItemTpopupmenu63: TMenuItem
+                      Caption = ''
+                      object ItemPcountM: TMenuItem
+                        Caption = '_counter'
+                        Checked = True
+                      end
+                      object ItemStatusM: TMenuItem
+                        Caption = '_status'
+                        Checked = True
+                      end
+                      object ItemBank0M: TMenuItem
+                        Caption = '_b0'
+                        Checked = False
+                      end
+                      object ItemBank1M: TMenuItem
+                        Caption = '_b1'
+                        Checked = False
+                      end
+                      object ItemBank2M: TMenuItem
+                        Caption = '_b2'
+                        Checked = False
+                      end
+                      object ItemBank3M: TMenuItem
+                        Caption = '_b3'
+                        Checked = False
+                      end
+                      object ItemEeM: TMenuItem
+                        Caption = '_ee'
+                        Checked = False
+                      end
+                    end
+                  end
+                end
+              end
+              object Tscrollbox64: TScrollBox
+                Name = 'Tscrollbox64'
+                Align = alClient
+                Visible = True
+                object IcdStatus: TMemo
+                  Name = 'IcdStatus'
+                  Align = alClient
+                  Visible = True
+                  ReadOnly = True
+                end
+              end
+            end
+          end
+        end
+      end
+      object Notebook_Tab6: TTabSheet
+        Caption = 'I/O'
+        object IoTab: TPanel
+          Name = 'IoTab'
+          Align = alClient
+          Visible = True
+          BorderSpacing.Top = 5
+          BorderSpacing.Around = 10
+          object Tgroupbox66: TGroupBox
+            Name = 'Tgroupbox66'
+            Visible = True
+            Anchors = [akLeft]
+            object Tpanel67: TPanel
+              Name = 'Tpanel67'
+              Align = alClient
+              Visible = True
+              object Ioen: TCheckBox
+                Name = 'Ioen'
+                Caption = '_io'
+                Visible = True
+                Anchors = [akLeft]
+              end
+              object Tpanel68: TPanel
+                Name = 'Tpanel68'
+                Visible = True
+                BorderSpacing.Bottom = 5
+                BorderSpacing.Around = 30
+                object Tpanel69: TPanel
+                  Name = 'Tpanel69'
+                  Visible = True
+                  object Tpanel70: TPanel
+                    Name = 'Tpanel70'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel71: TLabel
+                      Name = 'Tlabel71'
+                      Visible = True
+                      Caption = 'RB7'
+                    end
+                    object Rb70: TRadioButton
+                      Name = 'Rb70'
+                      Caption = '0'
+                      Visible = True
+                    end
+                    object Rb71: TRadioButton
+                      Name = 'Rb71'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb7I: TRadioButton
+                      Name = 'Rb7I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb7L: TLabel
+                      Name = 'Rb7L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel72: TPanel
+                    Name = 'Tpanel72'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel73: TLabel
+                      Name = 'Tlabel73'
+                      Visible = True
+                      Caption = 'RB6'
+                    end
+                    object Rb60: TRadioButton
+                      Name = 'Rb60'
+                      Caption = '0'
+                      Visible = True
+                    end
+                    object Rb61: TRadioButton
+                      Name = 'Rb61'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb6I: TRadioButton
+                      Name = 'Rb6I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb6L: TLabel
+                      Name = 'Rb6L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel74: TPanel
+                    Name = 'Tpanel74'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel75: TLabel
+                      Name = 'Tlabel75'
+                      Visible = True
+                      Caption = 'RB5'
+                    end
+                    object Rb50: TRadioButton
+                      Name = 'Rb50'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb51: TRadioButton
+                      Name = 'Rb51'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb5I: TRadioButton
+                      Name = 'Rb5I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb5L: TLabel
+                      Name = 'Rb5L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel76: TPanel
+                    Name = 'Tpanel76'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel77: TLabel
+                      Name = 'Tlabel77'
+                      Visible = True
+                      Caption = 'RB4'
+                    end
+                    object Rb40: TRadioButton
+                      Name = 'Rb40'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb41: TRadioButton
+                      Name = 'Rb41'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb4I: TRadioButton
+                      Name = 'Rb4I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb4L: TLabel
+                      Name = 'Rb4L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel78: TPanel
+                    Name = 'Tpanel78'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel79: TLabel
+                      Name = 'Tlabel79'
+                      Visible = True
+                      Caption = 'RB3'
+                    end
+                    object Rb30: TRadioButton
+                      Name = 'Rb30'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb31: TRadioButton
+                      Name = 'Rb31'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb3I: TRadioButton
+                      Name = 'Rb3I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb3L: TLabel
+                      Name = 'Rb3L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel80: TPanel
+                    Name = 'Tpanel80'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel81: TLabel
+                      Name = 'Tlabel81'
+                      Visible = True
+                      Caption = 'RB2'
+                    end
+                    object Rb20: TRadioButton
+                      Name = 'Rb20'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb21: TRadioButton
+                      Name = 'Rb21'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb2I: TRadioButton
+                      Name = 'Rb2I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb2L: TLabel
+                      Name = 'Rb2L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel82: TPanel
+                    Name = 'Tpanel82'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel83: TLabel
+                      Name = 'Tlabel83'
+                      Visible = True
+                      Caption = 'RB1'
+                    end
+                    object Rb10: TRadioButton
+                      Name = 'Rb10'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb11: TRadioButton
+                      Name = 'Rb11'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb1I: TRadioButton
+                      Name = 'Rb1I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb1L: TLabel
+                      Name = 'Rb1L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel84: TPanel
+                    Name = 'Tpanel84'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel85: TLabel
+                      Name = 'Tlabel85'
+                      Visible = True
+                      Caption = 'RB0'
+                    end
+                    object Rb00: TRadioButton
+                      Name = 'Rb00'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb01: TRadioButton
+                      Name = 'Rb01'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rb0I: TRadioButton
+                      Name = 'Rb0I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rb0L: TLabel
+                      Name = 'Rb0L'
+                      Visible = True
+                    end
+                  end
+                end
+                object Tpanel86: TPanel
+                  Name = 'Tpanel86'
+                  Visible = True
+                  object Tpanel87: TPanel
+                    Name = 'Tpanel87'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel88: TLabel
+                      Name = 'Tlabel88'
+                      Visible = True
+                      Caption = 'RC7'
+                    end
+                    object Rc70: TRadioButton
+                      Name = 'Rc70'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rc71: TRadioButton
+                      Name = 'Rc71'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rc7I: TRadioButton
+                      Name = 'Rc7I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rc7L: TLabel
+                      Name = 'Rc7L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel89: TPanel
+                    Name = 'Tpanel89'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel90: TLabel
+                      Name = 'Tlabel90'
+                      Visible = True
+                      Caption = 'RC6'
+                    end
+                    object Rc60: TRadioButton
+                      Name = 'Rc60'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rc61: TRadioButton
+                      Name = 'Rc61'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Rc6I: TRadioButton
+                      Name = 'Rc6I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Rc6L: TLabel
+                      Name = 'Rc6L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel91: TPanel
+                    Name = 'Tpanel91'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel92: TLabel
+                      Name = 'Tlabel92'
+                      Visible = True
+                      Caption = 'RA5'
+                    end
+                    object Ra50: TRadioButton
+                      Name = 'Ra50'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Ra51: TRadioButton
+                      Name = 'Ra51'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Ra5I: TRadioButton
+                      Name = 'Ra5I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Ra5L: TLabel
+                      Name = 'Ra5L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel93: TPanel
+                    Name = 'Tpanel93'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel94: TLabel
+                      Name = 'Tlabel94'
+                      Visible = True
+                      Caption = 'RA4'
+                    end
+                    object Ra40: TRadioButton
+                      Name = 'Ra40'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Ra41: TRadioButton
+                      Name = 'Ra41'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Ra4I: TRadioButton
+                      Name = 'Ra4I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Ra4L: TLabel
+                      Name = 'Ra4L'
+                      Visible = True
+                    end
+                  end
+                  object Tpanel95: TPanel
+                    Name = 'Tpanel95'
+                    Visible = True
+                    BorderSpacing.Around = 4
+                    object Tlabel96: TLabel
+                      Name = 'Tlabel96'
+                      Visible = True
+                      Caption = 'RA3'
+                    end
+                    object Ra30: TRadioButton
+                      Name = 'Ra30'
+                      Caption = '0'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Ra31: TRadioButton
+                      Name = 'Ra31'
+                      Caption = '1'
+                      Visible = True
+                    end
+                    object Ra3I: TRadioButton
+                      Name = 'Ra3I'
+                      Caption = 'INPUT:'
+                      Visible = True
+                      ItemIndex = 0
+                    end
+                    object Ra3L: TLabel
+                      Name = 'Ra3L'
+                      Visible = True
+                    end
+                  end
+                end
+              end
+            end
+            object Tlabel97: TLabel
+              Name = 'Tlabel97'
+              Align = alClient
+              Visible = True
+              Caption = 'I/O'
+            end
+          end
+          object Tpanel98: TPanel
+            Name = 'Tpanel98'
+            Visible = True
+            BorderSpacing.Around = 10
+            object Vdduen: TCheckBox
+              Name = 'Vdduen'
+              Caption = 'VDDU'
+              Visible = True
+            end
+            object Vppuen: TCheckBox
+              Name = 'Vppuen'
+              Caption = 'VPPU'
+              Visible = True
+            end
+            object Dcdcen: TCheckBox
+              Name = 'Dcdcen'
+              Caption = 'DCDC'
+              Visible = True
+            end
+            object DcdcS: TTrackBar
+              Name = 'DcdcS'
+              Align = alLeft
+              Visible = True
+              Anchors = [akLeft]
+            end
+          end
+          object Tgroupbox99: TGroupBox
+            Name = 'Tgroupbox99'
+            Visible = True
+            object Tpanel100: TPanel
+              Name = 'Tpanel100'
+              Align = alClient
+              Visible = True
+              BorderSpacing.Around = 5
+              object Tpanel101: TPanel
+                Name = 'Tpanel101'
+                Visible = True
+                BorderSpacing.Around = 5
+                object Tpanel102: TPanel
+                  Name = 'Tpanel102'
+                  Visible = True
+                  Anchors = [akLeft]
+                  object CmdsendL: TLabel
+                    Name = 'CmdsendL'
+                    Visible = True
+                    Caption = '_datasend'
+                  end
+                  object Cmdsend: TEdit
+                    Name = 'Cmdsend'
+                    Visible = True
+                    BorderSpacing.Top = 10
+                  end
+                end
+                object Tpanel103: TPanel
+                  Name = 'Tpanel103'
+                  Visible = True
+                  object CmdtrL: TLabel
+                    Name = 'CmdtrL'
+                    Visible = True
+                    Caption = '_datatransferred'
+                  end
+                  object Tgroupbox104: TGroupBox
+                    Name = 'Tgroupbox104'
+                    Visible = True
+                    object Cmdtr: TMemo
+                      Name = 'Cmdtr'
+                      Align = alClient
+                      Width = 200
+                      Visible = True
+                      ReadOnly = True
+                    end
+                    object Tlabel105: TLabel
+                      Name = 'Tlabel105'
+                      Align = alClient
+                      Visible = True
+                    end
+                  end
+                end
+              end
+              object CmdtrB: TButton
+                Name = 'CmdtrB'
+                Caption = '_send'
+                Visible = True
+                Anchors = [akLeft]
+                BorderSpacing.Bottom = 5
+              end
+            end
+            object CmdL: TLabel
+              Name = 'CmdL'
+              Align = alClient
+              Visible = True
+              Caption = '_cmd'
+            end
+          end
+        end
+      end
+      object Notebook_Tab7: TTabSheet
+        Caption = 'Utility'
+        object UtilityTab: TPanel
+          Name = 'UtilityTab'
+          Align = alClient
+          Visible = True
+          BorderSpacing.Top = 5
+          BorderSpacing.Around = 10
+          object Tgroupbox107: TGroupBox
+            Name = 'Tgroupbox107'
+            Visible = True
+            object Tpanel108: TPanel
+              Name = 'Tpanel108'
+              Align = alClient
+              Visible = True
+              BorderSpacing.Bottom = 5
+              BorderSpacing.Around = 5
+              object Tpanel109: TPanel
+                Name = 'Tpanel109'
+                Visible = True
+                BorderSpacing.Around = 10
+                object Tlabel110: TLabel
+                  Name = 'Tlabel110'
+                  Visible = True
+                  Caption = 'Hex'
+                end
+                object Hexin: TEdit
+                  Name = 'Hexin'
+                  Align = alLeft
+                  Visible = True
+                end
+              end
+              object Dataout: TEdit
+                Name = 'Dataout'
+                Align = alClient
+                Visible = True
+                ReadOnly = True
+              end
+            end
+            object Tlabel111: TLabel
+              Name = 'Tlabel111'
+              Align = alClient
+              Visible = True
+              Caption = 'HEX -> DATA'
+            end
+          end
+          object Tgroupbox112: TGroupBox
+            Name = 'Tgroupbox112'
+            Visible = True
+            object Tpanel113: TPanel
+              Name = 'Tpanel113'
+              Align = alClient
+              Visible = True
+              BorderSpacing.Bottom = 5
+              BorderSpacing.Around = 5
+              object Tpanel114: TPanel
+                Name = 'Tpanel114'
+                Visible = True
+                BorderSpacing.Around = 10
+                object Tlabel115: TLabel
+                  Name = 'Tlabel115'
+                  Visible = True
+                  Caption = '_addr'
+                end
+                object Addrin: TEdit
+                  Name = 'Addrin'
+                  Visible = True
+                end
+              end
+              object Tpanel116: TPanel
+                Name = 'Tpanel116'
+                Visible = True
+                BorderSpacing.Around = 10
+                object Tlabel117: TLabel
+                  Name = 'Tlabel117'
+                  Visible = True
+                  Caption = '_data'
+                end
+                object Datain: TEdit
+                  Name = 'Datain'
+                  Align = alLeft
+                  Visible = True
+                end
+              end
+              object Tpanel118: TPanel
+                Name = 'Tpanel118'
+                Visible = True
+                BorderSpacing.Around = 10
+                object Tlabel119: TLabel
+                  Name = 'Tlabel119'
+                  Visible = True
+                  Caption = 'Hex'
+                end
+                object Hexout: TEdit
+                  Name = 'Hexout'
+                  Align = alLeft
+                  Visible = True
+                  ReadOnly = True
+                end
+              end
+              object Hexsave: TButton
+                Name = 'Hexsave'
+                Caption = '_save'
+                Visible = True
+                Anchors = [akLeft]
+              end
+            end
+            object Tlabel120: TLabel
+              Name = 'Tlabel120'
+              Align = alClient
+              Visible = True
+              Caption = 'DATA -> HEX'
+            end
+          end
+        end
+      end
+    end
+  end
+end

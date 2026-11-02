@@ -1,2618 +1,2412 @@
-unit progEEPROM;
-(**
- * progEEPROM.pas
- * 다양한 EEPROM 타입 프로그래밍 알고리즘
- * 원본 C 소스: progEEPROM.c (Copyright (C) 2009-2022 Alberto Maccioni)
- * Free Pascal 변환
- *
- * GNU General Public License v2 이상 적용
- *)
+unit progeeprom;
 
-{$MODE OBJFPC}
-{$H+}
+{$mode objfpc}{$H+}
 
 interface
 
 uses
-  SysUtils, common;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs,
+  StdCtrls, ComCtrls, ExtCtrls, Buttons, Spin, Menus, LCLType,
+  mainform,
+  common;
 
-{ I2C 메모리 }
+const
+  PRE = $08;
+  S = $10;
+  W = $20;
+  ORG = $20;
+  CS = 8;
+  HLD = 16;
+  WP = $40;
+  READ_ROM = $33;
+  MATCH_ROM = $55;
+  SKIP_ROM = $CC;
+  SEARCH_ROM = $F0;
+  WRITE_SCRATCHPAD = $0F;
+  READ_SCRATCHPAD = $AA;
+  COPY_SCRATCHPAD = $55;
+  READ_MEMORY = $F0;
+  WRITE_APP_REGISTER = $99;
+  READ_STAT_REGISTER = $66;
+  READ_APP_REGISTER = $C3;
+  COPY_LOCK_APP_REGISTER = $5A;
+  READ_SCRATCHPAD2 = $BE;
+  CONVERT_TEMP = $44;
+  RECALL_EE = $B8;
+  READ_PWSUP = $B4;
+  UNIO_READ = $03;
+  UNIO_CRRD = $06;
+  UNIO_WRITE = $6C;
+  UNIO_WREN = $96;
+  UNIO_WRDI = $91;
+  UNIO_RDSR = $05;
+  UNIO_WRSR = $6E;
+  UNIO_ERAL = $6D;
+  UNIO_SETAL = $67;
+
+type
+  DWORD = Cardinal;
+  WORD  = Word;
+  BYTE  = Byte;
+
+// --- function declarations ---
 procedure ReadI2C(dim: Integer; addr: Integer);
 procedure WriteI2C(dim: Integer; addr: Integer; page: Integer);
-
-{ 93x 시리즈 마이크로와이어 메모리 }
 procedure Read93x(dim: Integer; na: Integer; options: Integer);
 procedure Write93Sx(dim: Integer; na: Integer; page: Integer);
 procedure Write93Cx(dim: Integer; na: Integer; options: Integer);
-
-{ 25xx SPI 메모리 }
 procedure Read25xx(dim: Integer);
 procedure Write25xx(dim: Integer; options: Integer);
-
-{ OneWire 메모리 }
+procedure OW_ID(id: Integer);
 procedure ReadOneWireMem(dim: Integer; options: Integer);
 procedure WriteOneWireMem(dim: Integer; options: Integer);
-procedure ReadDS1820();
-
-{ 11xx UNIO 메모리 }
+procedure ReadDS1820;
 procedure Read11xx(dim: Integer);
 procedure Write11xx(dim: Integer; page: Integer);
 
 implementation
 
-{ ============================================================
-  공용 상수 (instructions.h 에서 가져온 값들이 common 유닛에 있다고 가정)
-  실제 프로젝트에서는 common 유닛에 아래 상수들이 정의되어야 합니다.
-  ============================================================ }
-
-const
-  { 93x 시리즈용 포트 비트 상수 }
-  PRE = $08;   { RB3 }
-  S   = $10;   { RB4 }
-  W_  = $20;   { RB5 - W는 Free Pascal 예약어이므로 W_ 사용 }
-  ORG = $20;   { RB5 }
-
-  { 25xx SPI용 포트 비트 상수 }
-  CS  = 8;
-  HLD = 16;
-  WP  = $40;
-
-  { OneWire 명령 }
-  READ_ROM             = $33;
-  MATCH_ROM            = $55;
-  SKIP_ROM             = $CC;
-  SEARCH_ROM           = $F0;
-  WRITE_SCRATCHPAD_OW  = $0F;
-  READ_SCRATCHPAD_OW   = $AA;
-  COPY_SCRATCHPAD_OW   = $55;
-  READ_MEMORY_OW       = $F0;
-  WRITE_APP_REGISTER   = $99;
-  READ_STAT_REGISTER   = $66;
-  READ_APP_REGISTER    = $C3;
-  COPY_LOCK_APP_REGISTER = $5A;
-  READ_SCRATCHPAD2     = $BE;
-  CONVERT_TEMP         = $44;
-  RECALL_EE            = $B8;
-  READ_PWSUP           = $B4;
-
-  { UNIO 명령 }
-  UNIO_READ  = $03;
-  UNIO_CRRD  = $06;
-  UNIO_WRITE = $6C;
-  UNIO_WREN  = $96;
-  UNIO_WRDI  = $91;
-  UNIO_RDSR  = $05;
-  UNIO_WRSR  = $6E;
-  UNIO_ERAL  = $6D;
-  UNIO_SETAL = $67;
-
-{ ============================================================
-  OneWire 디바이스 ID 테이블
-  ============================================================ }
-type
-  TOW_ID = record
-    id: Integer;
-    device: string;
-  end;
-
-const
-  OW_LIST_COUNT = 6;
-  OW_LIST: array[0..OW_LIST_COUNT - 1] of TOW_ID = (
-    (id: $10; device: 'DS1820'#13#10),
-    (id: $14; device: 'DS2430'#13#10),
-    (id: $23; device: 'DS2433'#13#10),
-    (id: $28; device: 'DS18B20'#13#10),
-    (id: $2D; device: 'DS2431'#13#10),
-    (id: $43; device: 'DS28EC20'#13#10)
-  );
-
-{ ============================================================
-  내부 헬퍼 프로시저
-  ============================================================ }
-
-procedure OW_ID(id: Integer);
-var
-  i: Integer;
-  s: string;
-begin
-  for i := 0 to OW_LIST_COUNT - 1 do
-  begin
-    if id = OW_LIST[i].id then
-    begin
-      PrintMessage(PChar(OW_LIST[i].device));
-      Exit;
-    end;
-  end;
-  s := strings[S_nodev]; { "Unknown device" }
-  PrintMessage(PChar(s));
-end;
-
-{ ============================================================
-  ReadI2C - I2C 메모리 읽기
-  dim  = 크기(바이트)
-  addr [3:0]  = 0: 1바이트 주소, 1: 2바이트 주소
-       [7:4]  = A2:A0 값
-       [11:8] = 17번째 주소 비트 위치(컨트롤 바이트에 추가)
-  ============================================================ }
 procedure ReadI2C(dim: Integer; addr: Integer);
 var
-  k, z, i, j, inc_: Integer;
-  AX, addr17: Integer;
-  start_, stop_: LongWord;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
+  AX: Integer;
+  addr17: Integer;
+  start: Cardinal;
+  inc: Integer;
+  inc: Telse;
+  stop: Cardinal;
   sum: Integer;
 begin
   k := 0;
   z := 0;
-  AX     := (addr shr 4) and 7;
-  addr17 := (addr shr 8) and $F;
-  addr   := addr and 1;
-
-  if (dim > $30000) or (dim < 0) then
+  AX := (addr shr 4)&7;
+  addr17 := (addr shr 8)&0xF;
+  addr := addr and 1;
+  if dim>0x30000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]); { "EEPROM size out of limits" }
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'ReadI2C(%d,%d)    (0x%X,0x%X)'#10, [dim, addr, dim, addr]);
-  end;
-
-  sizeEE := dim;
-  if memEE <> nil then FreeMem(memEE);
-  memEE := GetMem(dim);
-
-  start_ := GetTickCount();
-  hvreg  := 0;
-
+  if memEE then
+   FreeMem(memEE);
+  memEE := malloc(dim);
+  start := GetTickCount();
+  hvreg := 0;
   j := 0;
-  bufferU[j] := VREG_DIS;    Inc(j);
-  bufferU[j] := I2C_INIT;    Inc(j);
-  bufferU[j] := AX;          Inc(j);  { 100k }
-  bufferU[j] := EN_VPP_VCC;  Inc(j);  { VDD }
-  bufferU[j] := $1;          Inc(j);
-  bufferU[j] := FLUSH;       Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := I2C_INIT;
+  bufferU[Inc(j)] := AX;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
-  { ---- 읽기 ---- }
   PrintMessage(strings[S_ReadEE]);
   PrintStatusSetup();
-
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    { 64KB 경계 넘지 않도록 처리 }
-    if (i < $10000) and (i > $10000 - (DIMBUF - 4)) then
-      inc_ := $10000 - i
-    else if i < dim - (DIMBUF - 4) then
-      inc_ := DIMBUF - 4
-    else
-      inc_ := dim - i;
-
-    j := 0;
-    if addr = 0 then
+   if i<0x10000 and i>0x10000-(DIMBUF-4) then
+    inc := 0x10000-i;
+   inc := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   if  not addr then
+   begin
+    bufferU[Inc(j)] := I2C_READ;
+    bufferU[Inc(j)] := inc;
+    bufferU[Inc(j)] := 0xA0+((i shr 7)&0x0E);
+    bufferU[Inc(j)] := i&0xFF;
+   end
+   else
+   begin
+    bufferU[Inc(j)] := I2C_READ2;
+    bufferU[Inc(j)] := inc;
+    bufferU[Inc(j)] := IfThen(0xA0+(i>0xFFFF, addr17, 0));
+    bufferU[Inc(j)] := (i shr 8)&0xFF;
+    bufferU[Inc(j)] := i&0xFF;
+   end;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(8);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =I2C_READ and bufferI[j] not =I2C_READ2) - 1 do
+   begin
+   end;
+   if j<DIMBUF-1 and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1] and z<DIMBUF) - 1 do
     begin
-      { 1바이트 주소 }
-      bufferU[j] := I2C_READ;               Inc(j);
-      bufferU[j] := inc_;                   Inc(j);
-      bufferU[j] := $A0 + ((i shr 7) and $0E); Inc(j);
-      bufferU[j] := i and $FF;              Inc(j);
-    end
-    else
-    begin
-      { 2바이트 주소 }
-      bufferU[j] := I2C_READ2; Inc(j);
-      bufferU[j] := inc_;      Inc(j);
-      if i > $FFFF then
-        bufferU[j] := $A0 + addr17   { 17번째 비트(64K 초과 시) }
-      else
-        bufferU[j] := $A0;
-      Inc(j);
-      bufferU[j] := (i shr 8) and $FF; Inc(j);
-      bufferU[j] := i and $FF;         Inc(j);
     end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(8);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> I2C_READ) and (bufferI[j] <> I2C_READ2) do
-      Inc(j);
-    if (j < DIMBUF - 1) and (bufferI[j + 1] < $FA) then
-    begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        memEE[k] := bufferI[z];
-        Inc(k); Inc(z);
-      end;
-    end;
-
-    PrintStatus(strings[S_CodeReading2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    Inc(i, inc_);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   i := i + inc;
   end;
-
-  PrintStatusEnd();
-
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
-    sizeEE := k;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
+   sizeEE := k;
   end
   else
-    PrintMessage(strings[S_Compl]);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j);
-  bufferU[j] := $0;         Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+   PrintMessage(strings[S_Compl]);
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
   DisplayEE();
-
   sum := 0;
-  for i := 0 to sizeEE - 1 do
-    Inc(sum, memEE[i]);
-  PrintMessage1('Checksum: 0x%X'#13#10, sum and $FFFF);
-
-  sprintf(str, strings[S_End], [(stop_ - start_) / 1000.0]);
-  PrintMessage(str);
-
-  if saveLog <> 0 then
+  for i := 0 to (sizeEE) - 1 do
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+  end;
+  PrintMessage1('Checksum: 0x%X\r' + LineEnding + '', sum&0xFFFF);
+  sprintf(str, strings[S_End], (stop-start)/1000.0);
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  WriteI2C - I2C 메모리 쓰기
-  dim  = 크기(바이트)
-  addr = ReadI2C와 동일한 형식
-  page = 페이지 크기
-  ============================================================ }
 procedure WriteI2C(dim: Integer; addr: Integer; page: Integer);
 var
-  k, z, i, j, inc_: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
   err: Integer;
-  AX, addr17: Integer;
-  start_, stop_: LongWord;
+  AX: Integer;
+  addr17: Integer;
   ack: Integer;
+  ack: Telse;
+  inc: Integer;
+  inc: Telse;
+  stop: Cardinal;
 begin
-  k := 0; z := 0; err := 0;
-  AX     := (addr shr 4) and 7;
-  addr17 := (addr shr 8) and $F;
-  addr   := addr and 1;
-  hvreg  := 0;
-
-  if (dim > $30000) or (dim < 0) then
+  k := 0;
+  z := 0;
+  err := 0;
+  AX := (addr shr 4)&7;
+  addr17 := (addr shr 8)&0xF;
+  addr := addr and 1;
+  hvreg := 0;
+  if dim>0x30000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'WriteI2C(%d,%d,%d)    (0x%X,0x%X)'#10,
-            [dim, addr, page, dim, addr]);
-  end;
-
-  if dim > sizeEE then
-  begin
-    i := sizeEE;
-    ReallocMem(memEE, dim);
-    while i < dim do begin memEE[i] := $FF; Inc(i); end;
-    sizeEE := dim;
-  end;
-
-  if dim < 1 then
-  begin
-    PrintMessage(strings[S_NoCode]);
-    Exit;
-  end;
-
-  start_ := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;   Inc(j);
-  bufferU[j] := I2C_INIT;   Inc(j);
-  bufferU[j] := AX;         Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j);
-  bufferU[j] := $1;         Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := I2C_INIT;
+  bufferU[Inc(j)] := AX;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
-  { ---- 쓰기 ---- }
   PrintMessage(strings[S_EEAreaW]);
   PrintStatusSetup();
-
-  while page >= DIMBUF - 6 do page := page shr 1;
-
-  i := 0;
-  while i < dim do
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;page>=DIMBUF-6;page>>=1) *)
+  // init: 
+  while page>=DIMBUF-6 do
   begin
-    j := 0;
-    bufferU[j] := I2C_WRITE; Inc(j);
-    if addr = 0 then
-    begin
-      bufferU[j] := page;                        Inc(j);
-      bufferU[j] := $A0 + ((i shr 7) and $0E);  Inc(j);
-      bufferU[j] := i and $FF;                   Inc(j);
-    end
-    else
-    begin
-      bufferU[j] := page + 1; Inc(j);
-      if i > $FFFF then bufferU[j] := $A0 + addr17
-      else              bufferU[j] := $A0;
-      Inc(j);
-      bufferU[j] := (i shr 8) and $FF; Inc(j);
-      bufferU[j] := i and $FF;         Inc(j);
-    end;
-
-    for k := 0 to page - 1 do
-    begin
-      bufferU[j] := memEE[i + k]; Inc(j);
-    end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(3);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> I2C_WRITE) do Inc(j);
-    if (bufferI[j] <> I2C_WRITE) or (bufferI[j + 1] >= $FA) then
-      i := dim + 10;
-
-    PrintStatus(strings[S_CodeWriting2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    { ACK 폴링 }
-    j := 0;
-    bufferU[j] := I2C_WRITE; Inc(j);
-    bufferU[j] := 0;         Inc(j);
-    bufferU[j] := $A0;       Inc(j);
-    bufferU[j] := 0;         Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-    ack := $FD;
-    j   := 0;
-    while (ack = $FD) and (j < 20) do
-    begin
-      PacketIO(2);
-      k := 0;
-      while (k < DIMBUF - 1) and (bufferI[k] <> I2C_WRITE) do Inc(k);
-      if (bufferI[k] <> I2C_WRITE) or (bufferI[k + 1] >= $FA) then
-        ack := $FD
-      else
-        ack := bufferI[k + 1];
-      Inc(j);
-    end;
-    j := 0;
-
-    Inc(i, page);
+   (* TODO gtk2laz: unrecognised statement: page>>=1; *)
   end;
-
-  PrintStatusEnd();
+  for i := 0,j=0 to (dim) - 1 do
+  begin
+   bufferU[Inc(j)] := I2C_WRITE;
+   if  not addr then
+   begin
+    bufferU[Inc(j)] := page;
+    bufferU[Inc(j)] := 0xA0+((i shr 7)&0x0E);
+    bufferU[Inc(j)] := i&0xFF;
+   end
+   else
+   begin
+    bufferU[Inc(j)] := page+1;
+    bufferU[Inc(j)] := IfThen(0xA0+(i>0xFFFF, addr17, 0));
+    bufferU[Inc(j)] := (i shr 8)&0xFF;
+    bufferU[Inc(j)] := i&0xFF;
+   end;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(3);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =I2C_WRITE) - 1 do
+   begin
+   end;
+   if bufferI[j] not =I2C_WRITE or bufferI[j+1]>=0xFA then
+    i := dim+10;
+   PrintStatus(strings[S_CodeWriting2], i*100/(dim), i);
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := $A0;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   ack := $FD;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(j=0;ack==0xFD&&j<20;j++){	 			PacketIO(2); 			for(j=0;j<DIMBUF-1&&bufferI[j]!=I2C_WRITE;j++); 			if(bufferI[j]!=I2C_WRITE||bufferI[j+1]>=0xFA) ack=0xFD; 			else ack=bufferI[j+1]; 		} 		j=0 *)
+   // init: j=0
+   while ack = 0xFD and j<20 do
+   begin
+    PacketIO(2);
+    for j := 0 to (DIMBUF-1 and bufferI[j] not =I2C_WRITE) - 1 do
+    begin
+    end;
+    if bufferI[j] not =I2C_WRITE or bufferI[j+1]>=0xFA then
+     ack := $FD;
+    ack := bufferI[j+1];
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   i := i + page;
+  end;
   PrintMessage(strings[S_Compl]);
-
-  { ---- 검증 ---- }
   PrintMessage(strings[S_EEV]);
   PrintStatusSetup();
   k := 0;
-
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    if (i < $10000) and (i > $10000 - (DIMBUF - 4)) then
-      inc_ := $10000 - i
-    else if i < dim - (DIMBUF - 4) then
-      inc_ := DIMBUF - 4
-    else
-      inc_ := dim - i;
-
-    j := 0;
-    if addr = 0 then
+   if i<0x10000 and i>0x10000-(DIMBUF-4) then
+    inc := 0x10000-i;
+   inc := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   if  not addr then
+   begin
+    bufferU[Inc(j)] := I2C_READ;
+    bufferU[Inc(j)] := inc;
+    bufferU[Inc(j)] := 0xA0+((i shr 7)&0x0E);
+    bufferU[Inc(j)] := i&0xFF;
+   end
+   else
+   begin
+    bufferU[Inc(j)] := I2C_READ2;
+    bufferU[Inc(j)] := inc;
+    bufferU[Inc(j)] := IfThen(0xA0+(i>0xFFFF, addr17, 0));
+    bufferU[Inc(j)] := (i shr 8)&0xFF;
+    bufferU[Inc(j)] := i&0xFF;
+   end;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(8);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =I2C_READ and bufferI[j] not =I2C_READ2) - 1 do
+   begin
+   end;
+   if (bufferI[j] = I2C_READ or bufferI[j] = I2C_READ2) and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to ((j+2+bufferI[j+1]) and z<DIMBUF) - 1 do
     begin
-      bufferU[j] := I2C_READ;                    Inc(j);
-      bufferU[j] := inc_;                        Inc(j);
-      bufferU[j] := $A0 + ((i shr 7) and $0E);  Inc(j);
-      bufferU[j] := i and $FF;                   Inc(j);
-    end
-    else
-    begin
-      bufferU[j] := I2C_READ2; Inc(j);
-      bufferU[j] := inc_;      Inc(j);
-      if i > $FFFF then bufferU[j] := $A0 + addr17
-      else              bufferU[j] := $A0;
-      Inc(j);
-      bufferU[j] := (i shr 8) and $FF; Inc(j);
-      bufferU[j] := i and $FF;         Inc(j);
+     if memEE[Inc(k)] not =bufferI[z] then
+     begin
+      PrintMessage('\r' + LineEnding + '');
+      PrintMessage4(strings[S_CodeVError], i+z-3, i+z-3, memEE[k-1], bufferI[z]);
+      (* TODO gtk2laz: unrecognised statement: err++ *)
+     end;
     end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(8);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> I2C_READ) and (bufferI[j] <> I2C_READ2) do
-      Inc(j);
-    if ((bufferI[j] = I2C_READ) or (bufferI[j] = I2C_READ2)) and (bufferI[j + 1] < $FA) then
-    begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        if memEE[k] <> bufferI[z] then
-        begin
-          PrintMessage(#13#10);
-          PrintMessage4(strings[S_CodeVError],
-                        i + z - 3, i + z - 3, memEE[k], bufferI[z]);
-          Inc(err);
-        end;
-        Inc(k); Inc(z);
-      end;
-    end;
-
-    PrintStatus(strings[S_CodeV2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log8], [i, i, k, k, err]);
-
-    if err >= max_err then Break;
-    Inc(i, inc_);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
+   end;
+   i := i + inc;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
   end;
-  PrintMessage1(strings[S_ComplErr], err);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j);
-  bufferU[j] := $0;         Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
-  sprintf(str, strings[S_EndErr],
-          [(stop_ - start_) / 1000.0, err,
-           IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing])]);
+  sprintf(str, strings[S_EndErr], (stop-start)/1000.0, err, IfThen(err not =1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Read93x - 93Sx6 마이크로와이어 메모리 읽기
-  dim     = 크기(바이트)
-  na      = 주소 비트 수
-  options = 0: x16 구성, 1: x8 구성
-  ============================================================ }
 procedure Read93x(dim: Integer; na: Integer; options: Integer);
 var
-  k, z, i, j, x8: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
+  x8: Integer;
+  start: Cardinal;
   dim2: Integer;
-  start_, stop_: LongWord;
+  stop: Cardinal;
   sum: Integer;
 begin
-  k := 0; z := 0;
+  k := 0;
+  z := 0;
   hvreg := 0;
-
-  if (dim > $3000) or (dim < 0) then
+  if dim>0x3000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-  if na > 13 then na := 13;
-
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    OpenLogFile();
-    fprintf(logfile, 'Read93x(%d,%d,%d)    (0x%X,0x%X)'#10,
-            [dim, na, options, dim, na]);
+   OpenLogFile();
+   fprintf(logfile, 'Read93x(%d,%d,%d)    (0x%X,0x%X)' + LineEnding + '', dim, na, options, dim, na);
   end;
-
-  x8 := options and 1;
   sizeEE := dim;
-  if memEE <> nil then FreeMem(memEE);
-  memEE := GetMem(dim);
-
-  start_ := GetTickCount();
+  if memEE then
+   FreeMem(memEE);
+  memEE := malloc(dim);
+  start := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := uW_INIT;   Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j);
-  bufferU[j] := $1;        Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);
-  if x8 <> 0 then bufferU[j] := S
-  else             bufferU[j] := S + ORG;
-  Inc(j);
-  bufferU[j] := 0;   Inc(j);
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := uW_INIT;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(x8, S, S+ORG);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
-  { ---- 읽기 ---- }
   PrintMessage(strings[S_ReadEE]);
   PrintStatusSetup();
-
-  if x8 <> 0 then dim2 := dim
-  else             dim2 := dim div 2;
-
-  i := 0;
-  while i < dim2 do
+  dim2 := IfThen(x8, dim, dim/2);
+  (* TODO gtk2laz: complex for loop: for(i=0;i<dim2;){ 		for(j=0;j<DIMBUF-14&&i<dim2;){ 			bufferU[j++]=uWTX; 			bufferU[j++]=na+3;				 			bufferU[j++]=0xC0+((i>>(na-5))&0x1F);				 			bufferU[j++]=(i<<(13-na))&0xFF; 			bufferU[j++]=uWRX; *)
+  if k not =dim then
   begin
-    j := 0;
-    while (j < DIMBUF - 14) and (i < dim2) do
-    begin
-      bufferU[j] := uWTX;            Inc(j);
-      bufferU[j] := na + 3;          Inc(j);  { READ }
-      bufferU[j] := $C0 + ((i shr (na - 5)) and $1F); Inc(j); { 110aaaaa aaax0000 }
-      bufferU[j] := (i shl (13 - na)) and $FF;        Inc(j);
-      bufferU[j] := uWRX;            Inc(j);
-      if x8 <> 0 then bufferU[j] := 8
-      else             bufferU[j] := 16;
-      Inc(j);
-      bufferU[j] := EXT_PORT;        Inc(j);
-      if x8 <> 0 then bufferU[j] := 0
-      else             bufferU[j] := ORG;
-      Inc(j);
-      bufferU[j] := 0; Inc(j);
-      bufferU[j] := EXT_PORT; Inc(j);
-      if x8 <> 0 then bufferU[j] := S
-      else             bufferU[j] := S + ORG;
-      Inc(j);
-      bufferU[j] := 0; Inc(j);
-      Inc(i);
-    end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-
-    z := 0;
-    while z < DIMBUF - 3 do
-    begin
-      while (bufferI[z] <> uWRX) and (z < DIMBUF - 3) do Inc(z);
-      if bufferI[z] = uWRX then
-      begin
-        if x8 <> 0 then
-        begin
-          memEE[k] := bufferI[z + 2];
-          Inc(k);
-        end
-        else
-        begin
-          memEE[k + 1] := bufferI[z + 2];
-          memEE[k]     := bufferI[z + 3];
-          Inc(k, 2);
-        end;
-        Inc(z, 3);
-      end;
-    end;
-
-    PrintStatus(strings[S_CodeReading2], i * 100 div dim2, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-  end;
-
-  PrintStatusEnd();
-  if k <> dim then
-  begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
-    sizeEE := k;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
+   sizeEE := k;
   end
   else
-    PrintMessage(strings[S_Compl]);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EXT_PORT;  Inc(j);
-  bufferU[j] := 0;         Inc(j);
-  bufferU[j] := 0;         Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j);
-  bufferU[j] := $0;        Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+   PrintMessage(strings[S_Compl]);
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
   DisplayEE();
-
   sum := 0;
-  for i := 0 to sizeEE - 1 do Inc(sum, memEE[i]);
-  PrintMessage1('Checksum: 0x%X'#13#10, sum and $FFFF);
-  sprintf(str, strings[S_End], [(stop_ - start_) / 1000.0]);
-  PrintMessage(str);
-  if saveLog <> 0 then
+  for i := 0 to (sizeEE) - 1 do
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+  end;
+  PrintMessage1('Checksum: 0x%X\r' + LineEnding + '', sum&0xFFFF);
+  sprintf(str, strings[S_End], (stop-start)/1000.0);
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Write93Sx - 93Sx6 마이크로와이어 메모리 쓰기 (자동 지연)
-  dim  = 크기(바이트)
-  na   = 주소 비트 수
-  page = 페이지 크기(바이트)
-  ============================================================ }
 procedure Write93Sx(dim: Integer; na: Integer; page: Integer);
 var
-  k, z, i, j: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
   err: Integer;
   addr: Integer;
   n: Integer;
-  start_, stop_: LongWord;
-  dim2: Integer;
+  stop: Cardinal;
 begin
-  k := 0; z := 0; err := 0;
+  k := 0;
+  z := 0;
+  err := 0;
   hvreg := 0;
-
-  if (dim > $1000) or (dim < 0) then
+  if dim>0x1000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-  if na > 13 then na := 13;
-  if page > 48 then page := 48;
-
-  if saveLog <> 0 then
+  if page>48 then
+   page := 48;
+  if saveLog then
   begin
-    OpenLogFile();
-    fprintf(logfile, 'Write93Sx(%d,%d,%d)    (0x%X,0x%X)'#10,
-            [dim, na, page, dim, na]);
+   OpenLogFile();
+   fprintf(logfile, 'Write93Sx(%d,%d,%d)    (0x%X,0x%X)' + LineEnding + '', dim, na, page, dim, na);
   end;
-
-  if dim > sizeEE then
-  begin
-    i := sizeEE;
-    ReallocMem(memEE, dim);
-    while i < dim do begin memEE[i] := $FF; Inc(i); end;
-    sizeEE := dim;
-  end;
-
-  if dim < 1 then
-  begin
-    PrintMessage(strings[S_NoCode]);
-    Exit;
-  end;
-
-  start_ := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := 0; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := uW_INIT;   Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := S + W_; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;      Inc(j);  bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $98;        Inc(j);  bufferU[j] := 0; Inc(j);   { EWEN }
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := W_; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := S + W_ + PRE; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;      Inc(j);  bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $98;        Inc(j);  bufferU[j] := 0; Inc(j);   { Prot.reg.enable }
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := W_ + PRE; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := S + W_ + PRE; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;      Inc(j);  bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $FF;        Inc(j);  bufferU[j] := $F0; Inc(j);  { Prot.reg.clear }
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := W_ + PRE; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := S + W_; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;      Inc(j);  bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $98;        Inc(j);  bufferU[j] := 0; Inc(j);   { EWEN }
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := W_; Inc(j);  bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := S + W_ + PRE; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;      Inc(j);  bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $C0;        Inc(j);  bufferU[j] := 0; Inc(j);   { Prot.reg.read }
-  bufferU[j] := uWRX;      Inc(j);  bufferU[j] := 10; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := W_ + PRE; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uW_INIT;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := S+W;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $98;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := W;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := S+W+PRE;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $98;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := W+PRE;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := S+W+PRE;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $FF;
+  bufferU[Inc(j)] := $F0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := W+PRE;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := S+W;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $98;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := W;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := S+W+PRE;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $C0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWRX;
+  bufferU[Inc(j)] := 10;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := W+PRE;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
-  { ---- 쓰기 ---- }
   PrintMessage(strings[S_EEAreaW]);
   PrintStatusSetup();
   addr := 0;
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    j := 0;
-    bufferU[j] := EXT_PORT; Inc(j);
-    bufferU[j] := W_;       Inc(j);  { S=0 으로 시작 }
-    bufferU[j] := 0;        Inc(j);
-    bufferU[j] := EXT_PORT; Inc(j);
-    bufferU[j] := S + W_;  Inc(j);
-    bufferU[j] := 0;        Inc(j);
-    bufferU[j] := uWTX;     Inc(j);
-    bufferU[j] := 3;        Inc(j);
-    bufferU[j] := $E0;      Inc(j);  { 111aaaaa aaa(a) D 페이지 쓰기 }
-    bufferU[j] := uWTX;     Inc(j);
-    bufferU[j] := na;       Inc(j);
-    bufferU[j] := addr shr 8; Inc(j);
-    if na > 8 then
-    begin
-      bufferU[j] := addr and $FF; Inc(j);
-    end;
-    bufferU[j] := uWTX;       Inc(j);
-    bufferU[j] := 8 * page;   Inc(j);
-    k := 0;
-    while k < page do
-    begin
-      bufferU[j] := memEE[i + k + 1]; Inc(j);
-      bufferU[j] := memEE[i + k];     Inc(j);
-      Inc(k, 2);
-    end;
-    bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := W_;      Inc(j);  bufferU[j] := 0; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j);  bufferU[j] := S + W_;  Inc(j);  bufferU[j] := 0; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := W;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := S+W;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := uWTX;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := $E0;
+   bufferU[Inc(j)] := uWTX;
+   bufferU[Inc(j)] := na;
+   bufferU[Inc(j)] := addr shr 8;
+   if na>8 then
+    bufferU[Inc(j)] := addr&0xFF;
+   bufferU[Inc(j)] := uWTX;
+   bufferU[Inc(j)] := 8*page;
+   for k := 0 to (page) - 1 do
+   begin
+    bufferU[Inc(j)] := memEE[i+k+1];
+    bufferU[Inc(j)] := memEE[i+k];
+    k := k + 2;
+   end;
+   bufferU[Inc(j)] := W;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := S+W;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(2);
+   j := 0;
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =uWTX) - 1 do
+   begin
+   end;
+   if bufferI[j] not =uWTX or bufferI[j+1]>=0xFA then
+    i := dim+10;
+   bufferU[Inc(j)] := uWRX;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   for z := 0,k=0 to (30 and  not k) - 1 do
+   begin
     PacketIO(2);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> uWTX) do Inc(j);
-    if (bufferI[j] <> uWTX) or (bufferI[j + 1] >= $FA) then i := dim + 10;
-
-    { 준비 완료 대기 }
-    bufferU[j] := uWRX;  Inc(j);
-    bufferU[j] := 1;     Inc(j);
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-    z := 0; k := 0;
-    while (z < 30) and (k = 0) do
+    for j := 0 to (DIMBUF-1 and bufferI[j] not =uWRX) - 1 do
     begin
-      PacketIO(2);
-      j := 0;
-      while (j < DIMBUF - 1) and (bufferI[j] <> uWRX) do Inc(j);
-      if bufferI[j] = uWRX then k := bufferI[j + 2];
-      Inc(z);
     end;
-
-    j := 0;
-    PrintStatus(strings[S_CodeWriting2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    Inc(i, page);
-    Inc(addr, ($10000 shr na) * page div 2);
+    if bufferI[j] = uWRX then
+     k := bufferI[j+2];
+   end;
+   PrintStatus(strings[S_CodeWriting2], i*100/(dim), i);
+   if RWstop then
+    i := dim;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   i := i + page,addr+=(0x10000 shr na)*page/2;
   end;
-
-  PrintStatusEnd();
   PrintMessage(strings[S_Compl]);
-
-  { ---- 검증 ---- }
   PrintMessage(strings[S_EEV]);
   PrintStatusSetup();
   j := 0;
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := S; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;     Inc(j); bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $C0;       Inc(j); bufferU[j] := 0; Inc(j);  { READ 16bit }
-  bufferU[j] := FLUSH;    Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := S;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $C0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
   k := 0;
-  n := DIMBUF - 2;
-  if n > 30 then n := 30;  { 최대 240비트 = 30바이트 }
-  dim2 := dim;
-
-  i := 0;
-  while i < dim2 do
+  n := (DIMBUF-2);
+  if n>30 then
+   n := 30;
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    j := 0;
-    if i < dim2 - n then bufferU[j] := n * 8
-    else                 bufferU[j] := (dim2 - i) * 8;
-    { Note: C 원본에서 버퍼 앞에 uWRX 명령을 먼저 넣음 }
-    bufferU[0] := uWRX;
-    bufferU[1] := bufferU[j];
-    j := 2;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-
-    j := 0;
-    while (bufferI[j] <> uWRX) and (j < DIMBUF - 1) do Inc(j);
-    if bufferI[j] = uWRX then
+   bufferU[Inc(j)] := uWRX;
+   bufferU[Inc(j)] := IfThen(i<(dim-n), n*8, (dim-i)*8);
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(2);
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(j=0;bufferI[j]!=uWRX&&j<DIMBUF-1;j++) *)
+   // init: j=0
+   while bufferI[j] not =uWRX and j<DIMBUF-1 do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   if bufferI[j] = uWRX then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1]/8 and z<DIMBUF) - 1 do
     begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1] div 8) and (z < DIMBUF) do
-      begin
-        if memEE[k + 1] <> bufferI[z] then
-        begin
-          PrintMessage(#13#10);
-          PrintMessage4(strings[S_CodeVError], i + z - 3, i + z - 3, memEE[k + 1], bufferI[z]);
-          Inc(err);
-        end;
-        if memEE[k] <> bufferI[z + 1] then
-        begin
-          PrintMessage(#13#10);
-          PrintMessage4(strings[S_CodeVError], i + z - 3, i + z - 3, memEE[k], bufferI[z + 1]);
-          Inc(err);
-        end;
-        Inc(z, 2); Inc(k, 2);
-      end;
+     if memEE[k+1] not =bufferI[z] then
+     begin
+      PrintMessage('\r' + LineEnding + '');
+      PrintMessage4(strings[S_CodeVError], i+z-3, i+z-3, memEE[k+1], bufferI[z]);
+      (* TODO gtk2laz: unrecognised statement: err++ *)
+     end;
+     z := z + 2,k+=2;
     end;
-
-    PrintStatus(strings[S_CodeV2], i * 100 div dim2, i);
-    if RWstop <> 0 then i := dim2;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log8], [i, i, k, k, err]);
-
-    if err >= max_err then Break;
-    Inc(i, n);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
+   end;
+   i := i + n;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
   end;
-  PrintMessage1(strings[S_ComplErr], err);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
-  sprintf(str, strings[S_EndErr],
-          [(stop_ - start_) / 1000.0, err,
-           IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing])]);
+  sprintf(str, strings[S_EndErr], (stop-start)/1000.0, err, IfThen(err not =1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Write93Cx - 93Cx6 마이크로와이어 메모리 쓰기
-  dim     = 크기(바이트)
-  na      = 주소 비트 수
-  options = 0: x16 구성, 1: x8 구성
-  ============================================================ }
 procedure Write93Cx(dim: Integer; na: Integer; options: Integer);
 var
-  k, z, i, j: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
   err: Integer;
   addr: Integer;
-  start_, stop_: LongWord;
   dim2: Integer;
-  org_bit, s_org_bit: Byte;
+  stop: Cardinal;
 begin
-  k := 0; z := 0; err := 0;
+  k := 0;
+  z := 0;
+  err := 0;
   hvreg := 0;
-
-  if (dim > $1000) or (dim < 0) then
+  if dim>0x1000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-  if na > 13 then na := 13;
-
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    OpenLogFile();
-    fprintf(logfile, 'Write93Cx(%d,%d,%d)    (0x%X,0x%X)'#10,
-            [dim, na, options, dim, na]);
+   OpenLogFile();
+   fprintf(logfile, 'Write93Cx(%d,%d,%d)    (0x%X,0x%X)' + LineEnding + '', dim, na, options, dim, na);
   end;
-
-  if dim > sizeEE then
-  begin
-    i := sizeEE;
-    ReallocMem(memEE, dim);
-    while i < dim do begin memEE[i] := $FF; Inc(i); end;
-    sizeEE := dim;
-  end;
-  if dim < 1 then
-  begin
-    PrintMessage(strings[S_NoCode]);
-    Exit;
-  end;
-
-  { x16이면 ORG 비트 포함, x8이면 미포함 }
-  if options = 0 then begin org_bit := ORG + PRE;   s_org_bit := S + ORG + PRE; end
-  else                begin org_bit := PRE;          s_org_bit := S + PRE;       end;
-
-  start_ := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;   Inc(j);
-  bufferU[j] := EXT_PORT;   Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uW_INIT;    Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;    Inc(j);
-  { EWEN }
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := s_org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;     Inc(j); bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $98;       Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-  { ERAL }
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := s_org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWTX;     Inc(j); bufferU[j] := na + 3; Inc(j);
-  bufferU[j] := $90;       Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := s_org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := uWRX;     Inc(j); bufferU[j] := 1; Inc(j);
-  bufferU[j] := FLUSH;    Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uW_INIT;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, S+ORG+PRE, S+PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $98;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, ORG+PRE, PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, S+ORG+PRE, S+PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWTX;
+  bufferU[Inc(j)] := na+3;
+  bufferU[Inc(j)] := $90;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, ORG+PRE, PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, S+ORG+PRE, S+PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := uWRX;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
   j := 0;
-  bufferU[j] := uWRX;  Inc(j); bufferU[j] := 1; Inc(j);
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-  i := 0; k := 0;
-  while (i < 30) and (k = 0) do
+  bufferU[Inc(j)] := uWRX;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
   begin
-    PacketIO(2);
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> uWRX) do Inc(j);
-    if bufferI[j] = uWRX then k := bufferI[j + 2];
-    Inc(i);
+   (* TODO gtk2laz: unrecognised statement: j++; *)
   end;
-
-  { ---- 쓰기 ---- }
-  PrintMessage(strings[S_EEAreaW]);
+  for i := 0,k=0 to (30 and  not k) - 1 do
+  begin
+   PacketIO(2);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =uWRX) - 1 do
+   begin
+   end;
+   if bufferI[j] = uWRX then
+    k := bufferI[j+2];
+  end;
   PrintStatusSetup();
   addr := 0;
-  j    := 0;
-
-  if options = 0 then i := 0
-  else                i := 0;
-
-  while i < dim do
+  j := 0;
+  for i := 0 to (dim) - 1 do
   begin
-    if (memEE[i] < $FF) or ((options = 0) and (memEE[i + 1] < $FF)) then
+   if memEE[i]<0xFF or (options = 0 and memEE[i+1]<0xFF) then
+   begin
+    bufferU[Inc(j)] := EXT_PORT;
+    bufferU[Inc(j)] := IfThen(options = 0, ORG+PRE, PRE);
+    bufferU[Inc(j)] := 0;
+    bufferU[Inc(j)] := EXT_PORT;
+    bufferU[Inc(j)] := IfThen(options = 0, S+ORG+PRE, S+PRE);
+    bufferU[Inc(j)] := 0;
+    bufferU[Inc(j)] := uWTX;
+    bufferU[Inc(j)] := 3;
+    bufferU[Inc(j)] := $A0;
+    bufferU[Inc(j)] := uWTX;
+    bufferU[Inc(j)] := na;
+    bufferU[Inc(j)] := addr shr 8;
+    if na>8 then
+     bufferU[Inc(j)] := addr&0xFF;
+    bufferU[Inc(j)] := uWTX;
+    if options = 0 then
     begin
-      bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-      bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := s_org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-      bufferU[j] := uWTX;     Inc(j); bufferU[j] := 3; Inc(j);
-      bufferU[j] := $A0;       Inc(j);  { 101aaaaa 쓰기 }
-      bufferU[j] := uWTX;     Inc(j); bufferU[j] := na; Inc(j);
-      bufferU[j] := addr shr 8; Inc(j);
-      if na > 8 then begin bufferU[j] := addr and $FF; Inc(j); end;
-      bufferU[j] := uWTX; Inc(j);
-      if options = 0 then
-      begin  { x16 }
-        bufferU[j] := 16;         Inc(j);
-        bufferU[j] := memEE[i+1]; Inc(j);
-        bufferU[j] := memEE[i];   Inc(j);
-      end
-      else
-      begin  { x8 }
-        bufferU[j] := 8;       Inc(j);
-        bufferU[j] := memEE[i]; Inc(j);
-      end;
-      bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-      bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := s_org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-      bufferU[j] := uWRX;     Inc(j); bufferU[j] := 1; Inc(j);
-      bufferU[j] := FLUSH;    Inc(j);
-      while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-      PacketIO(2);
-
-      PrintStatus(strings[S_CodeWriting2], i * 100 div dim, i);
-      if RWstop <> 0 then i := dim;
-
-      if saveLog <> 0 then
-        fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-      { 준비 완료 대기 }
-      j := 0;
-      bufferU[j] := uWRX;  Inc(j); bufferU[j] := 1; Inc(j);
-      bufferU[j] := FLUSH; Inc(j);
-      while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-      z := 0; k := 0;
-      while (z < 30) and (k = 0) do
-      begin
-        PacketIO(2);
-        j := 0;
-        while (j < DIMBUF - 1) and (bufferI[j] <> uWRX) do Inc(j);
-        if bufferI[j] = uWRX then k := bufferI[j + 2];
-        Inc(z);
-      end;
-      j := 0;
+     bufferU[Inc(j)] := 16;
+     bufferU[Inc(j)] := memEE[i+1];
+     bufferU[Inc(j)] := memEE[i];
+    end
+    else
+    begin
+     bufferU[Inc(j)] := 8;
+     bufferU[Inc(j)] := memEE[i];
     end;
-
-    if options = 0 then Inc(i, 2)
-    else                Inc(i, 1);
-    Inc(addr, $10000 shr na);
+    bufferU[Inc(j)] := IfThen(options = 0, ORG+PRE, PRE);
+    bufferU[Inc(j)] := 0;
+    bufferU[Inc(j)] := EXT_PORT;
+    bufferU[Inc(j)] := IfThen(options = 0, S+ORG+PRE, S+PRE);
+    bufferU[Inc(j)] := 0;
+    bufferU[Inc(j)] := uWRX;
+    bufferU[Inc(j)] := 1;
+    bufferU[Inc(j)] := FLUSH;
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+    // init: 
+    while j<DIMBUF do
+    begin
+     (* TODO gtk2laz: unrecognised statement: j++; *)
+    end;
+    PacketIO(2);
+    PrintStatus(strings[S_CodeWriting2], i*100/(dim), i);
+    if RWstop then
+     i := dim;
+    j := 0;
+    if saveLog then
+    begin
+     fprintf(logfile, strings[S_Log7], i, i, k, k);
+    end;
+    bufferU[Inc(j)] := 1;
+    bufferU[Inc(j)] := FLUSH;
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+    // init: 
+    while j<DIMBUF do
+    begin
+     (* TODO gtk2laz: unrecognised statement: j++; *)
+    end;
+    for z := 0,k=0 to (30 and  not k) - 1 do
+    begin
+     PacketIO(2);
+     for j := 0 to (DIMBUF-1 and bufferI[j] not =uWRX) - 1 do
+     begin
+     end;
+     if bufferI[j] = uWRX then
+      k := bufferI[j+2];
+    end;
+   end;
+   i := i + IfThen(options = 0, 2, 1,addr+=0x10000 shr na);
   end;
-
-  msDelay(2);
   PrintStatusEnd();
-  if i <> dim then
-    PrintMessage2(strings[S_CodeWError4], i, dim)
+  if i not =dim then
+  begin
+   PrintMessage2(strings[S_CodeWError4], i, dim);
+  end
   else
-    PrintMessage(strings[S_Compl]);
-
-  { ---- 검증 ---- }
+   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   PrintStatusSetup();
   j := 0;
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := org_bit;   Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT; Inc(j); bufferU[j] := s_org_bit; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := FLUSH;    Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, ORG+PRE, PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := IfThen(options = 0, S+ORG+PRE, S+PRE);
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
   k := 0;
-  if options = 0 then dim2 := dim div 2
-  else                dim2 := dim;
-
-  i := 0;
-  while i < dim2 do
+  dim2 := IfThen(options = 0, dim/2, dim);
+  (* TODO gtk2laz: complex for loop: for(i=0;i<dim2;){ 		for(j=0;j<DIMBUF-14&&i<dim2;){ 			bufferU[j++]=uWTX; 			bufferU[j++]=na+3;				 			bufferU[j++]=0xC0+((i>>(na-5))&0x1F);				 			bufferU[j++]=(i<<(13-na))&0xFF; 			bufferU[j++]=uWRX; *)
+  if k not =dim then
   begin
-    j := 0;
-    while (j < DIMBUF - 14) and (i < dim2) do
-    begin
-      bufferU[j] := uWTX;   Inc(j); bufferU[j] := na + 3; Inc(j);
-      bufferU[j] := $C0 + ((i shr (na - 5)) and $1F); Inc(j);
-      bufferU[j] := (i shl (13 - na)) and $FF;        Inc(j);
-      bufferU[j] := uWRX;   Inc(j);
-      if options = 0 then bufferU[j] := 16
-      else                bufferU[j] := 8;
-      Inc(j);
-      bufferU[j] := EXT_PORT; Inc(j);
-      if options = 0 then bufferU[j] := ORG
-      else                bufferU[j] := 0;
-      Inc(j);
-      bufferU[j] := 0; Inc(j);
-      bufferU[j] := EXT_PORT; Inc(j);
-      if options = 0 then bufferU[j] := S + ORG
-      else                bufferU[j] := S;
-      Inc(j);
-      bufferU[j] := 0; Inc(j);
-      Inc(i);
-    end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-
-    z := 0;
-    while z < DIMBUF - 3 do
-    begin
-      while (bufferI[z] <> uWRX) and (z < DIMBUF - 3) do Inc(z);
-      if bufferI[z] = uWRX then
-      begin
-        if options = 1 then
-        begin  { x8 }
-          if memEE[k] <> bufferI[z + 2] then
-          begin
-            PrintMessage(#13#10);
-            PrintMessage4(strings[S_CodeVError], k, k, memEE[k], bufferI[z + 2]);
-            Inc(err);
-          end;
-          Inc(k);
-        end
-        else
-        begin  { x16 }
-          if memEE[k] <> bufferI[z + 3] then
-          begin
-            PrintMessage(#13#10);
-            PrintMessage4(strings[S_CodeVError], k, k, memEE[k], bufferI[z + 3]);
-            Inc(err);
-          end;
-          if memEE[k + 1] <> bufferI[z + 2] then
-          begin
-            PrintMessage(#13#10);
-            PrintMessage4(strings[S_CodeVError], k + 1, k + 1, memEE[k + 1], bufferI[z + 2]);
-            Inc(err);
-          end;
-          Inc(k, 2);
-        end;
-        Inc(z, 3);
-      end;
-    end;
-
-    PrintStatus(strings[S_CodeV2], i * 100 div dim2, i);
-    if RWstop <> 0 then i := dim2;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log8], [i, i, k, k, err]);
-
-    if err >= max_err then Break;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
+   (* TODO gtk2laz: unrecognised statement: j++; *)
   end;
-  PrintMessage1(strings[S_ComplErr], err);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
-  sprintf(str, strings[S_EndErr],
-          [(stop_ - start_) / 1000.0, err,
-           IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing])]);
+  sprintf(str, strings[S_EndErr], (stop-start)/1000.0, err, IfThen(err not =1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Read25xx - 25xx SPI 메모리 읽기
-  dim = 크기(바이트)
-  ============================================================ }
 procedure Read25xx(dim: Integer);
 var
-  k, z, i, j: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
   ID: Integer;
-  start_, stop_: LongWord;
+  start: Cardinal;
+  stop: Cardinal;
   sum: Integer;
 begin
-  k := 0; z := 0;
+  k := 0;
+  z := 0;
   hvreg := 0;
-
-  if (dim > $1000000) or (dim < 0) then
+  if dim>0x1000000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'Read25xx(%d)    (0x%X)'#10, [dim, dim]);
-  end;
-
-  sizeEE := dim;
-  if memEE <> nil then FreeMem(memEE);
-  memEE := GetMem(dim);
-
-  start_ := GetTickCount();
+  if memEE then
+   FreeMem(memEE);
+  memEE := malloc(dim);
+  start := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := SPI_INIT;  Inc(j);
-  bufferU[j] := 3;         Inc(j);  { 0=100k, 1=200k, 2=300k, 3=500k }
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := 0; Inc(j); { CS=1,HLD=1,WP=0 }
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := 0; Inc(j); { CS=0 }
-  bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := $9F; Inc(j); { READ ID }
-  bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 3; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := SPI_WRITE; Inc(j);
-  if dim > $10000 then
-  begin  { 24비트 주소 }
-    bufferU[j] := 4; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := SPI_INIT;
+  bufferU[Inc(j)] := 3;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := SPI_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := $9F;
+  bufferU[Inc(j)] := SPI_READ;
+  bufferU[Inc(j)] := 3;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := SPI_WRITE;
+  if dim>0x10000 then
+  begin
+   bufferU[Inc(j)] := 4;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
   end
-  else if dim > $200 then
-  begin  { 16비트 주소 }
-    bufferU[j] := 3; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
+  else if dim>0x200 then
+  begin
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
   end
   else
-  begin  { 8비트 주소 }
-    bufferU[j] := 2; Inc(j); bufferU[j] := 3; Inc(j); bufferU[j] := 0; Inc(j);
+  begin
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 0;
   end;
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
-  z := 0;
-  while (z < DIMBUF - 4) and (bufferI[z] <> SPI_READ) do Inc(z);
-  ID := (bufferI[z + 2] shl 16) + (bufferI[z + 3] shl 8) + bufferI[z + 4];
-  if (ID > 0) and (ID <> $FFFFFF) then
-    PrintMessage1('DEVICE ID=0x%06X'#13#10, ID);
-
-  { ---- 읽기 ---- }
+  for z := 0 to (DIMBUF-4 and bufferI[z] not =SPI_READ) - 1 do
+  begin
+  end;
+  ID := (bufferI[z+2] shl 16)+(bufferI[z+3] shl 8)+bufferI[z+4];
+  if ID>0 and ID not =0xFFFFFF then
+   PrintMessage1('DEVICE ID=0x%06X\r' + LineEnding + '', ID);
   PrintMessage(strings[S_ReadEE]);
   PrintStatusSetup();
-
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    j := 0;
-    bufferU[j] := SPI_READ; Inc(j);
-    if i < dim - (DIMBUF - 4) then bufferU[j] := DIMBUF - 4
-    else                           bufferU[j] := dim - i;
-    Inc(j);
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(4);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> SPI_READ) do Inc(j);
-    if (bufferI[j] = SPI_READ) and (bufferI[j + 1] < $FA) then
+   bufferU[Inc(j)] := SPI_READ;
+   bufferU[Inc(j)] := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(4);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =SPI_READ) - 1 do
+   begin
+   end;
+   if bufferI[j] = SPI_READ and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1] and z<DIMBUF) - 1 do
     begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        memEE[k] := bufferI[z]; Inc(k); Inc(z);
-      end;
     end;
-
-    PrintStatus(strings[S_CodeReading2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    Inc(i, DIMBUF - 4);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   i := i + DIMBUF-4;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
-    sizeEE := k;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
+   sizeEE := k;
   end
   else
-    PrintMessage(strings[S_Compl]);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+   PrintMessage(strings[S_Compl]);
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
   DisplayEE();
-
   sum := 0;
-  for i := 0 to sizeEE - 1 do Inc(sum, memEE[i]);
-  PrintMessage1('Checksum: 0x%X'#13#10, sum and $FFFF);
-  sprintf(str, strings[S_End], [(stop_ - start_) / 1000.0]);
-  PrintMessage(str);
-  if saveLog <> 0 then
+  for i := 0 to (sizeEE) - 1 do
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+  end;
+  PrintMessage1('Checksum: 0x%X\r' + LineEnding + '', sum&0xFFFF);
+  sprintf(str, strings[S_End], (stop-start)/1000.0);
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Write25xx - SPI 메모리 쓰기
-  dim     = 크기(바이트)
-  options [11:0] = 페이지 크기
-          [12]   = 쓰기 전 지우기
-          [13]   = 상태 레지스터 2 사용
-  ============================================================ }
 procedure Write25xx(dim: Integer; options: Integer);
 var
-  k, z, i, j: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
+  ID: Integer;
   err: Integer;
   page: Integer;
-  ID: Integer;
   pp: Integer;
-  i0, k2, valid: Integer;
-  start_, stop_: LongWord;
+  pp: Integer;
+  i0: Integer;
+  k2: Integer;
+  valid: Integer;
+  stop: Cardinal;
 begin
-  k := 0; z := 0; err := 0;
-  hvreg := 0;
-  page  := options and $FFF;
-
-  if (dim > $1000000) or (dim < 0) then
-  begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
-  end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'Write25xx(%d,%d)    (0x%X,0x%X)'#10, [dim, options, dim, options]);
-  end;
-
-  if dim > sizeEE then
-  begin
-    i := sizeEE;
-    ReallocMem(memEE, dim);
-    while i < dim do begin memEE[i] := $FF; Inc(i); end;
-    sizeEE := dim;
-  end;
-  if dim < 1 then
-  begin
-    PrintMessage(strings[S_NoCode]);
-    Exit;
-  end;
-
-  start_ := GetTickCount();
-  j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := SPI_INIT;  Inc(j); bufferU[j] := 3; Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := $9F; Inc(j); { READ ID }
-  bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 3; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 5; Inc(j); { READ STATUS }
-  bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  if (options and $2000) <> 0 then
-  begin
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := $35; Inc(j); { READ STATUS2 }
-    bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  end;
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-  PacketIO(5);
-
-  j := 0;
-  z := 0;
-  while (z < DIMBUF - 4) and (bufferI[z] <> SPI_READ) do Inc(z);
-  ID := (bufferI[z + 2] shl 16) + (bufferI[z + 3] shl 8) + bufferI[z + 4];
-  if (ID > 0) and (ID <> $FFFFFF) then
-  begin
-    PrintMessage1('DEVICE ID=0x%06X'#13#10, ID);
-    if saveLog <> 0 then fprintf(logfile, 'DEVICE ID=0x%06X'#10, [ID]);
-  end;
-
-  msDelay(10);
-
-  { WRITE ENABLE + WRITE STATUS(해제) }
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 6; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  if (options and $2000) <> 0 then
-  begin
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := 1; Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  end
-  else
-  begin
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 2; Inc(j);
-    bufferU[j] := 1; Inc(j); bufferU[j] := 0; Inc(j);
-  end;
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 5; Inc(j);
-  bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-  PacketIO(5);
-  j := 0;
-
-  { 칩 지우기 (옵션) }
-  if (options and $1000) <> 0 then
-  begin
-    PrintMessage(strings[S_StartErase]);
-    if saveLog <> 0 then fprintf(logfile, '%s'#10, [strings[S_StartErase]]);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 5; Inc(j);
-    bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    if (options and $2000) <> 0 then
-    begin
-      bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-      bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := $35; Inc(j);
-      bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-      bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    end;
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 6; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := $C7; Inc(j); { CHIP ERASE }
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(5);
-    j := 0;
-
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 5; Inc(j);
-    bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-    pp := 1; j := 0;
-    while (pp <> 0) and (j < 400) do  { 최대 40초 대기 }
-    begin
-      PacketIO(2);
-      msDelay(100);
-      z := 0;
-      while (z < DIMBUF - 1) and (bufferI[z] <> SPI_READ) do Inc(z);
-      pp := bufferI[z + 2] and 1;  { WIP 비트 }
-      PrintStatus(strings[S_StartErase], 0, 0);
-      Inc(j);
-    end;
-    if saveLog <> 0 then fprintf(logfile, 'Erase time %d ms'#10, [j * 100]);
-    PrintMessage(strings[S_Compl]);
-    PrintStatus(strings[S_Compl], 0, 0);
-  end;
-
-  { ---- 쓰기 ---- }
-  PrintMessage(strings[S_EEAreaW]);
-  if saveLog <> 0 then fprintf(logfile, '%s'#10, [strings[S_EEAreaW]]);
-
-  i := 0;
-  while i < dim do
-  begin
-    j := 0;
-    if (options and $1000) <> 0 then
-    begin  { 칩 지우기 후: 빈 페이지 건너뜀 }
-      while i < dim - page do
-      begin
-        k := page;
-        while k = page do
-        begin
-          k := 0;
-          while k < page do
-          begin
-            if memEE[i + k] < $FF then k := page;  { 비어있지 않음 }
-            Inc(k);
-          end;
-          if k = page then Inc(i, page);
-        end;
-        Break;  { 내부 루프 종료 }
-      end;
-    end;
-
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 6; Inc(j); { WRITE ENABLE }
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j);
-    if dim > $10000 then
-    begin
-      bufferU[j] := 4; Inc(j); bufferU[j] := 2; Inc(j);
-      bufferU[j] := i shr 16;        Inc(j);
-      bufferU[j] := (i shr 8) and $FF; Inc(j);
-      bufferU[j] := i and $FF;       Inc(j);
-    end
-    else if dim > $200 then
-    begin
-      bufferU[j] := 3; Inc(j); bufferU[j] := 2; Inc(j);
-      bufferU[j] := i shr 8;  Inc(j);
-      bufferU[j] := i and $FF; Inc(j);
-    end
-    else
-    begin
-      bufferU[j] := 2; Inc(j);
-      bufferU[j] := 2 + IfThen((i and $100) <> 0, 8, 0); Inc(j);
-      bufferU[j] := i and $FF; Inc(j);
-    end;
-
-    pp := IfThen(page < DIMBUF - j - 4, page, DIMBUF - j - 4);
-    k := 0;
-    while k < page do
-    begin
-      bufferU[j] := SPI_WRITE; Inc(j);
-      bufferU[j] := pp;        Inc(j);
-      while (k < page) and (pp > 0) do
-      begin
-        bufferU[j] := memEE[i + k]; Inc(j);
-        Inc(k); Dec(pp);
-      end;
-      bufferU[j] := FLUSH; Inc(j);
-      while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-      PacketIO(2);
-      z := 0;
-      while (z < DIMBUF - 1) and (bufferI[z] <> SPI_WRITE) do Inc(z);
-      if bufferI[z + 1] >= $FA then
-      begin
-        k := i; i := dim + 10;
-        k := page;  { 루프 종료 }
-      end;
-      pp := IfThen((page - k) < DIMBUF - 4, page - k, DIMBUF - 4);
-      j := 0;
-    end;
-
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 5; Inc(j);
-    bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-    j := 0;
-
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := SPI_WRITE; Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := 5; Inc(j);
-    bufferU[j] := SPI_READ;  Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-    pp := 1; j := 0;
-    while (pp <> 0) and (j < 50) do  { 쓰기 완료 대기 }
-    begin
-      PacketIO(2);
-      z := 0;
-      while (z < DIMBUF - 1) and (bufferI[z] <> SPI_READ) do Inc(z);
-      pp := bufferI[z + 2] and 1;
-      Inc(j);
-    end;
-
-    PrintStatus(strings[S_CodeWriting2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, 0, 0]);
-
-    j := 0;
-    Inc(i, page);
-  end;
-
-  PrintStatusEnd();
-  PrintMessage(strings[S_Compl]);
-
-  { ---- 검증 ---- }
-  PrintMessage(strings[S_EEV]);
-  if saveLog <> 0 then fprintf(logfile, '%s'#10, [strings[S_EEV]]);
-  PrintStatusSetup();
-
-  j := 0;
-  bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := SPI_WRITE; Inc(j);
-  if dim > $10000 then
-  begin
-    bufferU[j] := 4; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  end
-  else if dim > $200 then
-  begin
-    bufferU[j] := 3; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
-  end
-  else
-  begin
-    bufferU[j] := 2; Inc(j); bufferU[j] := 3; Inc(j); bufferU[j] := 0; Inc(j);
-  end;
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-  PacketIO(2);
-
   k := 0;
-  i := 0;
-  while i < dim do
+  z := 0;
+  err := 0;
+  hvreg := 0;
+  page := options&0xFFF;
+  if dim>0x1000000 or dim<0 then
   begin
-    j := 0;
-    if (options and $1000) <> 0 then
-    begin
-      i0 := i;
-      valid := 0;
-      while (valid = 0) and (i < dim) do
-      begin
-        k2 := 0;
-        while (k2 < DIMBUF - 4) and (valid = 0) and (i + k2 < dim) do
-        begin
-          if memEE[i + k2] < $FF then valid := 1;
-          Inc(k2);
-        end;
-        if valid = 0 then Inc(i, DIMBUF - 4);
-      end;
-      if i >= dim then Break;
-      if i > i0 then
-      begin
-        j := 0;
-        bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := CS + HLD; Inc(j); bufferU[j] := WP; Inc(j);
-        bufferU[j] := EXT_PORT;  Inc(j); bufferU[j] := HLD;      Inc(j); bufferU[j] := 0;  Inc(j);
-        bufferU[j] := SPI_WRITE; Inc(j);
-        if dim > $10000 then
-        begin
-          bufferU[j] := 4; Inc(j); bufferU[j] := 3; Inc(j);
-          bufferU[j] := i shr 16;          Inc(j);
-          bufferU[j] := (i shr 8) and $FF; Inc(j);
-          bufferU[j] := i and $FF;         Inc(j);
-        end
-        else if dim > $200 then
-        begin
-          bufferU[j] := 3; Inc(j); bufferU[j] := 3; Inc(j);
-          bufferU[j] := i shr 8;  Inc(j);
-          bufferU[j] := i and $FF; Inc(j);
-        end
-        else
-        begin
-          bufferU[j] := 2; Inc(j);
-          bufferU[j] := 3 + IfThen((i and $100) <> 0, 8, 0); Inc(j);
-          bufferU[j] := i and $FF; Inc(j);
-        end;
-        bufferU[j] := FLUSH; Inc(j);
-        while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-        PacketIO(2);
-        j := 0;
-      end;
-    end;
-
-    bufferU[j] := SPI_READ; Inc(j);
-    if i < dim - (DIMBUF - 4) then bufferU[j] := DIMBUF - 4
-    else                           bufferU[j] := dim - i;
-    Inc(j);
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(4);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> SPI_READ) do Inc(j);
-    if (bufferI[j] = SPI_READ) and (bufferI[j + 1] < $FA) then
-    begin
-      z := 0;
-      while (z < bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        if memEE[i + z] <> bufferI[z + j + 2] then
-        begin
-          PrintMessage4(strings[S_CodeVError], i + z, i + z, memEE[i + z], bufferI[z + 3]);
-          Inc(err);
-        end;
-        Inc(z);
-      end;
-    end;
-
-    PrintStatus(strings[S_CodeV2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log8], [i, i, k, k, err]);
-
-    if err >= max_err then Break;
-    Inc(i, DIMBUF - 4);
-    j := 0;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-
-  PrintStatusEnd();
-  if i < dim then
-  begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, i);
-  end;
-  PrintMessage1(strings[S_ComplErr], err);
-
-  { ---- 종료 ---- }
   j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-  PacketIO(2);
-
-  stop_ := GetTickCount();
-  PrintStatusClear();
-  sprintf(str, strings[S_EndErr],
-          [(stop_ - start_) / 1000.0, err,
-           IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing])]);
-  PrintMessage(str);
-  if saveLog <> 0 then
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := SPI_INIT;
+  bufferU[Inc(j)] := 3;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := SPI_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := $9F;
+  bufferU[Inc(j)] := SPI_READ;
+  bufferU[Inc(j)] := 3;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := SPI_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := 5;
+  bufferU[Inc(j)] := SPI_READ;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := WP;
+  if options&0x2000 then
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := $35;
+   bufferU[Inc(j)] := SPI_READ;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+  end;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
+  PacketIO(5);
+  j := 0;
+  for z := 0 to (DIMBUF-4 and bufferI[z] not =SPI_READ) - 1 do
+  begin
+  end;
+  ID := (bufferI[z+2] shl 16)+(bufferI[z+3] shl 8)+bufferI[z+4];
+  if ID>0 and ID not =0xFFFFFF then
+  begin
+   PrintMessage1('DEVICE ID=0x%06X\r' + LineEnding + '', ID);
+   if saveLog then
+    fprintf(logfile, 'DEVICE ID=0x%06X' + LineEnding + '', ID);
+  end;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := SPI_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := 6;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := WP;
+  if options&0x2000 then
+  begin
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
+  end
+  else
+  begin
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 0;
+  end;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := SPI_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := 5;
+  bufferU[Inc(j)] := SPI_READ;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := CS+HLD;
+  bufferU[Inc(j)] := WP;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
+  PacketIO(5);
+  j := 0;
+  if options&0x1000 then
+  begin
+   PrintMessage(strings[S_StartErase]);
+   if saveLog then
+    fprintf(logfile, '%s' + LineEnding + '', strings[S_StartErase]);
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 5;
+   bufferU[Inc(j)] := SPI_READ;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   if options&0x2000 then
+   begin
+    bufferU[Inc(j)] := EXT_PORT;
+    bufferU[Inc(j)] := HLD;
+    bufferU[Inc(j)] := WP;
+    bufferU[Inc(j)] := SPI_WRITE;
+    bufferU[Inc(j)] := 1;
+    bufferU[Inc(j)] := $35;
+    bufferU[Inc(j)] := SPI_READ;
+    bufferU[Inc(j)] := 1;
+    bufferU[Inc(j)] := EXT_PORT;
+    bufferU[Inc(j)] := CS+HLD;
+    bufferU[Inc(j)] := WP;
+   end;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 6;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := $C7;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(5);
+   j := 0;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 5;
+   bufferU[Inc(j)] := SPI_READ;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(pp=1,j=0;pp&&j<400;j++){	 			PacketIO(2); 			msDelay(100); 			for(z=0;z<DIMBUF-1&&bufferI[z]!=SPI_READ;z++); 			pp=bufferI[z+2]&1;	 			PrintStatus(strings[S_StartErase],0,0);	 		} 		if(saveLog) fp *)
+   // init: pp=1,j=0
+   while pp and j<400 do
+   begin
+    PacketIO(2);
+    msDelay(100);
+    for z := 0 to (DIMBUF-1 and bufferI[z] not =SPI_READ) - 1 do
+    begin
+    end;
+    pp := bufferI[z+2]&1;
+    PrintStatus(strings[S_StartErase], 0, 0);
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PrintMessage(strings[S_Compl]);
+   PrintStatus(strings[S_Compl], 0, 0);
+  end;
+  if saveLog then
+   fprintf(logfile, '%s' + LineEnding + '', strings[S_EEAreaW]);
+  for i := 0,j=0 to (dim) - 1 do
+  begin
+   if options&0x1000 then
+   begin
+    (* TODO gtk2laz: complex for loop: for(k=page;k==page&&i<dim-page;){ 				for(k=0;k<page;k++){ if(memEE[i+k]<0xFF) k=page;} 				if(k==page) i+=page; 			} *)
+   end;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 6;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   if dim>0x10000 then
+   begin
+    bufferU[Inc(j)] := 4;
+    bufferU[Inc(j)] := 2;
+    bufferU[Inc(j)] := i shr 16;
+    bufferU[Inc(j)] := (i shr 8)&0xFF;
+    bufferU[Inc(j)] := i&0xFF;
+   end
+   else if dim>0x200 then
+   begin
+    bufferU[Inc(j)] := 3;
+    bufferU[Inc(j)] := 2;
+    bufferU[Inc(j)] := i shr 8;
+    bufferU[Inc(j)] := i&0xFF;
+   end
+   else
+   begin
+    bufferU[Inc(j)] := 2;
+    bufferU[Inc(j)] := IfThen(2+(i&0x100, 8, 0));
+    bufferU[Inc(j)] := i&0xFF;
+   end;
+   (* TODO gtk2laz: complex for loop: for(k=0;k<page;){ 			bufferU[j++]=SPI_WRITE; 			bufferU[j++]=pp; 			for(;k<page&&pp;k++,pp--) bufferU[j++]=memEE[i+k]; 			bufferU[j++]=FLUSH; 			for(;j<DIMBUF;j++) bufferU[j]=0x0; 			PacketIO(2); 			f *)
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 5;
+   bufferU[Inc(j)] := SPI_READ;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(2);
+   j := 0;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := SPI_WRITE;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := 5;
+   bufferU[Inc(j)] := SPI_READ;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := EXT_PORT;
+   bufferU[Inc(j)] := CS+HLD;
+   bufferU[Inc(j)] := WP;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(pp=1,j=0;pp&&j<50;j++){	 			PacketIO(2); 			for(z=0;z<DIMBUF-1&&bufferI[z]!=SPI_READ;z++); 			pp=bufferI[z+2]&1;	 		} 		PrintStatus(strings[S_CodeWriting2],i*100/(dim),i) *)
+   // init: pp=1,j=0
+   while pp and j<50 do
+   begin
+    PacketIO(2);
+    for z := 0 to (DIMBUF-1 and bufferI[z] not =SPI_READ) - 1 do
+    begin
+    end;
+    pp := bufferI[z+2]&1;
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, 0, 0);
+   end;
+   i := i + page;
+  end;
+  PrintMessage(strings[S_Compl]);
+  PrintMessage(strings[S_EEV]);
+  if saveLog then
+   fprintf(logfile, '%s' + LineEnding + '', strings[S_EEV]);
+  PrintStatusSetup();
+  j := 0;
+  bufferU[Inc(j)] := EXT_PORT;
+  bufferU[Inc(j)] := HLD;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := SPI_WRITE;
+  if dim>0x10000 then
+  begin
+   bufferU[Inc(j)] := 4;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
+  end
+  else if dim>0x200 then
+  begin
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
+  end
+  else
+  begin
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := 0;
+  end;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
+  PacketIO(2);
+  k := 0;
+  for i := 0,j=0 to (dim) - 1 do
+  begin
+   if options&0x1000 then
+   begin
+    i0 := i;
+    (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(valid=0;!valid&&i<dim;i+=valid?0:DIMBUF-4){		 				for(k2=0;k2<DIMBUF-4&&!valid&&i+k2<dim;k2++) if(memEE[i+k2]<0xFF) valid=1; 			} 			if(i>=dim) break *)
+    // init: valid=0
+    while  not valid and i<dim do
+    begin
+     for k2 := 0 to (DIMBUF-4 and  not valid and i+k2<dim) - 1 do
+     begin
+     end;
+     i := i + IfThen(valid, 0, DIMBUF-4);
+    end;
+    if i>i0 then
+    begin
+     j := 0;
+     bufferU[Inc(j)] := EXT_PORT;
+     bufferU[Inc(j)] := CS+HLD;
+     bufferU[Inc(j)] := WP;
+     bufferU[Inc(j)] := EXT_PORT;
+     bufferU[Inc(j)] := HLD;
+     bufferU[Inc(j)] := 0;
+     bufferU[Inc(j)] := SPI_WRITE;
+     if dim>0x10000 then
+     begin
+      bufferU[Inc(j)] := 4;
+      bufferU[Inc(j)] := 3;
+      bufferU[Inc(j)] := i shr 16;
+      bufferU[Inc(j)] := (i shr 8)&0xFF;
+      bufferU[Inc(j)] := i&0xFF;
+     end
+     else if dim>0x200 then
+     begin
+      bufferU[Inc(j)] := 3;
+      bufferU[Inc(j)] := 3;
+      bufferU[Inc(j)] := i shr 8;
+      bufferU[Inc(j)] := i&0xFF;
+     end
+     else
+     begin
+      bufferU[Inc(j)] := 2;
+      bufferU[Inc(j)] := IfThen(3+(i&0x100, 8, 0));
+      bufferU[Inc(j)] := i&0xFF;
+     end;
+     (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+     // init: 
+     while j<DIMBUF do
+     begin
+      (* TODO gtk2laz: unrecognised statement: j++; *)
+     end;
+     PacketIO(2);
+     j := 0;
+    end;
+   end;
+   bufferU[Inc(j)] := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(4);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =SPI_READ) - 1 do
+   begin
+   end;
+   if bufferI[j] = SPI_READ and bufferI[j+1]<0xFA then
+   begin
+    for z := 0 to (bufferI[j+1] and z<DIMBUF) - 1 do
+    begin
+     if memEE[i+z] not =bufferI[z+j+2] then
+     begin
+      PrintMessage4(strings[S_CodeVError], i+z, i+z, memEE[i+z], bufferI[z+3]);
+      (* TODO gtk2laz: unrecognised statement: err++ *)
+     end;
+    end;
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
+   end;
+   i := i + DIMBUF-4;
+  end;
+  if i<dim then
+  begin
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, i);
+  end;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
+  PacketIO(2);
+  stop := GetTickCount();
+  PrintStatusClear();
+  sprintf(str, strings[S_EndErr], (stop-start)/1000.0, err, IfThen(err not =1, strings[S_ErrPlur], strings[S_ErrSing]));
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  ReadOneWireMem - OneWire 메모리 읽기
-  dim     = 크기(바이트)
-  options = 1: 상태 레지스터 + 앱 레지스터
-            2: 보호 바이트 + ID
-  ============================================================ }
+procedure OW_ID(id: Integer);
+var
+  s: array[0..64-1] of Char;
+  i: Integer;
+begin
+  for i := 0 to (sizeof(OW_LIST)/sizeof(OW_LIST[0])) - 1 do
+  begin
+   if id = OW_LIST[i].id then
+   begin
+    sprintf(s, OW_LIST[i].device, id);
+    PrintMessage(s);
+    Exit;
+   end;
+  end;
+  PrintMessage(s);
+end;
+
 procedure ReadOneWireMem(dim: Integer; options: Integer);
 var
-  k, z, i, j: Integer;
-  start_, stop_: LongWord;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
+  start: Cardinal;
+  stop: Cardinal;
   sum: Integer;
 begin
-  k := 0; z := 0;
+  k := 0;
+  z := 0;
   hvreg := 0;
-
-  if FWVersion < $800 then
+  if FWVersion<0x800 then
   begin
-    PrintMessage1(strings[S_FWver2old], '0.8.0');
-    Exit;
+   PrintMessage1(strings[S_FWver2old], '0.8.0');
+   Exit;
   end;
-  if (dim > $10000) or (dim < 0) then
-  begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
-  end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'ReadOneWireMem(%d)    (0x%X)'#10, [dim, dim]);
-  end;
-
-  sizeEE := dim;
-  if memEE <> nil then FreeMem(memEE);
-  memEE := GetMem(dim);
-
-  start_ := GetTickCount();
+  if memEE then
+   FreeMem(memEE);
+  memEE := malloc(dim);
+  start := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := uW_INIT;   Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := OW_RESET;  Inc(j);
-  bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := READ_ROM; Inc(j);
-  bufferU[j] := OW_READ;   Inc(j); bufferU[j] := 8; Inc(j);
-  if dim <= 32 then
-  begin  { 1바이트 주소 }
-    bufferU[j] := OW_WRITE; Inc(j); bufferU[j] := 2; Inc(j);
-    bufferU[j] := READ_MEMORY_OW; Inc(j); bufferU[j] := 0; Inc(j);
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := uW_INIT;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := OW_RESET;
+  bufferU[Inc(j)] := OW_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := READ_ROM;
+  bufferU[Inc(j)] := OW_READ;
+  bufferU[Inc(j)] := 8;
+  if dim<=32 then
+  begin
+   bufferU[Inc(j)] := OW_WRITE;
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := READ_MEMORY;
+   bufferU[Inc(j)] := 0;
   end
   else
-  begin  { 2바이트 주소 }
-    bufferU[j] := OW_WRITE; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := READ_MEMORY_OW; Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
+  begin
+   bufferU[Inc(j)] := OW_WRITE;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := READ_MEMORY;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
   end;
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(12);
   j := 0;
-
-  z := 0;
-  while (bufferI[z] <> OW_RESET) and (z < DIMBUF) do Inc(z);
-  if (bufferI[z] = OW_RESET) and (bufferI[z + 1] = 0) then
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z=0;bufferI[z]!=OW_RESET&&z<DIMBUF;z++) *)
+  // init: z=0
+  while bufferI[z] not =OW_RESET and z<DIMBUF do
   begin
-    PrintMessage(strings[S_ComErr]);
-    bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-    bufferU[j] := FLUSH;      Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-    Exit;
+   (* TODO gtk2laz: unrecognised statement: z++; *)
   end;
-
-  while (bufferI[z] <> OW_READ) and (z < DIMBUF) do Inc(z);
-  if (bufferI[z] = OW_READ) and (z < DIMBUF - 9) then
+  if bufferI[z] = OW_RESET and bufferI[z+1] = 0 then
   begin
-    PrintMessage1('Family code: 0x%02X ', bufferI[z + 2]);
-    OW_ID(bufferI[z + 2]);
-    PrintMessage3('Serial ID: 0x%02X%02X%02X', bufferI[z+3], bufferI[z+4], bufferI[z+5]);
-    PrintMessage3('%02X%02X%02X', bufferI[z+6], bufferI[z+7], bufferI[z+8]);
-    PrintMessage1(#13#10'CRC: 0x%02X'#13#10, bufferI[z + 9]);
+   PrintMessage(strings[S_ComErr]);
+   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(2);
+   Exit;
   end;
-
-  { ---- 읽기 ---- }
-  PrintStatusSetup();
-  i := 0;
-  while i < dim do
+  if bufferI[z] = OW_READ and z<DIMBUF-9 then
   begin
-    j := 0;
-    bufferU[j] := OW_READ; Inc(j);
-    if i < dim - (DIMBUF - 4) then bufferU[j] := DIMBUF - 4
-    else                           bufferU[j] := dim - i;
-    Inc(j);
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(37);
-
-    j := 0;
-    while (bufferI[j] <> OW_READ) and (j < DIMBUF) do Inc(j);
-    if (bufferI[j] = OW_READ) and (bufferI[j + 1] < $FA) then
+   PrintMessage1('Family code: 0x%02X ', bufferI[z+2]);
+   OW_ID(bufferI[z+2]);
+   PrintMessage3('Serial ID: 0x%02X%02X%02X', bufferI[z+3], bufferI[z+4], bufferI[z+5]);
+   PrintMessage3('%02X%02X%02X', bufferI[z+6], bufferI[z+7], bufferI[z+8]);
+   PrintMessage1('\r' + LineEnding + 'CRC: 0x%02X\r' + LineEnding + '', bufferI[z+9]);
+  end;
+  for i := 0,j=0 to (dim) - 1 do
+  begin
+   bufferU[Inc(j)] := OW_READ;
+   bufferU[Inc(j)] := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(37);
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(j=0;bufferI[j]!=OW_READ&&j<DIMBUF;j++) *)
+   // init: j=0
+   while bufferI[j] not =OW_READ and j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   if bufferI[j] = OW_READ and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1] and z<DIMBUF) - 1 do
     begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        memEE[k] := bufferI[z]; Inc(k); Inc(z);
-      end;
     end;
-    PrintStatus(strings[S_CodeReading2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-    j := 0;
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    Inc(i, DIMBUF - 4);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   i := i + DIMBUF-4;
   end;
-
-  { 상태/앱 레지스터 읽기 (options=1) }
-  if options = 1 then
+  if k not =dim then
   begin
-    j := 0;
-    bufferU[j] := OW_RESET;  Inc(j);
-    bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := SKIP_ROM;  Inc(j); bufferU[j] := READ_STAT_REGISTER; Inc(j); bufferU[j] := 0; Inc(j);
-    bufferU[j] := OW_READ;   Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := OW_RESET;  Inc(j);
-    bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := SKIP_ROM;  Inc(j); bufferU[j] := READ_APP_REGISTER; Inc(j); bufferU[j] := 0; Inc(j);
-    bufferU[j] := OW_READ;   Inc(j); bufferU[j] := 8; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(15);
-    j := 0;
-
-    z := 0;
-    while (bufferI[z] <> OW_READ) and (z < DIMBUF - 2) do Inc(z);
-    if z < DIMBUF - 2 then
-      PrintMessage1('Status register: 0x%02X'#13#10, bufferI[z + 2]);
-    Inc(z, 2);
-    while (bufferI[z] <> OW_READ) and (z < DIMBUF - 10) do Inc(z);
-    PrintMessage('Application register: 0x');
-    i := z + 2;
-    while i < z + 10 do
-    begin
-      PrintMessage1('%02X', bufferI[i]);
-      Inc(i);
-    end;
-    PrintMessage(#13#10);
-  end
-  else if options = 2 then
-  begin
-    j := 0;
-    bufferU[j] := OW_READ; Inc(j);
-    if dim = $A00 then bufferU[j] := $24
-    else               bufferU[j] := 8;
-    Inc(j);
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(25);
-    j := 0;
-
-    z := 0;
-    while (bufferI[z] <> OW_READ) and (z < DIMBUF - 2) do Inc(z);
-    if (bufferI[z] = OW_READ) and (bufferI[z + 1] < $FA) then
-    begin
-      if dim = $A00 then
-      begin
-        for i := 0 to 9 do
-          PrintMessage2('Protection Control Byte Block %d: 0x%02X'#13#10, i, bufferI[z+2+i]);
-        PrintMessage('User EEPROM:'#13#10);
-        for i := 0 to 9 do PrintMessage1('%02X', bufferI[z+2+i+10]);
-        PrintMessage(#13#10);
-        for i := 0 to 9 do PrintMessage1('%02X', bufferI[z+2+i+20]);
-        PrintMessage1(#13#10'Memory Block Lock: 0x%02X'#13#10, bufferI[z+2+30]);
-        PrintMessage1('Register Page Lock: 0x%02X'#13#10, bufferI[z+2+31]);
-        PrintMessage1('Factory Byte: 0x%02X'#13#10, bufferI[z+2+32]);
-        PrintMessage2('Factory Trim Bytes: 0x%02X%02X'#13#10, bufferI[z+2+33], bufferI[z+2+34]);
-        PrintMessage2('Manufacturer ID: 0x%02X%02X'#13#10, bufferI[z+2+35], bufferI[z+2+36]);
-      end
-      else
-      begin
-        PrintMessage1('Protection Control Byte Page 0: 0x%02X'#13#10, bufferI[z+2]);
-        PrintMessage1('Protection Control Byte Page 1: 0x%02X'#13#10, bufferI[z+3]);
-        PrintMessage1('Protection Control Byte Page 2: 0x%02X'#13#10, bufferI[z+4]);
-        PrintMessage1('Protection Control Byte Page 3: 0x%02X'#13#10, bufferI[z+5]);
-        PrintMessage1('Copy Protection Byte: 0x%02X'#13#10, bufferI[z+6]);
-        PrintMessage1('Factory Byte: 0x%02X'#13#10, bufferI[z+7]);
-        PrintMessage2('User Bytes/Manufacturer ID: 0x%02X%02X'#13#10, bufferI[z+8], bufferI[z+9]);
-      end;
-    end;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
+   sizeEE := k;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
-    sizeEE := k;
+   (* TODO gtk2laz: unrecognised statement: j++; *)
   end;
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
   DisplayEE();
-
   sum := 0;
-  for i := 0 to sizeEE - 1 do Inc(sum, memEE[i]);
-  PrintMessage1('Checksum: 0x%X'#13#10, sum and $FFFF);
-  sprintf(str, strings[S_End], [(stop_ - start_) / 1000.0]);
-  PrintMessage(str);
-  if saveLog <> 0 then
+  for i := 0 to (sizeEE) - 1 do
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+  end;
+  PrintMessage1('Checksum: 0x%X\r' + LineEnding + '', sum&0xFFFF);
+  sprintf(str, strings[S_End], (stop-start)/1000.0);
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  WriteOneWireMem - OneWire 메모리 쓰기
-  dim     = 크기(바이트)
-  options = 0: 8바이트 스크래치패드
-            1: 32바이트 스크래치패드
-  ============================================================ }
 procedure WriteOneWireMem(dim: Integer; options: Integer);
 var
-  k, z, i, j: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
   err: Integer;
-  page_: Integer;
-  start_, stop_: LongWord;
+  page: Integer;
+  stop: Cardinal;
 begin
-  k := 0; z := 0; err := 0;
+  k := 0;
+  z := 0;
+  err := 0;
   hvreg := 0;
-
-  if FWVersion < $800 then
+  if FWVersion<0x800 then
   begin
-    PrintMessage1(strings[S_FWver2old], '0.8.0');
-    Exit;
+   PrintMessage1(strings[S_FWver2old], '0.8.0');
+   Exit;
   end;
-  if (dim > $10000) or (dim < 0) then
-  begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
-  end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'WriteOneWireMem(%d,%d)    (0x%X,0x%X)'#10, [dim, options, dim, options]);
-  end;
-
-  if dim > sizeEE then
-  begin
-    i := sizeEE;
-    ReallocMem(memEE, dim);
-    while i < dim do begin memEE[i] := $FF; Inc(i); end;
-    sizeEE := dim;
-  end;
-  if dim < 1 then
-  begin
-    PrintMessage(strings[S_NoCode]);
-    Exit;
-  end;
-
-  start_ := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := uW_INIT;   Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := OW_RESET;  Inc(j);
-  bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := READ_ROM; Inc(j);
-  bufferU[j] := OW_READ;   Inc(j); bufferU[j] := 8; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := uW_INIT;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := OW_RESET;
+  bufferU[Inc(j)] := OW_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := READ_ROM;
+  bufferU[Inc(j)] := OW_READ;
+  bufferU[Inc(j)] := 8;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(12);
   j := 0;
-
-  z := 0;
-  while (bufferI[z] <> OW_RESET) and (z < DIMBUF) do Inc(z);
-  if (bufferI[z] = OW_RESET) and (bufferI[z + 1] = 0) then
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z=0;bufferI[z]!=OW_RESET&&z<DIMBUF;z++) *)
+  // init: z=0
+  while bufferI[z] not =OW_RESET and z<DIMBUF do
   begin
-    PrintMessage(strings[S_ComErr]);
-    bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-    bufferU[j] := FLUSH;      Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-    j := 0;
-    if saveLog <> 0 then CloseLogFile();
-    Exit;
+   (* TODO gtk2laz: unrecognised statement: z++; *)
   end;
-
-  z := 0;
-  while (bufferI[z] <> OW_READ) and (z < DIMBUF) do Inc(z);
+  if bufferI[z] = OW_RESET and bufferI[z+1] = 0 then
+  begin
+   PrintMessage(strings[S_ComErr]);
+   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(2);
+   j := 0;
+   if saveLog then
+    CloseLogFile();
+   Exit;
+  end;
   if bufferI[z] = OW_READ then
   begin
-    PrintMessage1('Family code: 0x%02X ', bufferI[z + 2]);
-    OW_ID(bufferI[z + 2]);
-    PrintMessage3('Serial ID: 0x%02X%02X%02X', bufferI[z+3], bufferI[z+4], bufferI[z+5]);
-    PrintMessage3('%02X%02X%02X', bufferI[z+6], bufferI[z+7], bufferI[z+8]);
-    PrintMessage1(#13#10'CRC: 0x%02X'#13#10, bufferI[z + 9]);
+   PrintMessage1('Family code: 0x%02X ', bufferI[z+2]);
+   OW_ID(bufferI[z+2]);
+   PrintMessage3('Serial ID: 0x%02X%02X%02X', bufferI[z+3], bufferI[z+4], bufferI[z+5]);
+   PrintMessage3('%02X%02X%02X', bufferI[z+6], bufferI[z+7], bufferI[z+8]);
+   PrintMessage1('\r' + LineEnding + 'CRC: 0x%02X\r' + LineEnding + '', bufferI[z+9]);
   end;
-
-  { ---- 쓰기 ---- }
-  PrintMessage(strings[S_EEAreaW]);
-  if options = 0 then page_ := 8
-  else                page_ := 32;
-
-  i := 0;
-  while i < dim do
+  page := IfThen(options = 0, 8, 32);
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    j := 0;
-    bufferU[j] := OW_RESET;  Inc(j);
-    bufferU[j] := OW_WRITE;  Inc(j);
-    if dim <= 32 then bufferU[j] := page_ + 3
-    else              bufferU[j] := page_ + 4;
-    Inc(j);
-    bufferU[j] := SKIP_ROM;         Inc(j);
-    bufferU[j] := WRITE_SCRATCHPAD_OW; Inc(j);
-    bufferU[j] := i and $FF;        Inc(j);
-    if dim > 32 then begin bufferU[j] := i shr 8; Inc(j); end;
-    for k := 0 to page_ - 1 do begin bufferU[j] := memEE[i + k]; Inc(j); end;
-    bufferU[j] := OW_RESET;  Inc(j);
-    bufferU[j] := OW_WRITE;  Inc(j);
-    if dim <= 32 then bufferU[j] := 3
-    else              bufferU[j] := 5;
-    Inc(j);
-    bufferU[j] := SKIP_ROM;        Inc(j);
-    bufferU[j] := COPY_SCRATCHPAD_OW; Inc(j);
-    if dim <= 32 then
-    begin
-      bufferU[j] := $A5; Inc(j);
-    end
-    else
-    begin
-      bufferU[j] := i and $FF;  Inc(j);
-      bufferU[j] := i shr 8;   Inc(j);
-      bufferU[j] := page_ - 1; Inc(j);
-    end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(Round(6 + 0.8 * page_));
-    msDelay(10);
-    j := 0;
-
-    PrintStatus(strings[S_CodeWriting2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, 0, 0]);
-
-    Inc(i, page_);
+   bufferU[Inc(j)] := OW_RESET;
+   bufferU[Inc(j)] := OW_WRITE;
+   bufferU[Inc(j)] := IfThen(page+(dim<=32, 3, 4));
+   bufferU[Inc(j)] := SKIP_ROM;
+   bufferU[Inc(j)] := WRITE_SCRATCHPAD;
+   bufferU[Inc(j)] := i&0xFF;
+   if dim>32 then
+    bufferU[Inc(j)] := i shr 8;
+   for k := 0 to (page) - 1 do
+   begin
+   end;
+   bufferU[Inc(j)] := OW_RESET;
+   bufferU[Inc(j)] := OW_WRITE;
+   bufferU[Inc(j)] := IfThen(dim<=32, 3, 5);
+   bufferU[Inc(j)] := SKIP_ROM;
+   bufferU[Inc(j)] := COPY_SCRATCHPAD;
+   if dim<=32 then
+    bufferU[Inc(j)] := $A5;
+   else{ 			bufferU[Inc(j)] := i&0xFF; 			bufferU[Inc(j)]=i shr 8; 			bufferU[Inc(j)]=page-1; 		} 		bufferU[Inc(j)]=FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(6+0.8*page);
+   msDelay(10);
+   j := 0;
+   PrintStatus(strings[S_CodeWriting2], i*100/(dim), i);
+   if RWstop then
+    i := dim;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, 0, 0);
+   end;
+   i := i + page;
   end;
-
-  PrintStatusEnd();
   PrintMessage(strings[S_Compl]);
-
-  { ---- 검증 ---- }
   PrintMessage(strings[S_EEV]);
-  if saveLog <> 0 then fprintf(logfile, '%s'#10, [strings[S_EEV]]);
+  if saveLog then
+   fprintf(logfile, '%s' + LineEnding + '', strings[S_EEV]);
   PrintStatusSetup();
   k := 0;
-
-  bufferU[j] := OW_RESET;  Inc(j);
-  bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := SKIP_ROM; Inc(j);
-  if dim <= 32 then
+  bufferU[Inc(j)] := OW_RESET;
+  bufferU[Inc(j)] := OW_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := SKIP_ROM;
+  if dim<=32 then
   begin
-    bufferU[j] := OW_WRITE; Inc(j); bufferU[j] := 2; Inc(j);
-    bufferU[j] := READ_MEMORY_OW; Inc(j); bufferU[j] := 0; Inc(j);
+   bufferU[Inc(j)] := OW_WRITE;
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := READ_MEMORY;
+   bufferU[Inc(j)] := 0;
   end
   else
   begin
-    bufferU[j] := OW_WRITE; Inc(j); bufferU[j] := 3; Inc(j);
-    bufferU[j] := READ_MEMORY_OW; Inc(j); bufferU[j] := 0; Inc(j); bufferU[j] := 0; Inc(j);
+   bufferU[Inc(j)] := OW_WRITE;
+   bufferU[Inc(j)] := 3;
+   bufferU[Inc(j)] := READ_MEMORY;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := 0;
   end;
-  bufferU[j] := FLUSH; Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(10);
   j := 0;
-
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    bufferU[j] := OW_READ; Inc(j);
-    if i < dim - (DIMBUF - 4) then bufferU[j] := DIMBUF - 4
-    else                           bufferU[j] := dim - i;
-    Inc(j);
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(37);
-
-    j := 0;
-    while (bufferI[j] <> OW_READ) and (j < DIMBUF) do Inc(j);
-    if (bufferI[j] = OW_READ) and (bufferI[j + 1] < $FA) then
+   bufferU[Inc(j)] := OW_READ;
+   bufferU[Inc(j)] := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(37);
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(j=0;bufferI[j]!=OW_READ&&j<DIMBUF;j++) *)
+   // init: j=0
+   while bufferI[j] not =OW_READ and j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   if bufferI[j] = OW_READ and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1] and z<DIMBUF) - 1 do
     begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        if memEE[k] <> bufferI[z] then
-        begin
-          PrintMessage(#13#10);
-          PrintMessage4(strings[S_CodeVError],
-                        i + z - (j + 2), i + z - (j + 2), memEE[k], bufferI[z]);
-          Inc(err);
-        end;
-        Inc(k); Inc(z);
-      end;
+     if memEE[Inc(k)] not =bufferI[z] then
+     begin
+      PrintMessage('\r' + LineEnding + '');
+      PrintMessage4(strings[S_CodeVError], i+z-(j+2), i+z-(j+2), memEE[k-1], bufferI[z]);
+      (* TODO gtk2laz: unrecognised statement: err++ *)
+     end;
     end;
-    PrintStatus(strings[S_CodeV2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-    j := 0;
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log8], [i, i, k, k, err]);
-    if err >= max_err then Break;
-
-    Inc(i, DIMBUF - 4);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
+   end;
+   i := i + DIMBUF-4;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
-    sizeEE := k;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
+   sizeEE := k;
   end;
-  PrintMessage1(strings[S_ComplErr], err);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
-  sprintf(str, strings[S_EndErr],
-          [(stop_ - start_) / 1000.0, err,
-           IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing])]);
+  sprintf(str, strings[S_EndErr], (stop-start)/1000.0, err, IfThen(err not =1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  ReadDS1820 - DS1820 OneWire 온도 센서 읽기
-  ============================================================ }
-procedure ReadDS1820();
+procedure ReadDS1820;
 var
-  z, j: Integer;
-  TLSB: Double;
+  z: Integer;
+  j: Integer;
+  if(bufferI[z+2]==0x28) TLSB=0.0625: Telse;
   T: Integer;
-  start_, stop_: LongWord;
+  stop: Cardinal;
 begin
   z := 0;
-  TLSB := 0.5;
+  (* TODO gtk2laz: do-while without while: double TLSB=0.5 *)
   hvreg := 0;
-
-  if FWVersion < $800 then
+  if FWVersion<0x800 then
   begin
-    PrintMessage1(strings[S_FWver2old], '0.8.0');
-    Exit;
+   PrintMessage1(strings[S_FWver2old], '0.8.0');
+   Exit;
   end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'ReadDS1820()'#10);
-  end;
-
-  start_ := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := uW_INIT;   Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := OW_RESET;  Inc(j);
-  bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 1; Inc(j); bufferU[j] := READ_ROM; Inc(j);
-  bufferU[j] := OW_READ;   Inc(j); bufferU[j] := 8; Inc(j);
-  bufferU[j] := OW_RESET;  Inc(j);
-  bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 2; Inc(j);
-  bufferU[j] := SKIP_ROM;  Inc(j); bufferU[j] := CONVERT_TEMP; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := uW_INIT;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := OW_RESET;
+  bufferU[Inc(j)] := OW_WRITE;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := READ_ROM;
+  bufferU[Inc(j)] := OW_READ;
+  bufferU[Inc(j)] := 8;
+  bufferU[Inc(j)] := OW_RESET;
+  bufferU[Inc(j)] := OW_WRITE;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := SKIP_ROM;
+  bufferU[Inc(j)] := CONVERT_TEMP;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(16);
   j := 0;
-
-  z := 0;
-  while (bufferI[z] <> OW_RESET) and (z < DIMBUF) do Inc(z);
-  if (bufferI[z] = OW_RESET) and (bufferI[z + 1] = 0) then
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z=0;bufferI[z]!=OW_RESET&&z<DIMBUF;z++) *)
+  // init: z=0
+  while bufferI[z] not =OW_RESET and z<DIMBUF do
   begin
-    PrintMessage(strings[S_ComErr]);
-    bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-    bufferU[j] := FLUSH;      Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(2);
-    if saveLog <> 0 then CloseLogFile();
-    Exit;
+   (* TODO gtk2laz: unrecognised statement: z++; *)
   end;
-
-  z := 0;
-  while (bufferI[z] <> OW_READ) and (z < DIMBUF) do Inc(z);
-  if z < DIMBUF - 9 then
+  if bufferI[z] = OW_RESET and bufferI[z+1] = 0 then
   begin
-    PrintMessage1('Family code: 0x%02X ', bufferI[z + 2]);
-    OW_ID(bufferI[z + 2]);
-    if bufferI[z + 2] = $10 then TLSB := 0.5      { DS1820 }
-    else if bufferI[z + 2] = $28 then TLSB := 0.0625; { DS18B20 }
-    PrintMessage3('Serial ID: 0x%02X%02X%02X', bufferI[z+3], bufferI[z+4], bufferI[z+5]);
-    PrintMessage3('%02X%02X%02X', bufferI[z+6], bufferI[z+7], bufferI[z+8]);
-    PrintMessage1(#13#10'CRC: 0x%02X'#13#10, bufferI[z + 9]);
+   PrintMessage(strings[S_ComErr]);
+   bufferU[Inc(j)] := EN_VPP_VCC;
+   bufferU[Inc(j)] := $0;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(2);
+   if saveLog then
+    CloseLogFile();
+   Exit;
   end;
-
-  { ---- 읽기 ---- }
-  msDelay(800);
-  bufferU[j] := OW_RESET;  Inc(j);
-  bufferU[j] := OW_WRITE;  Inc(j); bufferU[j] := 2; Inc(j);
-  bufferU[j] := SKIP_ROM;  Inc(j); bufferU[j] := READ_SCRATCHPAD2; Inc(j);
-  bufferU[j] := OW_READ;   Inc(j); bufferU[j] := 8; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  if z<DIMBUF-9 then
+  begin
+   PrintMessage1('Family code: 0x%02X ', bufferI[z+2]);
+   OW_ID(bufferI[z+2]);
+   if bufferI[z+2] = 0x10 then
+    TLSB := 0.5;
+   PrintMessage3('Serial ID: 0x%02X%02X%02X', bufferI[z+3], bufferI[z+4], bufferI[z+5]);
+   PrintMessage3('%02X%02X%02X', bufferI[z+6], bufferI[z+7], bufferI[z+8]);
+   PrintMessage1('\r' + LineEnding + 'CRC: 0x%02X\r' + LineEnding + '', bufferI[z+9]);
+  end;
+  bufferU[Inc(j)] := OW_RESET;
+  bufferU[Inc(j)] := OW_WRITE;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := SKIP_ROM;
+  bufferU[Inc(j)] := READ_SCRATCHPAD2;
+  bufferU[Inc(j)] := OW_READ;
+  bufferU[Inc(j)] := 8;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(10);
   j := 0;
-
-  z := 0;
-  while (bufferI[z] <> OW_READ) and (z < DIMBUF - 2) do Inc(z);
-  T := bufferI[z + 2] + (bufferI[z + 3] shl 8);
-  if T > $F000 then T := T or Integer($FFFF0000);  { 음수 보정 }
-
-  PrintMessage2('T=%.4f°C  (0x%04X)'#13#10, T * TLSB, T);
-
-  { ---- 종료 ---- }
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-  PacketIO(2);
-
-  stop_ := GetTickCount();
-  sprintf(str, strings[S_End], [(stop_ - start_) / 1000.0]);
-  PrintMessage(str);
-  if saveLog <> 0 then
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(z=0;bufferI[z]!=OW_READ&&z<DIMBUF-2;z++) *)
+  // init: z=0
+  while bufferI[z] not =OW_READ and z<DIMBUF-2 do
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   (* TODO gtk2laz: unrecognised statement: z++; *)
+  end;
+  T := bufferI[z+2]+(bufferI[z+3] shl 8);
+  if T>0xF000 then
+   T := T or $FFFF0000;
+  PrintMessage2('T=%.4f�C  (0x%04X)\r' + LineEnding + '', T*TLSB, T);
+  PrintMessage2('T=%.4f°C  (0x%04X)\r' + LineEnding + '', T*TLSB, T);
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
+  PacketIO(2);
+  stop := GetTickCount();
+  sprintf(str, strings[S_End], (stop-start)/1000.0);
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Read11xx - 11xx UNIO 메모리 읽기
-  dim = 크기(바이트)
-  ============================================================ }
 procedure Read11xx(dim: Integer);
 var
-  k, z, i, j: Integer;
-  start_, stop_: LongWord;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
+  start: Cardinal;
+  stop: Cardinal;
   sum: Integer;
 begin
-  k := 0; z := 0;
+  k := 0;
+  z := 0;
   hvreg := 0;
-
-  if FWVersion < $800 then
+  if FWVersion<0x800 then
   begin
-    PrintMessage1(strings[S_FWver2old], '0.8.0');
-    Exit;
+   PrintMessage1(strings[S_FWver2old], '0.8.0');
+   Exit;
   end;
-  if (dim >= $10000) or (dim < 0) then
-  begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
-  end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'Read11xx(%d)    (0x%X)'#10, [dim, dim]);
-  end;
-
-  sizeEE := dim;
-  if memEE <> nil then FreeMem(memEE);
-  memEE := GetMem(dim);
-
-  start_ := GetTickCount();
+  if memEE then
+   FreeMem(memEE);
+  memEE := malloc(dim);
+  start := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;  Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;   Inc(j);
-  bufferU[j] := UNIO_COM;  Inc(j);
-  bufferU[j] := 2;         Inc(j);  { 쓰기 x 바이트 }
-  bufferU[j] := 1;         Inc(j);  { 읽기 x 바이트 }
-  bufferU[j] := $A0;       Inc(j);
-  bufferU[j] := UNIO_RDSR; Inc(j);
-  bufferU[j] := FLUSH;     Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := UNIO_COM;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := $A0;
+  bufferU[Inc(j)] := UNIO_RDSR;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(5);
-
-  { ---- 읽기 ---- }
   PrintMessage(strings[S_ReadEE]);
   PrintStatusSetup();
-
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    j := 0;
-    bufferU[j] := UNIO_COM; Inc(j);
-    bufferU[j] := 4;        Inc(j);  { 쓰기 4바이트 }
-    if i < dim - (DIMBUF - 5) then bufferU[j] := DIMBUF - 5
-    else                           bufferU[j] := dim - i;
-    Inc(j);
-    bufferU[j] := $A0;       Inc(j);
-    bufferU[j] := UNIO_READ; Inc(j);
-    bufferU[j] := i shr 8;   Inc(j);
-    bufferU[j] := i and $FF; Inc(j);
-    bufferU[j] := FLUSH;     Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(14);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> UNIO_COM) do Inc(j);
-    if (bufferI[j] = UNIO_COM) and (bufferI[j + 1] < $FA) then
+   bufferU[Inc(j)] := UNIO_COM;
+   bufferU[Inc(j)] := 4;
+   bufferU[Inc(j)] := IfThen(i<dim-(DIMBUF-5), DIMBUF-5, dim-i);
+   bufferU[Inc(j)] := $A0;
+   bufferU[Inc(j)] := UNIO_READ;
+   bufferU[Inc(j)] := i shr 8;
+   bufferU[Inc(j)] := i&0xFF;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(14);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =UNIO_COM) - 1 do
+   begin
+   end;
+   if bufferI[j] = UNIO_COM and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1] and z<DIMBUF) - 1 do
     begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        memEE[k] := bufferI[z]; Inc(k); Inc(z);
-      end;
     end;
-
-    PrintStatus(strings[S_CodeReading2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-    j := 0;
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    Inc(i, DIMBUF - 5);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   i := i + DIMBUF-5;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
-    sizeEE := k;
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
+   sizeEE := k;
   end
   else
-    PrintMessage(strings[S_Compl]);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+   PrintMessage(strings[S_Compl]);
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
   DisplayEE();
-
   sum := 0;
-  for i := 0 to sizeEE - 1 do Inc(sum, memEE[i]);
-  PrintMessage1('Checksum: 0x%X'#13#10, sum and $FFFF);
-  sprintf(str, strings[S_End], [(stop_ - start_) / 1000.0]);
-  PrintMessage(str);
-  if saveLog <> 0 then
+  for i := 0 to (sizeEE) - 1 do
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+  end;
+  PrintMessage1('Checksum: 0x%X\r' + LineEnding + '', sum&0xFFFF);
+  sprintf(str, strings[S_End], (stop-start)/1000.0);
+  PrintMessage(str);
+  if saveLog then
+  begin
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 
-{ ============================================================
-  Write11xx - 11xx UNIO 메모리 쓰기
-  dim  = 크기(바이트)
-  page = 페이지 크기
-  ============================================================ }
 procedure Write11xx(dim: Integer; page: Integer);
 var
-  k, z, i, j: Integer;
+  k: Integer;
+  z: Integer;
+  i: Integer;
+  j: Integer;
   err: Integer;
-  status_: Integer;
-  start_, stop_: LongWord;
+  status: Integer;
+  stop: Cardinal;
 begin
-  k := 0; z := 0; err := 0;
-
-  if FWVersion < $800 then
+  k := 0;
+  z := 0;
+  err := 0;
+  if FWVersion<0x800 then
   begin
-    PrintMessage1(strings[S_FWver2old], '0.8.0');
-    Exit;
+   PrintMessage1(strings[S_FWver2old], '0.8.0');
+   Exit;
   end;
-  hvreg := 0;
-  if (dim >= $10000) or (dim < 0) then
+  if dim>=0x10000 or dim<0 then
   begin
-    PrintMessage(strings[S_EELim]);
-    Exit;
+   PrintMessage(strings[S_EELim]);
+   Exit;
   end;
-
-  if saveLog <> 0 then
-  begin
-    OpenLogFile();
-    fprintf(logfile, 'Write11xx(%d,%d)    (0x%X,0x%X)'#10, [dim, page, dim, page]);
-  end;
-
-  if dim > sizeEE then
-  begin
-    i := sizeEE;
-    ReallocMem(memEE, dim);
-    while i < dim do begin memEE[i] := $FF; Inc(i); end;
-    sizeEE := dim;
-  end;
-  if dim < 1 then
-  begin
-    PrintMessage(strings[S_NoCode]);
-    Exit;
-  end;
-
-  start_ := GetTickCount();
   j := 0;
-  bufferU[j] := VREG_DIS;   Inc(j);
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $1; Inc(j);
-  bufferU[j] := WAIT_T3;    Inc(j);
-  bufferU[j] := UNIO_STBY;  Inc(j);
-  { WREN }
-  bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 2; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_WREN; Inc(j);
-  { RDSR }
-  bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 2; Inc(j); bufferU[j] := 1; Inc(j);
-  bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_RDSR; Inc(j);
-  { WRSR }
-  bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 3; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_WRSR; Inc(j); bufferU[j] := 0; Inc(j);
-  { WAIT x5 }
-  bufferU[j] := WAIT_T3; Inc(j); bufferU[j] := WAIT_T3; Inc(j);
-  bufferU[j] := WAIT_T3; Inc(j); bufferU[j] := WAIT_T3; Inc(j); bufferU[j] := WAIT_T3; Inc(j);
-  { RDSR }
-  bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 2; Inc(j); bufferU[j] := 1; Inc(j);
-  bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_RDSR; Inc(j);
-  { WREN }
-  bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 2; Inc(j); bufferU[j] := 0; Inc(j);
-  bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_WREN; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := VREG_DIS;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $1;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := UNIO_STBY;
+  bufferU[Inc(j)] := UNIO_COM;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := $A0;
+  bufferU[Inc(j)] := UNIO_WREN;
+  bufferU[Inc(j)] := UNIO_COM;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := $A0;
+  bufferU[Inc(j)] := UNIO_RDSR;
+  bufferU[Inc(j)] := UNIO_COM;
+  bufferU[Inc(j)] := 3;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := $A0;
+  bufferU[Inc(j)] := UNIO_WRSR;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := WAIT_T3;
+  bufferU[Inc(j)] := UNIO_COM;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := 1;
+  bufferU[Inc(j)] := $A0;
+  bufferU[Inc(j)] := UNIO_RDSR;
+  bufferU[Inc(j)] := UNIO_COM;
+  bufferU[Inc(j)] := 2;
+  bufferU[Inc(j)] := 0;
+  bufferU[Inc(j)] := $A0;
+  bufferU[Inc(j)] := UNIO_WREN;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(25);
-
-  { ---- 쓰기 ---- }
   PrintMessage(strings[S_EEAreaW]);
   PrintStatusSetup();
-  while page >= DIMBUF - 8 do page := page shr 1;
-
-  i := 0;
-  while i < dim do
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;page>=DIMBUF-8;page>>=1) *)
+  // init: 
+  while page>=DIMBUF-8 do
   begin
-    j := 0;
-    bufferU[j] := UNIO_COM;   Inc(j);
-    bufferU[j] := 4 + page;   Inc(j);  { 쓰기 바이트 수 }
-    bufferU[j] := 0;           Inc(j);  { 읽기 없음 }
-    bufferU[j] := $A0;         Inc(j);
-    bufferU[j] := UNIO_WRITE;  Inc(j);
-    bufferU[j] := i shr 8;     Inc(j);
-    bufferU[j] := i and $FF;   Inc(j);
-    for k := 0 to page - 1 do begin bufferU[j] := memEE[i + k]; Inc(j); end;
-    bufferU[j] := FLUSH; Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(Round((5 + page) * 0.2 + 2));
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> UNIO_COM) do Inc(j);
-    if (bufferI[j] <> UNIO_COM) or (bufferI[j + 1] >= $FA) then i := dim + 10;
-
-    PrintStatus(strings[S_CodeWriting2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-    j := 0;
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log7], [i, i, k, k]);
-
-    { 상태 폴링 }
-    bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 2; Inc(j); bufferU[j] := 1; Inc(j);
-    bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_RDSR; Inc(j);
-    bufferU[j] := UNIO_COM;   Inc(j); bufferU[j] := 2; Inc(j); bufferU[j] := 0; Inc(j);
-    bufferU[j] := $A0;        Inc(j); bufferU[j] := UNIO_WREN; Inc(j);
-    bufferU[j] := FLUSH;      Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-
-    status_ := 1; k := 0;
-    while (status_ <> 0) and (k < 20) do
-    begin
-      PacketIO(2);
-      j := 0;
-      while (j < DIMBUF - 1) and (bufferI[j] <> UNIO_COM) do Inc(j);
-      if bufferI[j] = UNIO_COM then status_ := bufferI[j + 2] and 1;
-      Inc(k);
-    end;
-    j := 0;
-
-    Inc(i, page);
+   (* TODO gtk2laz: unrecognised statement: page>>=1; *)
   end;
-
-  PrintStatusEnd();
+  for i := 0,j=0 to (dim) - 1 do
+  begin
+   bufferU[Inc(j)] := UNIO_COM;
+   bufferU[Inc(j)] := 4+page;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := $A0;
+   bufferU[Inc(j)] := UNIO_WRITE;
+   bufferU[Inc(j)] := i shr 8;
+   bufferU[Inc(j)] := i&0xFF;
+   for k := 0 to (page) - 1 do
+   begin
+   end;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO((5+page)*0.2+2);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =UNIO_COM) - 1 do
+   begin
+   end;
+   if bufferI[j] not =UNIO_COM or bufferI[j+1]>=0xFA then
+    i := dim+10;
+   PrintStatus(strings[S_CodeWriting2], i*100/(dim), i);
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log7], i, i, k, k);
+   end;
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := 1;
+   bufferU[Inc(j)] := $A0;
+   bufferU[Inc(j)] := UNIO_RDSR;
+   bufferU[Inc(j)] := UNIO_COM;
+   bufferU[Inc(j)] := 2;
+   bufferU[Inc(j)] := 0;
+   bufferU[Inc(j)] := $A0;
+   bufferU[Inc(j)] := UNIO_WREN;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   status := 1;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(k=0;status&&k<20;k++){	 			PacketIO(2); 			for(j=0;j<DIMBUF-1&&bufferI[j]!=UNIO_COM;j++); 			if(bufferI[j]==UNIO_COM) status=bufferI[j+2]&1; 		} 		j=0 *)
+   // init: k=0
+   while status and k<20 do
+   begin
+    PacketIO(2);
+    for j := 0 to (DIMBUF-1 and bufferI[j] not =UNIO_COM) - 1 do
+    begin
+    end;
+    if bufferI[j] = UNIO_COM then
+     status := bufferI[j+2]&1;
+    (* TODO gtk2laz: unrecognised statement: k++; *)
+   end;
+   i := i + page;
+  end;
   PrintMessage(strings[S_Compl]);
-
-  { ---- 검증 ---- }
   PrintMessage(strings[S_EEV]);
   PrintStatusSetup();
   k := 0;
-
-  i := 0;
-  while i < dim do
+  for i := 0,j=0 to (dim) - 1 do
   begin
-    j := 0;
-    bufferU[j] := UNIO_COM;  Inc(j);
-    bufferU[j] := 4;         Inc(j);
-    if i < dim - (DIMBUF - 4) then bufferU[j] := DIMBUF - 4
-    else                           bufferU[j] := dim - i;
-    Inc(j);
-    bufferU[j] := $A0;        Inc(j);
-    bufferU[j] := UNIO_READ;  Inc(j);
-    bufferU[j] := i shr 8;    Inc(j);
-    bufferU[j] := i and $FF;  Inc(j);
-    bufferU[j] := FLUSH;      Inc(j);
-    while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
-    PacketIO(14);
-
-    j := 0;
-    while (j < DIMBUF - 1) and (bufferI[j] <> UNIO_COM) do Inc(j);
-    if (bufferI[j] = UNIO_COM) and (bufferI[j + 1] < $FA) then
+   bufferU[Inc(j)] := UNIO_COM;
+   bufferU[Inc(j)] := 4;
+   bufferU[Inc(j)] := IfThen(i<dim-(DIMBUF-4), DIMBUF-4, dim-i);
+   bufferU[Inc(j)] := $A0;
+   bufferU[Inc(j)] := UNIO_READ;
+   bufferU[Inc(j)] := i shr 8;
+   bufferU[Inc(j)] := i&0xFF;
+   bufferU[Inc(j)] := FLUSH;
+   (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+   // init: 
+   while j<DIMBUF do
+   begin
+    (* TODO gtk2laz: unrecognised statement: j++; *)
+   end;
+   PacketIO(14);
+   for j := 0 to (DIMBUF-1 and bufferI[j] not =UNIO_COM) - 1 do
+   begin
+   end;
+   if bufferI[j] = UNIO_COM and bufferI[j+1]<0xFA then
+   begin
+    for z := j+2 to (j+2+bufferI[j+1] and z<DIMBUF) - 1 do
     begin
-      z := j + 2;
-      while (z < j + 2 + bufferI[j + 1]) and (z < DIMBUF) do
-      begin
-        if memEE[k] <> bufferI[z] then
-        begin
-          PrintMessage(#13#10);
-          PrintMessage4(strings[S_CodeVError], i + z - 3, i + z - 3, memEE[k], bufferI[z]);
-          Inc(err);
-        end;
-        Inc(k); Inc(z);
-      end;
+     if memEE[Inc(k)] not =bufferI[z] then
+     begin
+      PrintMessage('\r' + LineEnding + '');
+      PrintMessage4(strings[S_CodeVError], i+z-3, i+z-3, memEE[k-1], bufferI[z]);
+      (* TODO gtk2laz: unrecognised statement: err++ *)
+     end;
     end;
-
-    PrintStatus(strings[S_CodeV2], i * 100 div dim, i);
-    if RWstop <> 0 then i := dim;
-    j := 0;
-    if saveLog <> 0 then
-      fprintf(logfile, strings[S_Log8], [i, i, k, k, err]);
-    if err >= max_err then Break;
-
-    Inc(i, DIMBUF - 4);
+   end;
+   if RWstop then
+    i := dim;
+   j := 0;
+   if saveLog then
+   begin
+    fprintf(logfile, strings[S_Log8], i, i, k, k, err);
+   end;
+   i := i + DIMBUF-4;
   end;
-
-  PrintStatusEnd();
-  if k <> dim then
+  if k not =dim then
   begin
-    PrintMessage(#13#10);
-    PrintMessage2(strings[S_ReadEEErr], dim, k);
+   PrintMessage('\r' + LineEnding + '');
+   PrintMessage2(strings[S_ReadEEErr], dim, k);
   end;
-  PrintMessage1(strings[S_ComplErr], err);
-
-  { ---- 종료 ---- }
-  j := 0;
-  bufferU[j] := EN_VPP_VCC; Inc(j); bufferU[j] := $0; Inc(j);
-  bufferU[j] := FLUSH;      Inc(j);
-  while j < DIMBUF do begin bufferU[j] := $00; Inc(j); end;
+  bufferU[Inc(j)] := EN_VPP_VCC;
+  bufferU[Inc(j)] := $0;
+  bufferU[Inc(j)] := FLUSH;
+  (* TODO gtk2laz: for loop with non-standard form; rewritten as while: for(;j<DIMBUF;j++) bufferU[j]=0x0 *)
+  // init: 
+  while j<DIMBUF do
+  begin
+   (* TODO gtk2laz: unrecognised statement: j++; *)
+  end;
   PacketIO(2);
-
-  stop_ := GetTickCount();
+  stop := GetTickCount();
   PrintStatusClear();
-  sprintf(str, strings[S_EndErr],
-          [(stop_ - start_) / 1000.0, err,
-           IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing])]);
+  sprintf(str, strings[S_EndErr], (stop-start)/1000.0, err, IfThen(err not =1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
-  if saveLog <> 0 then
+  if saveLog then
   begin
-    fprintf(logfile, str);
-    CloseLogFile();
+   fprintf(logfile, str);
+   CloseLogFile();
   end;
 end;
 

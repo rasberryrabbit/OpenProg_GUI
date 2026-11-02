@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="12"/>
+    <General>
+      <SessionStorage Value="InProjectDir"/>
+      <Title Value="opgui_lazarus"/>
+      <ResourceType Value="res"/>
+    </General>
+    <BuildModes>
+      <Item Name="Default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lpi|lrres|lrs)"/>
+    </PublishOptions>
+    <RunParams>
+      <FormatVersion Value="2"/>
+    </RunParams>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
+    </RequiredPackages>
+    <Units>
+      <Unit>
+        <Filename Value="mainform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="mainform"/>
+        <HasResources Value="True"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="i2cspi.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="i2cspi"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="coff.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="coff"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="strings.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="strings"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="instructions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="instructions"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="common.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="common"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="devicerw.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="devicerw"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="fileio.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fileio"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="icd.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="icd"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progavr.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progavr"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progeeprom.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progeeprom"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp12.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp12"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp16.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp16"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp18.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp18"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp24.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp24"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp32.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp32"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="i2cspi.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="i2cspi"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="coff.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="coff"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="devicerw.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="devicerw"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="fileio.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fileio"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="icd.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="icd"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="icons.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="icons"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progavr.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progavr"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progeeprom.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progeeprom"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp12.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp12"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp16.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp16"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp18.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp18"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp24.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp24"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="progp32.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="progp32"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="resources.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="resources"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="strings.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="strings"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <Target>
+      <Filename Value="opgui_lazarus"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="."/>
+      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <SyntaxMode Value="ObjFPC"/>
+        <CStyleOperator Value="True"/>
+        <AllowLabel Value="False"/>
+        <CPPInline Value="True"/>
+        <UseAnsiStrings Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <Linking>
+      <Debugging>
+        <UseExternalDbgSyms Value="True"/>
+      </Debugging>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+  </CompilerOptions>
+  <CompilerMessages>
+    <IgnoredMessages>
+      <Code>5024</Code>
+    </IgnoredMessages>
+  </CompilerMessages>
+</CONFIG>
