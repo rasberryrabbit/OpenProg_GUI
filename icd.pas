@@ -66,6 +66,11 @@ type
   WORD  = Word;
   BYTE  = Byte;
 
+  Tvar = record
+    name_: PChar;
+    display: Integer;
+  end;
+
 var
   statusTxt: ^TControl;
   sourceTxt: ^TControl;
@@ -100,28 +105,11 @@ var
   ins: array[0..32-1] of Char;
   reg: array[0..32-1] of Char;
 
+  variables: array[0..$200-1] of Tvar;
+
 // --- function declarations ---
 procedure ShowContext(tck: T);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct var{	char name;	int display;} variables[0x200];
 
 
 
@@ -169,25 +157,6 @@ implementation
 
 procedure ShowContext(tck: T);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct var{	char name;	int display;} variables[0x200];
 
 
 
