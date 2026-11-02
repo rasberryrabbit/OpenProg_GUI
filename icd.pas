@@ -134,10 +134,10 @@ procedure run;
 function version: Integer;
 procedure Halt_;
 function ReadRegister(addr: Integer): Integer;
-function ReadRegisterN(addr: Integer; n: Integer; buf: ^Integer): Integer;
+function ReadRegisterN(addr: Integer; n: Integer; buf: PInteger): Integer;
 procedure WriteRegister(addr: Integer; data: Integer);
 function ReadProgMem(addr: Integer): Integer;
-function ReadProgMemN(addr: Integer; n: Integer; buf: ^Integer): Integer;
+function ReadProgMemN(addr: Integer; n: Integer; buf: PInteger): Integer;
 function ReadDataMem(addr: Integer): Integer;
 function ReadDataMemN(addr: Integer; n: Integer; buf: PByte): Integer;
 function getVar(addr: Integer; var_: PChar): PChar;
@@ -441,7 +441,7 @@ begin
   Exit(bufferI[z+3]);
 end;
 
-function ReadRegisterN(addr: Integer; n: Integer; buf: ^Integer): Integer;
+function ReadRegisterN(addr: Integer; n: Integer; buf: PInteger): Integer;
 var
   i: Integer;
   j: Integer;
@@ -556,7 +556,7 @@ begin
   Exit(data);
 end;
 
-function ReadProgMemN(addr: Integer; n: Integer; buf: ^Integer): Integer;
+function ReadProgMemN(addr: Integer; n: Integer; buf: PInteger): Integer;
 var
   addr_temp: Integer;
   data_temp: Integer;
@@ -966,8 +966,8 @@ end;
 
 procedure loadCoff(widget: ^TControl; window: ^TControl);
 var
-  dialog: TGtkFileChooser;
-  filename: Char;
+  dialog: ^TGtkFileChooser;
+  filename: PChar;
 begin
   dialog := gtk_file_chooser_dialog_new(strings[I_LOAD_COFF], GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, strings[I_CANCEL], GTK_RESPONSE_CANCEL, strings[I_OPEN], GTK_RESPONSE_ACCEPT, nil);
   if (cur_path) <> 0 then
@@ -1286,7 +1286,7 @@ var
   data: array[0..256-1] of Byte;
   s: array[0..64-1] of Char;
   t: array[0..9-1] of Char;
-  g: Char;
+  g: PChar;
 begin
   cmd[0] := #0;
   status[0] := #0;
@@ -1442,7 +1442,7 @@ var
   data: array[0..256-1] of Byte;
   s: array[0..64-1] of Char;
   t: array[0..9-1] of Char;
-  g: Char;
+  g: PChar;
   i: Integer;
   n: Integer;
   i: Integer;
@@ -1453,7 +1453,7 @@ var
   s: Tstruct symbol;
   s: Tstruct symbol;
   var_: array[0..64-1] of Char;
-  p: Char;
+  p: PChar;
   data: Integer;
   i: Integer;
   addr: Integer;
