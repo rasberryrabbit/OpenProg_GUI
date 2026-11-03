@@ -28,8 +28,7 @@ uses
   glib_types,
   gtk_types,
   libc_types,
-  sys_types,
-  mainform;
+  sys_types;
 
 const
   NL = #10;

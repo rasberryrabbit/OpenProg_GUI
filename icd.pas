@@ -23,8 +23,7 @@ uses
   glib_types,
   gtk_types,
   libc_types,
-  sys_types,
-  mainform;
+  sys_types;
 
 const
   NL = #10;
@@ -1975,9 +1974,9 @@ var
   selection: PChar;
   line: Integer;
 begin
-  if (GTK_IS_TEXT_VIEW(widget)) and ((event^type_) = (GDK_2BUTTON_PRESS)) then
+  if (GTK_IS_TEXT_VIEW(widget)) and ((event^.type_) = (GDK_2BUTTON_PRESS)) then
   begin
-   gtk_text_view_window_to_buffer_coords(widget, GTK_TEXT_WINDOW_WIDGET, event^x, event^y, @(x), @(y));
+   gtk_text_view_window_to_buffer_coords(widget, GTK_TEXT_WINDOW_WIDGET, event^.x, event^.y, @(x), @(y));
    gtk_text_view_get_iter_at_location(widget, @(iter), x, y);
    iter2 := iter;
    itx := iter2;
@@ -2039,9 +2038,9 @@ var
   c: Char;
   selection: PChar;
 begin
-  if (GTK_IS_TEXT_VIEW(widget)) and ((event^type_) = (GDK_2BUTTON_PRESS)) then
+  if (GTK_IS_TEXT_VIEW(widget)) and ((event^.type_) = (GDK_2BUTTON_PRESS)) then
   begin
-   gtk_text_view_window_to_buffer_coords(widget, GTK_TEXT_WINDOW_WIDGET, event^x, event^y, @(x), @(y));
+   gtk_text_view_window_to_buffer_coords(widget, GTK_TEXT_WINDOW_WIDGET, event^.x, event^.y, @(x), @(y));
    gtk_text_view_get_iter_at_location(widget, @(iter), x, y);
    iter2 := iter;
    itx := iter2;
@@ -2072,7 +2071,7 @@ function icdCommand_key_event(widget: ^TControl; event: ^TGdkEventButton; func_d
 var
   s: array[0..64-1] of Char;
 begin
-  if ((event^type_) = (GDK_KEY_PRESS)) and ((event^keyval) = ($FF0D)) then
+  if ((event^.type_) = (GDK_KEY_PRESS)) and ((event^.keyval) = ($FF0D)) then
   begin
    strncpy(s, gtk_entry_get_text(GTK_ENTRY(icdCommand)), 63);
    if not (strlen(s)) then
@@ -2101,9 +2100,9 @@ begin
   begin
    gtk_main_iteration();
   end;
-  if (event^type_) = (GDK_KEY_PRESS) then
+  if (event^.type_) = (GDK_KEY_PRESS) then
   begin
-   case event^keyval of
+   case event^.keyval of
     $FFBE:
     begin
      ICDHelp(NULL, NULL);

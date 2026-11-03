@@ -28,8 +28,7 @@ uses
   glib_types,
   gtk_types,
   libc_types,
-  sys_types,
-  mainform;
+  sys_types;
 
 const
   NL = #10;
@@ -410,23 +409,23 @@ var
   x: Double;
   ee: Integer;
 begin
-  info^family := devlistEntry^family;
-  info^HV := devlistEntry^HV;
-  info^V33 := devlistEntry^V33;
-  info^size := devlistEntry^ReadParam[0];
-  info^sizeEE := devlistEntry^WriteParam[1];
+  info^.family := devlistEntry^.family;
+  info^.HV := devlistEntry^.HV;
+  info^.V33 := devlistEntry^.V33;
+  info^.size := devlistEntry^.ReadParam[0];
+  info^.sizeEE := devlistEntry^.WriteParam[1];
   str2[0] := 0;
-  x := (info^size) div (1024.0);
+  x := (info^.size) div (1024.0);
   if (x) - (x) then
    sprintf(strF, '%.1f', x)
   else
    sprintf(strF, '%d', x);
-  case info^family of
+  case info^.family of
    PIC12:
    begin
     sprintf(str2, 'PIC12, ');
-    if (info^size) < (1024) then
-     sprintf(str3, '%dW FLASH', info^size)
+    if (info^.size) < (1024) then
+     sprintf(str3, '%dW FLASH', info^.size)
     else
      sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
@@ -434,14 +433,14 @@ begin
    PIC16:
    begin
     sprintf(str2, 'PIC16, ');
-    if (info^size) < (1024) then
-     sprintf(str3, '%dW FLASH', info^size)
+    if (info^.size) < (1024) then
+     sprintf(str3, '%dW FLASH', info^.size)
     else
      sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
-    if info^sizeEE then
+    if info^.sizeEE then
     begin
-     ee := info^sizeEE;
+     ee := info^.sizeEE;
      if (ee) < (0) then
       ee := -(ee);
      sprintf(str3, ' + %dB EEPROM', ee);
@@ -451,94 +450,94 @@ begin
    PIC18:
    begin
     sprintf(str2, 'PIC18, ');
-    if (info^size) < (1024) then
-     sprintf(str3, '%dB FLASH ', info^size)
+    if (info^.size) < (1024) then
+     sprintf(str3, '%dB FLASH ', info^.size)
     else
      sprintf(str3, '%sKB FLASH ', strF);
     strcat(str2, str3);
-    if info^sizeEE then
+    if info^.sizeEE then
     begin
-     sprintf(str3, '+ %dB EEPROM ', info^sizeEE);
+     sprintf(str3, '+ %dB EEPROM ', info^.sizeEE);
      strcat(str2, str3);
     end;
    end;
    PIC24:
    begin
     sprintf(str2, 'PIC24, ');
-    if (info^size) < (1024) then
-     sprintf(str3, '%dW FLASH', info^size)
+    if (info^.size) < (1024) then
+     sprintf(str3, '%dW FLASH', info^.size)
     else
      sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
-    if info^sizeEE then
+    if info^.sizeEE then
     begin
-     sprintf(str3, ' + %dB EEPROM', info^sizeEE);
+     sprintf(str3, ' + %dB EEPROM', info^.sizeEE);
      strcat(str2, str3);
     end;
    end;
    PIC32:
    begin
     sprintf(str2, 'PIC32, ');
-    if (info^size) < (1024) then
-     sprintf(str3, '%dW FLASH', info^size)
+    if (info^.size) < (1024) then
+     sprintf(str3, '%dW FLASH', info^.size)
     else
      sprintf(str3, '%sKW FLASH', strF);
     strcat(str2, str3);
-    if info^sizeEE then
+    if info^.sizeEE then
     begin
-     sprintf(str3, ' + %dB EEPROM', info^sizeEE);
+     sprintf(str3, ' + %dB EEPROM', info^.sizeEE);
      strcat(str2, str3);
     end;
    end;
    AVR:
    begin
     sprintf(str2, 'AVR, ');
-    if (info^size) < (1024) then
-     sprintf(str3, '%dB FLASH', info^size)
+    if (info^.size) < (1024) then
+     sprintf(str3, '%dB FLASH', info^.size)
     else
      sprintf(str3, '%sKB FLASH', strF);
     strcat(str2, str3);
-    if info^sizeEE then
+    if info^.sizeEE then
     begin
-     sprintf(str3, ' + %dB EEPROM', info^sizeEE);
+     sprintf(str3, ' + %dB EEPROM', info^.sizeEE);
      strcat(str2, str3);
     end;
    end;
    I2CEE:
    begin
-    if (info^size) < (1024) then
-     sprintf(str2, '%s, %dB', strings[I_I2CMEM], info^size)
+    if (info^.size) < (1024) then
+     sprintf(str2, '%s, %dB', strings[I_I2CMEM], info^.size)
     else
      sprintf(str2, '%s, %sKB', strings[I_I2CMEM], strF);
    end;
    SPIEE:
    begin
-    if (info^size) < (1024) then
-     sprintf(str2, '%s, %dB', strings[I_SPIMEM], info^size)
+    if (info^.size) < (1024) then
+     sprintf(str2, '%s, %dB', strings[I_SPIMEM], info^.size)
     else
      sprintf(str2, '%s, %sKB', strings[I_SPIMEM], strF);
    end;
    UWEE:
    begin
-    if (info^size) < (1024) then
-     sprintf(str2, '%s, %dB', strings[I_UWMEM], info^size)
+    if (info^.size) < (1024) then
+     sprintf(str2, '%s, %dB', strings[I_UWMEM], info^.size)
     else
      sprintf(str2, '%s,%sKB', strings[I_UWMEM], strF);
    end;
    OWEE:
    begin
-    if (info^size) < (0) then
+    if (info^.size) < (0) then
      sprintf(str2, strings[I_OWDEV])
     else
-     if (info^size) < (1024) then
-      sprintf(str2, '%s, %dB', strings[I_OWMEM], info^size)
+     if (info^.size) < (1024) then
+      sprintf(str2, '%s, %dB', strings[I_OWMEM], info^.size)
      else
       sprintf(str2, '%s, %sKB', strings[I_OWMEM], strF);
    end;
    UNIOEE:
    begin
-    if (info^size) < (1024) then
-     sprintf(str2, '%s, %dB', strings[I_UNIOMEM], info^size)
+    if (info^.size) < (1024) then
+     sprintf(str2, '%s, %dB', strings[I_UNIOMEM], info^.size)
     else
      sprintf(str2, '%s, %sKB', strings[I_UNIOMEM], strF);
    end;
@@ -547,18 +546,18 @@ begin
     sprintf(str2, '!!unknown family!!');
    end;
   end;
-  if (info^HV) > (0) then
+  if (info^.HV) > (0) then
   begin
-   sprintf(str3, ', %.1fV', info^HV);
+   sprintf(str3, ', %.1fV', info^.HV);
    strcat(str2, str3);
   end;
-  if info^V33 then
+  if info^.V33 then
   begin
    strcat(str2, ', ');
    strcat(str2, strings[I_3V3REQUIRED]);
   end;
-  info^features := malloc((strlen(str2)) + (1));
-  strcpy(info^features, str2);
+  info^.features := malloc((strlen(str2)) + (1));
+  strcpy(info^.features, str2);
 end;
 
 function GetDevInfo(dev: PChar): TDevInfo;
