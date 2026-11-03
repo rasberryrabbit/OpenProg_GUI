@@ -24,6 +24,7 @@ uses
   , progp18
   , progp24
   , progp32
+  , opgui
   , i2cspi
   , coff
   , devicerw

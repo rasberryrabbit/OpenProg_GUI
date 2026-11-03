@@ -136,6 +136,13 @@
         <ResourcePath Value=".lfm"/>
       </Unit>
       <Unit>
+        <Filename Value="opgui.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="opgui"/>
+        <HasResources Value="False"/>
+        <ResourcePath Value=".lfm"/>
+      </Unit>
+      <Unit>
         <Filename Value="i2cspi.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="i2cspi"/>

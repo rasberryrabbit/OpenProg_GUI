@@ -19,6 +19,10 @@ uses
   Menus,
   LCLType,
   common,
+  glib_types,
+  gtk_types,
+  libc_types,
+  sys_types,
   mainform;
 
 const

@@ -18,6 +18,10 @@ uses
   Spin,
   Menus,
   LCLType,
+  glib_types,
+  gtk_types,
+  libc_types,
+  sys_types,
   mainform;
 
 const

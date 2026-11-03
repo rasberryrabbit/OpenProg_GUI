@@ -25,6 +25,10 @@ uses
   progp24,
   progavr,
   devicerw,
+  glib_types,
+  gtk_types,
+  libc_types,
+  sys_types,
   mainform;
 
 const
