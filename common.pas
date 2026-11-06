@@ -97,7 +97,6 @@ var
   useSAFLOCK_flag: Integer;
 
 // --- function declarations ---
-function GetTickCount: DWORD;
 function StartHVReg(V: Double): Integer;
 procedure msDelay(delay: Double);
 procedure DisplayEE;

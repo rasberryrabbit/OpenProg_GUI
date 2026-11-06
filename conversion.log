@@ -1,0 +1,331 @@
+gtk2laz conversion log
+Date: 2026-11-06T13:27:15
+Output directory: E:/dev/opgui-0.12.4\opgui-0.12.4_lazarus
+Lines: 326
+============================================================
+[info] Starting conversion: mode=full input=E:/dev/opgui-0.12.4/opgui-0.12.4 output=E:/dev/opgui-0.12.4\opgui-0.12.4_lazarus
+[progress] Converting Glade: opgui.glade
+[progress] Converting header: I2CSPI.h
+[progress] Converting header: coff.h
+[progress] Converting header: strings.h
+[progress] Converting header: instructions.h
+[progress] Converting header: common.h
+[progress] Converting header: deviceRW.h
+[progress] Converting header: fileIO.h
+[progress] Converting header: icd.h
+[progress] Converting header: progAVR.h
+[progress] Converting header: progEEPROM.h
+[progress] Converting header: progP12.h
+[progress] Converting header: progP16.h
+[progress] Converting header: progP18.h
+[progress] Converting header: progP24.h
+[progress] Converting header: progP32.h
+[progress] Converting C source: opgui.c
+gtk2laz: [opgui.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [opgui.c] trying pcpp preprocessing...
+gtk2laz: [opgui.c] attempting pre-inline of local headers...
+gtk2laz: [opgui.c] pre-inlined local headers (117913 bytes, 22056 bytes added)
+gtk2laz: [opgui.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [opgui.c] pcpp OK — 126461 bytes of preprocessed text
+gtk2laz: [opgui.c] injected 22766 bytes of fake system headers
+gtk2laz: [opgui.c] parsing with pycparser (149228 bytes)...
+gtk2laz: [opgui.c] pycparser OK
+gtk2laz: [opgui.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [opgui.c] trying pcpp preprocessing...
+gtk2laz: [opgui.c] attempting pre-inline of local headers...
+gtk2laz: [opgui.c] pre-inlined local headers (117913 bytes, 22056 bytes added)
+gtk2laz: [opgui.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [opgui.c] pcpp OK — 126461 bytes of preprocessed text
+gtk2laz: [opgui.c] injected 22766 bytes of fake system headers
+gtk2laz: [opgui.c] parsing with pycparser (149228 bytes)...
+gtk2laz: [opgui.c] pycparser OK
+[progress] Converting C source: I2CSPI.c
+gtk2laz: [I2CSPI.c] extracted 2 function-like macros for inlining
+gtk2laz: [I2CSPI.c] wrote expanded source to E:\dev\opgui-0.12.4\opgui-0.12.4\gtk2laz_expanded_I2CSPI__yl3cpcx.c (4413 bytes)
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] trying pcpp preprocessing...
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] attempting pre-inline of local headers...
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] pre-inlined local headers (14976 bytes, 10563 bytes added)
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] pcpp OK — 50061 bytes of preprocessed text
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] injected 22766 bytes of fake system headers
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] parsing with pycparser (72828 bytes)...
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] pycparser OK
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] trying pcpp preprocessing...
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] attempting pre-inline of local headers...
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] pre-inlined local headers (14976 bytes, 10563 bytes added)
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] pcpp OK — 50061 bytes of preprocessed text
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] injected 22766 bytes of fake system headers
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] parsing with pycparser (72828 bytes)...
+gtk2laz: [gtk2laz_expanded_I2CSPI__yl3cpcx.c] pycparser OK
+[progress] Converting C source: coff.c
+gtk2laz: [coff.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [coff.c] trying pcpp preprocessing...
+gtk2laz: [coff.c] attempting pre-inline of local headers...
+gtk2laz: [coff.c] pre-inlined local headers (12301 bytes, 4096 bytes added)
+gtk2laz: [coff.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [coff.c] pcpp OK — 33654 bytes of preprocessed text
+gtk2laz: [coff.c] injected 22766 bytes of fake system headers
+gtk2laz: [coff.c] parsing with pycparser (56421 bytes)...
+gtk2laz: [coff.c] pycparser OK
+gtk2laz: [coff.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [coff.c] trying pcpp preprocessing...
+gtk2laz: [coff.c] attempting pre-inline of local headers...
+gtk2laz: [coff.c] pre-inlined local headers (12301 bytes, 4096 bytes added)
+gtk2laz: [coff.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [coff.c] pcpp OK — 33654 bytes of preprocessed text
+gtk2laz: [coff.c] injected 22766 bytes of fake system headers
+gtk2laz: [coff.c] parsing with pycparser (56421 bytes)...
+gtk2laz: [coff.c] pycparser OK
+[progress] Converting C source: deviceRW.c
+gtk2laz: [deviceRW.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [deviceRW.c] trying pcpp preprocessing...
+gtk2laz: [deviceRW.c] attempting pre-inline of local headers...
+gtk2laz: [deviceRW.c] pre-inlined local headers (86091 bytes, 14839 bytes added)
+gtk2laz: [deviceRW.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [deviceRW.c] pcpp OK — 107788 bytes of preprocessed text
+gtk2laz: [deviceRW.c] injected 22766 bytes of fake system headers
+gtk2laz: [deviceRW.c] parsing with pycparser (130555 bytes)...
+gtk2laz: [deviceRW.c] pycparser OK
+gtk2laz: [deviceRW.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [deviceRW.c] trying pcpp preprocessing...
+gtk2laz: [deviceRW.c] attempting pre-inline of local headers...
+gtk2laz: [deviceRW.c] pre-inlined local headers (86091 bytes, 14839 bytes added)
+gtk2laz: [deviceRW.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [deviceRW.c] pcpp OK — 107788 bytes of preprocessed text
+gtk2laz: [deviceRW.c] injected 22766 bytes of fake system headers
+gtk2laz: [deviceRW.c] parsing with pycparser (130555 bytes)...
+gtk2laz: [deviceRW.c] pycparser OK
+[progress] Converting C source: fileIO.c
+gtk2laz: [fileIO.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [fileIO.c] trying pcpp preprocessing...
+gtk2laz: [fileIO.c] attempting pre-inline of local headers...
+gtk2laz: [fileIO.c] pre-inlined local headers (44469 bytes, 14438 bytes added)
+gtk2laz: [fileIO.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [fileIO.c] pcpp OK — 74667 bytes of preprocessed text
+gtk2laz: [fileIO.c] injected 22766 bytes of fake system headers
+gtk2laz: [fileIO.c] parsing with pycparser (97434 bytes)...
+gtk2laz: [fileIO.c] pycparser OK
+gtk2laz: [fileIO.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [fileIO.c] trying pcpp preprocessing...
+gtk2laz: [fileIO.c] attempting pre-inline of local headers...
+gtk2laz: [fileIO.c] pre-inlined local headers (44469 bytes, 14438 bytes added)
+gtk2laz: [fileIO.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [fileIO.c] pcpp OK — 74667 bytes of preprocessed text
+gtk2laz: [fileIO.c] injected 22766 bytes of fake system headers
+gtk2laz: [fileIO.c] parsing with pycparser (97434 bytes)...
+gtk2laz: [fileIO.c] pycparser OK
+[progress] Converting C source: icd.c
+gtk2laz: [icd.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [icd.c] trying pcpp preprocessing...
+gtk2laz: [icd.c] attempting pre-inline of local headers...
+gtk2laz: [icd.c] pre-inlined local headers (57929 bytes, 14659 bytes added)
+gtk2laz: [icd.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [icd.c] pcpp OK — 85394 bytes of preprocessed text
+gtk2laz: [icd.c] injected 22766 bytes of fake system headers
+gtk2laz: [icd.c] parsing with pycparser (108161 bytes)...
+gtk2laz: [icd.c] pycparser OK
+gtk2laz: [icd.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [icd.c] trying pcpp preprocessing...
+gtk2laz: [icd.c] attempting pre-inline of local headers...
+gtk2laz: [icd.c] pre-inlined local headers (57929 bytes, 14659 bytes added)
+gtk2laz: [icd.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [icd.c] pcpp OK — 85394 bytes of preprocessed text
+gtk2laz: [icd.c] injected 22766 bytes of fake system headers
+gtk2laz: [icd.c] parsing with pycparser (108161 bytes)...
+gtk2laz: [icd.c] pycparser OK
+[progress] Converting C source: icons.c
+gtk2laz: [icons.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [icons.c] trying pcpp preprocessing...
+gtk2laz: [icons.c] attempting pre-inline of local headers...
+gtk2laz: [icons.c] pre-inline found no local headers to inline (inlined=28855 bytes, original=28856 bytes)
+gtk2laz: [icons.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [icons.c] pcpp OK — 58559 bytes of preprocessed text
+gtk2laz: [icons.c] injected 22766 bytes of fake system headers
+gtk2laz: [icons.c] parsing with pycparser (81326 bytes)...
+gtk2laz: [icons.c] pycparser OK
+gtk2laz: [icons.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [icons.c] trying pcpp preprocessing...
+gtk2laz: [icons.c] attempting pre-inline of local headers...
+gtk2laz: [icons.c] pre-inline found no local headers to inline (inlined=28855 bytes, original=28856 bytes)
+gtk2laz: [icons.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [icons.c] pcpp OK — 58559 bytes of preprocessed text
+gtk2laz: [icons.c] injected 22766 bytes of fake system headers
+gtk2laz: [icons.c] parsing with pycparser (81326 bytes)...
+gtk2laz: [icons.c] pycparser OK
+[progress] Converting C source: progAVR.c
+gtk2laz: [progAVR.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progAVR.c] trying pcpp preprocessing...
+gtk2laz: [progAVR.c] attempting pre-inline of local headers...
+gtk2laz: [progAVR.c] pre-inlined local headers (75751 bytes, 10562 bytes added)
+gtk2laz: [progAVR.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progAVR.c] pcpp OK — 98661 bytes of preprocessed text
+gtk2laz: [progAVR.c] injected 22766 bytes of fake system headers
+gtk2laz: [progAVR.c] parsing with pycparser (121428 bytes)...
+gtk2laz: [progAVR.c] pycparser OK
+gtk2laz: [progAVR.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progAVR.c] trying pcpp preprocessing...
+gtk2laz: [progAVR.c] attempting pre-inline of local headers...
+gtk2laz: [progAVR.c] pre-inlined local headers (75751 bytes, 10562 bytes added)
+gtk2laz: [progAVR.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progAVR.c] pcpp OK — 98661 bytes of preprocessed text
+gtk2laz: [progAVR.c] injected 22766 bytes of fake system headers
+gtk2laz: [progAVR.c] parsing with pycparser (121428 bytes)...
+gtk2laz: [progAVR.c] pycparser OK
+[progress] Converting C source: progEEPROM.c
+gtk2laz: [progEEPROM.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progEEPROM.c] trying pcpp preprocessing...
+gtk2laz: [progEEPROM.c] attempting pre-inline of local headers...
+gtk2laz: [progEEPROM.c] pre-inlined local headers (75263 bytes, 10562 bytes added)
+gtk2laz: [progEEPROM.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progEEPROM.c] pcpp OK — 94659 bytes of preprocessed text
+gtk2laz: [progEEPROM.c] injected 22766 bytes of fake system headers
+gtk2laz: [progEEPROM.c] parsing with pycparser (117426 bytes)...
+gtk2laz: [progEEPROM.c] pycparser OK
+gtk2laz: [progEEPROM.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progEEPROM.c] trying pcpp preprocessing...
+gtk2laz: [progEEPROM.c] attempting pre-inline of local headers...
+gtk2laz: [progEEPROM.c] pre-inlined local headers (75263 bytes, 10562 bytes added)
+gtk2laz: [progEEPROM.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progEEPROM.c] pcpp OK — 94659 bytes of preprocessed text
+gtk2laz: [progEEPROM.c] injected 22766 bytes of fake system headers
+gtk2laz: [progEEPROM.c] parsing with pycparser (117426 bytes)...
+gtk2laz: [progEEPROM.c] pycparser OK
+[progress] Converting C source: progP12.c
+gtk2laz: [progP12.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP12.c] trying pcpp preprocessing...
+gtk2laz: [progP12.c] attempting pre-inline of local headers...
+gtk2laz: [progP12.c] pre-inlined local headers (30850 bytes, 10562 bytes added)
+gtk2laz: [progP12.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP12.c] pcpp OK — 60845 bytes of preprocessed text
+gtk2laz: [progP12.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP12.c] parsing with pycparser (83612 bytes)...
+gtk2laz: [progP12.c] pycparser OK
+gtk2laz: [progP12.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP12.c] trying pcpp preprocessing...
+gtk2laz: [progP12.c] attempting pre-inline of local headers...
+gtk2laz: [progP12.c] pre-inlined local headers (30850 bytes, 10562 bytes added)
+gtk2laz: [progP12.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP12.c] pcpp OK — 60845 bytes of preprocessed text
+gtk2laz: [progP12.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP12.c] parsing with pycparser (83612 bytes)...
+gtk2laz: [progP12.c] pycparser OK
+[progress] Converting C source: progP16.c
+gtk2laz: [progP16.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP16.c] trying pcpp preprocessing...
+gtk2laz: [progP16.c] attempting pre-inline of local headers...
+gtk2laz: [progP16.c] pre-inlined local headers (230355 bytes, 10562 bytes added)
+gtk2laz: [progP16.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP16.c] pcpp OK — 208577 bytes of preprocessed text
+gtk2laz: [progP16.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP16.c] parsing with pycparser (231344 bytes)...
+gtk2laz: [progP16.c] pycparser OK
+gtk2laz: [progP16.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP16.c] trying pcpp preprocessing...
+gtk2laz: [progP16.c] attempting pre-inline of local headers...
+gtk2laz: [progP16.c] pre-inlined local headers (230355 bytes, 10562 bytes added)
+gtk2laz: [progP16.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP16.c] pcpp OK — 208577 bytes of preprocessed text
+gtk2laz: [progP16.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP16.c] parsing with pycparser (231344 bytes)...
+gtk2laz: [progP16.c] pycparser OK
+[progress] Converting C source: progP18.c
+gtk2laz: [progP18.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP18.c] trying pcpp preprocessing...
+gtk2laz: [progP18.c] attempting pre-inline of local headers...
+gtk2laz: [progP18.c] pre-inlined local headers (100061 bytes, 10562 bytes added)
+gtk2laz: [progP18.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP18.c] pcpp OK — 117606 bytes of preprocessed text
+gtk2laz: [progP18.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP18.c] parsing with pycparser (140373 bytes)...
+gtk2laz: [progP18.c] pycparser OK
+gtk2laz: [progP18.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP18.c] trying pcpp preprocessing...
+gtk2laz: [progP18.c] attempting pre-inline of local headers...
+gtk2laz: [progP18.c] pre-inlined local headers (100061 bytes, 10562 bytes added)
+gtk2laz: [progP18.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP18.c] pcpp OK — 117606 bytes of preprocessed text
+gtk2laz: [progP18.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP18.c] parsing with pycparser (140373 bytes)...
+gtk2laz: [progP18.c] pycparser OK
+[progress] Converting C source: progP24.c
+gtk2laz: [progP24.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP24.c] trying pcpp preprocessing...
+gtk2laz: [progP24.c] attempting pre-inline of local headers...
+gtk2laz: [progP24.c] pre-inlined local headers (122024 bytes, 10562 bytes added)
+gtk2laz: [progP24.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP24.c] pcpp OK — 134681 bytes of preprocessed text
+gtk2laz: [progP24.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP24.c] parsing with pycparser (157448 bytes)...
+gtk2laz: [progP24.c] pycparser OK
+gtk2laz: [progP24.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP24.c] trying pcpp preprocessing...
+gtk2laz: [progP24.c] attempting pre-inline of local headers...
+gtk2laz: [progP24.c] pre-inlined local headers (122024 bytes, 10562 bytes added)
+gtk2laz: [progP24.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP24.c] pcpp OK — 134681 bytes of preprocessed text
+gtk2laz: [progP24.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP24.c] parsing with pycparser (157448 bytes)...
+gtk2laz: [progP24.c] pycparser OK
+[progress] Converting C source: progP32.c
+gtk2laz: [progP32.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP32.c] trying pcpp preprocessing...
+gtk2laz: [progP32.c] attempting pre-inline of local headers...
+gtk2laz: [progP32.c] pre-inlined local headers (83912 bytes, 10562 bytes added)
+gtk2laz: [progP32.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP32.c] pcpp OK — 64020 bytes of preprocessed text
+gtk2laz: [progP32.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP32.c] parsing with pycparser (86787 bytes)...
+gtk2laz: [progP32.c] pycparser OK
+gtk2laz: [progP32.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [progP32.c] trying pcpp preprocessing...
+gtk2laz: [progP32.c] attempting pre-inline of local headers...
+gtk2laz: [progP32.c] pre-inlined local headers (83912 bytes, 10562 bytes added)
+gtk2laz: [progP32.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [progP32.c] pcpp OK — 64020 bytes of preprocessed text
+gtk2laz: [progP32.c] injected 22766 bytes of fake system headers
+gtk2laz: [progP32.c] parsing with pycparser (86787 bytes)...
+gtk2laz: [progP32.c] pycparser OK
+[progress] Converting C source: resources.c
+gtk2laz: [resources.c] extracted 8 function-like macros for inlining
+gtk2laz: [resources.c] wrote expanded source to E:\dev\opgui-0.12.4\opgui-0.12.4\gtk2laz_expanded_resources_78s1tisc.c (485772 bytes)
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] trying pcpp preprocessing...
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] attempting pre-inline of local headers...
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] pre-inline found no local headers to inline (inlined=485772 bytes, original=485772 bytes)
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] using target platform 'windows' (7 preset defines)
+gtk2laz_expanded_resources_78s1tisc.c:7181 warning: "Constructor not supported on this compiler, linking in resources will not work"
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] pcpp OK — 506991 bytes of preprocessed text
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] injected 22766 bytes of fake system headers
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] parsing with pycparser (529758 bytes)...
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] pycparser OK
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] trying pcpp preprocessing...
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] attempting pre-inline of local headers...
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] pre-inline found no local headers to inline (inlined=485772 bytes, original=485772 bytes)
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] using target platform 'windows' (7 preset defines)
+gtk2laz_expanded_resources_78s1tisc.c:7181 warning: "Constructor not supported on this compiler, linking in resources will not work"
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] pcpp OK — 506991 bytes of preprocessed text
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] injected 22766 bytes of fake system headers
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] parsing with pycparser (529758 bytes)...
+gtk2laz: [gtk2laz_expanded_resources_78s1tisc.c] pycparser OK
+[progress] Converting C source: strings.c
+gtk2laz: [strings.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [strings.c] trying pcpp preprocessing...
+gtk2laz: [strings.c] attempting pre-inline of local headers...
+gtk2laz: [strings.c] pre-inlined local headers (61242 bytes, 10562 bytes added)
+gtk2laz: [strings.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [strings.c] pcpp OK — 97562 bytes of preprocessed text
+gtk2laz: [strings.c] injected 22766 bytes of fake system headers
+gtk2laz: [strings.c] parsing with pycparser (120329 bytes)...
+gtk2laz: [strings.c] pycparser OK
+gtk2laz: [strings.c] no function-like macros extracted — using original source for AST parse
+gtk2laz: [strings.c] trying pcpp preprocessing...
+gtk2laz: [strings.c] attempting pre-inline of local headers...
+gtk2laz: [strings.c] pre-inlined local headers (61242 bytes, 10562 bytes added)
+gtk2laz: [strings.c] using target platform 'windows' (7 preset defines)
+gtk2laz: [strings.c] pcpp OK — 97562 bytes of preprocessed text
+gtk2laz: [strings.c] injected 22766 bytes of fake system headers
+gtk2laz: [strings.c] parsing with pycparser (120329 bytes)...
+gtk2laz: [strings.c] pycparser OK
+[progress] Generating project files…
+[progress] Building conversion report…
+[ok] Done — 0 TODO(s) in 32 unit(s). Output: E:/dev/opgui-0.12.4\opgui-0.12.4_lazarus

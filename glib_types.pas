@@ -16,8 +16,8 @@ type
   Tgdouble = Double;
   Tgchar = Char;
   Tguchar = Byte;
-  Tgpointer = ^Pointer;
-  Tgconstpointer = ^Pointer;
+  Tgpointer = Pointer;
+  Tgconstpointer = Pointer;
   Tgsize = Cardinal;
   Tgssize = LongInt;
   Tguint32 = Cardinal;
@@ -26,8 +26,8 @@ type
   Tgint32 = Integer;
   Tgint16 = SmallInt;
   Tgint8 = Char;
-  Tgint64 = Int64;
-  Tguint64 = QWord;
+  Tgint64 = LongInt;
+  Tguint64 = Cardinal;
 
 implementation
 

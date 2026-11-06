@@ -11,216 +11,287 @@ type
   TGtkWidget = record
     (* empty struct *)
   end;
+  PGtkWidget = ^TGtkWidget;
   TGtkWindow = record
     (* empty struct *)
   end;
+  PGtkWindow = ^TGtkWindow;
   TGtkButton = record
     (* empty struct *)
   end;
+  PGtkButton = ^TGtkButton;
   TGtkLabel = record
     (* empty struct *)
   end;
+  PGtkLabel = ^TGtkLabel;
   TGtkEntry = record
     (* empty struct *)
   end;
+  PGtkEntry = ^TGtkEntry;
   TGtkBox = record
     (* empty struct *)
   end;
+  PGtkBox = ^TGtkBox;
   TGtkNotebook = record
     (* empty struct *)
   end;
+  PGtkNotebook = ^TGtkNotebook;
   TGtkComboBox = record
     (* empty struct *)
   end;
+  PGtkComboBox = ^TGtkComboBox;
   TGtkComboBoxText = record
     (* empty struct *)
   end;
+  PGtkComboBoxText = ^TGtkComboBoxText;
   TGtkSpinButton = record
     (* empty struct *)
   end;
+  PGtkSpinButton = ^TGtkSpinButton;
   TGtkTextView = record
     (* empty struct *)
   end;
+  PGtkTextView = ^TGtkTextView;
   TGtkTextBuffer = record
     (* empty struct *)
   end;
+  PGtkTextBuffer = ^TGtkTextBuffer;
   TGtkTextIter = record
     (* empty struct *)
   end;
+  PGtkTextIter = ^TGtkTextIter;
   TGtkStatusbar = record
     (* empty struct *)
   end;
+  PGtkStatusbar = ^TGtkStatusbar;
   TGtkTreeView = record
     (* empty struct *)
   end;
+  PGtkTreeView = ^TGtkTreeView;
   TGtkTreeSelection = record
     (* empty struct *)
   end;
+  PGtkTreeSelection = ^TGtkTreeSelection;
   TGtkListStore = record
     (* empty struct *)
   end;
+  PGtkListStore = ^TGtkListStore;
   TGtkTreeStore = record
     (* empty struct *)
   end;
+  PGtkTreeStore = ^TGtkTreeStore;
   TGtkTreeIter = record
     (* empty struct *)
   end;
+  PGtkTreeIter = ^TGtkTreeIter;
   TGtkTreePath = record
     (* empty struct *)
   end;
+  PGtkTreePath = ^TGtkTreePath;
   TGtkTreeModel = record
     (* empty struct *)
   end;
+  PGtkTreeModel = ^TGtkTreeModel;
   TGtkCellRenderer = record
     (* empty struct *)
   end;
+  PGtkCellRenderer = ^TGtkCellRenderer;
   TGtkCellRendererText = record
     (* empty struct *)
   end;
+  PGtkCellRendererText = ^TGtkCellRendererText;
   TGtkCellRendererPixbuf = record
     (* empty struct *)
   end;
+  PGtkCellRendererPixbuf = ^TGtkCellRendererPixbuf;
   TGtkTreeViewColumn = record
     (* empty struct *)
   end;
+  PGtkTreeViewColumn = ^TGtkTreeViewColumn;
   TGtkFileChooser = record
     (* empty struct *)
   end;
+  PGtkFileChooser = ^TGtkFileChooser;
   TGtkFileChooserDialog = record
     (* empty struct *)
   end;
+  PGtkFileChooserDialog = ^TGtkFileChooserDialog;
   TGtkDialog = record
     (* empty struct *)
   end;
+  PGtkDialog = ^TGtkDialog;
   TGtkMessageDialog = record
     (* empty struct *)
   end;
+  PGtkMessageDialog = ^TGtkMessageDialog;
   TGtkScale = record
     (* empty struct *)
   end;
+  PGtkScale = ^TGtkScale;
   TGtkHScale = record
     (* empty struct *)
   end;
+  PGtkHScale = ^TGtkHScale;
   TGtkVScale = record
     (* empty struct *)
   end;
+  PGtkVScale = ^TGtkVScale;
   TGtkScrollbar = record
     (* empty struct *)
   end;
+  PGtkScrollbar = ^TGtkScrollbar;
   TGtkHScrollbar = record
     (* empty struct *)
   end;
+  PGtkHScrollbar = ^TGtkHScrollbar;
   TGtkVScrollbar = record
     (* empty struct *)
   end;
+  PGtkVScrollbar = ^TGtkVScrollbar;
   TGtkPaned = record
     (* empty struct *)
   end;
+  PGtkPaned = ^TGtkPaned;
   TGtkHPaned = record
     (* empty struct *)
   end;
+  PGtkHPaned = ^TGtkHPaned;
   TGtkVPaned = record
     (* empty struct *)
   end;
+  PGtkVPaned = ^TGtkVPaned;
   TGtkSeparator = record
     (* empty struct *)
   end;
+  PGtkSeparator = ^TGtkSeparator;
   TGtkFrame = record
     (* empty struct *)
   end;
+  PGtkFrame = ^TGtkFrame;
   TGtkAspectFrame = record
     (* empty struct *)
   end;
+  PGtkAspectFrame = ^TGtkAspectFrame;
   TGtkScrolledWindow = record
     (* empty struct *)
   end;
+  PGtkScrolledWindow = ^TGtkScrolledWindow;
   TGtkDrawingArea = record
     (* empty struct *)
   end;
+  PGtkDrawingArea = ^TGtkDrawingArea;
   TGtkToggleToolButton = record
     (* empty struct *)
   end;
+  PGtkToggleToolButton = ^TGtkToggleToolButton;
   TGtkToggleButton = record
     (* empty struct *)
   end;
+  PGtkToggleButton = ^TGtkToggleButton;
   TGtkCheckButton = record
     (* empty struct *)
   end;
+  PGtkCheckButton = ^TGtkCheckButton;
   TGtkRadioButton = record
     (* empty struct *)
   end;
+  PGtkRadioButton = ^TGtkRadioButton;
   TGtkToolButton = record
     (* empty struct *)
   end;
+  PGtkToolButton = ^TGtkToolButton;
   TGtkToolbar = record
     (* empty struct *)
   end;
+  PGtkToolbar = ^TGtkToolbar;
   TGtkMenuBar = record
     (* empty struct *)
   end;
+  PGtkMenuBar = ^TGtkMenuBar;
   TGtkMenu = record
     (* empty struct *)
   end;
+  PGtkMenu = ^TGtkMenu;
   TGtkMenuItem = record
     (* empty struct *)
   end;
+  PGtkMenuItem = ^TGtkMenuItem;
   TGtkCheckMenuItem = record
     (* empty struct *)
   end;
+  PGtkCheckMenuItem = ^TGtkCheckMenuItem;
   TGtkImage = record
     (* empty struct *)
   end;
+  PGtkImage = ^TGtkImage;
   TGtkAdjustment = record
     (* empty struct *)
   end;
+  PGtkAdjustment = ^TGtkAdjustment;
   TGtkBuilder = record
     (* empty struct *)
   end;
+  PGtkBuilder = ^TGtkBuilder;
   TGdkPixbuf = record
     (* empty struct *)
   end;
+  PGdkPixbuf = ^TGdkPixbuf;
   TGdkScreen = record
     (* empty struct *)
   end;
+  PGdkScreen = ^TGdkScreen;
   TGdkEventButton = record
     (* empty struct *)
   end;
+  PGdkEventButton = ^TGdkEventButton;
   TGdkEventKey = record
     (* empty struct *)
   end;
+  PGdkEventKey = ^TGdkEventKey;
   TGdkEvent = record
     (* empty struct *)
   end;
+  PGdkEvent = ^TGdkEvent;
   TGdkDrawable = record
     (* empty struct *)
   end;
+  PGdkDrawable = ^TGdkDrawable;
   TGdkGC = record
     (* empty struct *)
   end;
+  PGdkGC = ^TGdkGC;
   TGdkPixmap = record
     (* empty struct *)
   end;
+  PGdkPixmap = ^TGdkPixmap;
   TGdkColor = record
     (* empty struct *)
   end;
+  PGdkColor = ^TGdkColor;
   TGdkRectangle = record
     (* empty struct *)
   end;
+  PGdkRectangle = ^TGdkRectangle;
   TGdkWindow = record
     (* empty struct *)
   end;
+  PGdkWindow = ^TGdkWindow;
   TGdkCursor = record
     (* empty struct *)
   end;
+  PGdkCursor = ^TGdkCursor;
   TGdkDevice = record
     (* empty struct *)
   end;
+  PGdkDevice = ^TGdkDevice;
   TGdkDisplay = record
     (* empty struct *)
   end;
+  PGdkDisplay = ^TGdkDisplay;
   TGtkCssProvider = record
     (* empty struct *)
   end;
+  PGtkCssProvider = ^TGtkCssProvider;
   Tgboolean = Integer;
   Tgint = Integer;
   Tguint = Cardinal;
@@ -229,8 +300,8 @@ type
   Tgdouble = Double;
   Tgchar = Char;
   Tguchar = Byte;
-  Tgpointer = ^Pointer;
-  Tgconstpointer = ^Pointer;
+  Tgpointer = Pointer;
+  Tgconstpointer = Pointer;
   Tgsize = Cardinal;
   Tgssize = LongInt;
   Tguint32 = Cardinal;
@@ -239,10 +310,18 @@ type
   Tgint32 = Integer;
   Tgint16 = SmallInt;
   Tgint8 = ShortInt;
-  Tgint64 = Int64;
-  Tguint64 = QWord;
+  Tgint64 = LongInt;
+  Tguint64 = Cardinal;
   TGCallback = Integer;
-  TGObject = ^Pointer;
+  TGObject = Pointer;
+  TGResource = record
+    (* empty struct *)
+  end;
+  PGResource = ^TGResource;
+  TGStaticResource = record
+    (* empty struct *)
+  end;
+  PGStaticResource = ^TGStaticResource;
 
 var
   gtk_button_new: TProcedure;

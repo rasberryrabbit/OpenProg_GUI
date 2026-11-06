@@ -22,7 +22,8 @@ uses
   glib_types,
   gtk_types,
   libc_types,
-  sys_types;
+  sys_types,
+  mainform;
 
 const
   NL = #10;
@@ -64,10 +65,83 @@ type
   WORD  = Word;
   BYTE  = Byte;
 
+type
+  TDWORD = Cardinal;
+  TWORD = Word;
+  TBYTE = Byte;
+
 var
+  strings_it: array[0..DIM-1] of PChar;
+  strings_en: array[0..DIM-1] of PChar;
+  STR_ID: array[0..DIM-1] of PChar;
+  bufferU0: array[0..128-1] of Byte;
+  bufferI0: array[0..128-1] of Byte;
+  bufferU: PByte;
+  bufferI: PByte;
+  NumberOfBytesRead: TDWORD;
+  BytesWritten: TDWORD;
+  Result_: TULONG;
+  WriteHandle: THANDLE;
+  ReadHandle: THANDLE;
+  HIDOverlapped: TOVERLAPPED;
+  hEventObject: THANDLE;
+  statusID: Integer;
+  status_bar: PControl;
+  str: array[0..4096-1] of Char;
+  saveLog: Integer;
+  strings: PChar;
+  fd: Integer;
+  programID: Integer;
+  MinDly: Integer;
+  load_osccal: Integer;
+  load_BKosccal: Integer;
+  use_osccal: Integer;
+  use_BKosccal: Integer;
+  load_calibword: Integer;
+  max_err: Integer;
+  AVRlock: Integer;
+  AVRfuse: Integer;
+  AVRfuse_h: Integer;
+  AVRfuse_x: Integer;
+  ICDenable: Integer;
+  ICDaddr: Integer;
+  FWVersion: Integer;
+  HwID: Integer;
+  logfile: ^TextFile;
+  LogFileName: array[0..512-1] of Char;
+  loadfile: array[0..512-1] of Char;
+  savefile: array[0..512-1] of Char;
+  memCODE_W: PWORD;
+  size: Integer;
+  sizeW: Integer;
+  sizeEE: Integer;
+  sizeCONFIG: Integer;
+  sizeUSERID: Integer;
+  memCODE: PByte;
+  memEE: PByte;
+  memID: array[0..512-1] of Byte;
+  memCONFIG: array[0..48-1] of Byte;
+  memUSERID: array[0..8-1] of Byte;
+  hvreg: Double;
+  RWstop: Integer;
+  useSAFLOCK_flag: Integer;
   OW_LIST: array of TID_OW;
 
 // --- function declarations ---
+procedure strinit;
+function strfind(langid: PChar; langfile: PChar): Integer;
+function GenerateLangFile(langid: PChar; langfile: PChar): Pointer;
+function StartHVReg(V: Double): Integer;
+function msDelay(delay: Double): Pointer;
+procedure DisplayEE;
+function PrintMessage(msg: PChar): Pointer;
+function PrintMessageI2C(msg: PChar): Pointer;
+function CheckV33Regulator: Integer;
+procedure OpenLogFile;
+procedure WriteLogIO;
+procedure CloseLogFile;
+function htoi(hex: PChar; length: Integer): Cardinal;
+function PacketIO(delay: Double): Pointer;
 function ReadI2C(dim: Integer; addr: Integer): Pointer;
 function WriteI2C(dim: Integer; addr: Integer; page: Integer): Pointer;
 function Read93x(dim: Integer; na: Integer; options: Integer): Pointer;
@@ -99,10 +173,10 @@ var
 begin
   k := 0;
   z := 0;
-  AX := ((addr) shr (4)) and (7);
-  addr17 := ((addr) shr (8)) and ($F);
+  AX := (addr shr 4) and 7;
+  addr17 := (addr shr 8) and $F;
   addr := addr and 1;
-  if ((dim) > ($30000)) or ((dim) < (0)) then
+  if (dim > $30000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -119,13 +193,19 @@ begin
   start := GetTickCount();
   hvreg := 0;
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $2B;
-  bufferU[Inc(j)] := AX;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $2B;
+  Inc(j);
+  bufferU[j] := AX;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -134,49 +214,60 @@ begin
   PrintMessage(strings[S_ReadEE]);
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   if ((i) < ($10000)) and ((i) > (($10000) - ((64) - (4)))) then
-    inc := ($10000) - (i)
+   if (i < $10000) and (i > $10000 - 64 - 4) then
+    inc := $10000 - i
    else
-    inc := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
+    inc := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
    if not (addr) then
    begin
-    bufferU[Inc(j)] := $2C;
-    bufferU[Inc(j)] := inc;
-    bufferU[Inc(j)] := ($A0) + (((i) shr (7)) and ($0E));
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := $2C;
+    Inc(j);
+    bufferU[j] := inc;
+    Inc(j);
+    bufferU[j] := $A0 + (i shr 7) and $0E;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end
    else
    begin
-    bufferU[Inc(j)] := $2E;
-    bufferU[Inc(j)] := inc;
-    bufferU[Inc(j)] := ($A0) + (IfThen((i) > ($FFFF), addr17, 0));
-    bufferU[Inc(j)] := ((i) shr (8)) and ($FF);
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := $2E;
+    Inc(j);
+    bufferU[j] := inc;
+    Inc(j);
+    bufferU[j] := $A0 + IfThen(i > $FFFF, addr17, 0);
+    Inc(j);
+    bufferU[j] := (i shr 8) and $FF;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(8);
    j := 0;
-   while (((j) < ((64) - (1))) and ((bufferI[j]) <> ($2C))) and ((bufferI[j]) <> ($2E)) do
+   while (j < 64 - 1) and (bufferI[j] <> $2C) and (bufferI[j] <> $2E) do
    begin
     Inc(j);
    end;
-   if ((j) < ((64) - (1))) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (j < 64 - 1) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     memEE[Inc(k)] := bufferI[z];
+     memEE[k] := bufferI[z];
+     Inc(k);
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeReading2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -191,7 +282,7 @@ begin
    end;
    Inc(i, inc);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -200,10 +291,13 @@ begin
   end
   else
    PrintMessage(strings[S_Compl]);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -217,9 +311,9 @@ begin
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', sum and $FFFF);
   PrintMessage(str);
-  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
+  sprintf(str, strings[S_End], (stop - start) div 1000.0);
   PrintMessage(str);
   if saveLog then
   begin
@@ -245,11 +339,11 @@ begin
   k := 0;
   z := 0;
   err := 0;
-  AX := ((addr) shr (4)) and (7);
-  addr17 := ((addr) shr (8)) and ($F);
+  AX := (addr shr 4) and 7;
+  addr17 := (addr shr 8) and $F;
   addr := addr and 1;
   hvreg := 0;
-  if ((dim) > ($30000)) or ((dim) < (0)) then
+  if (dim > $30000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -259,78 +353,94 @@ begin
    OpenLogFile();
    fprintf(logfile, 'WriteI2C(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, addr, page, dim, addr);
   end;
-  if (dim) > (sizeEE) then
+  if dim > sizeEE then
   begin
    i := sizeEE;
    memEE := realloc(memEE, dim);
-   while (i) < (dim) do
+   while i < dim do
    begin
     memEE[i] := $FF;
     Inc(i);
    end;
    sizeEE := dim;
   end;
-  if (dim) < (1) then
+  if dim < 1 then
   begin
    PrintMessage(strings[S_NoCode]);
    Exit;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $2B;
-  bufferU[Inc(j)] := AX;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $2B;
+  Inc(j);
+  bufferU[j] := AX;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(5);
   PrintMessage(strings[S_EEAreaW]);
-  while (page) >= ((64) - (6)) do
+  while page >= 64 - 6 do
   begin
    page := page shr 1;
   end;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $2D;
+   bufferU[j] := $2D;
+   Inc(j);
    if not (addr) then
    begin
-    bufferU[Inc(j)] := page;
-    bufferU[Inc(j)] := ($A0) + (((i) shr (7)) and ($0E));
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := page;
+    Inc(j);
+    bufferU[j] := $A0 + (i shr 7) and $0E;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end
    else
    begin
-    bufferU[Inc(j)] := (page) + (1);
-    bufferU[Inc(j)] := ($A0) + (IfThen((i) > ($FFFF), addr17, 0));
-    bufferU[Inc(j)] := ((i) shr (8)) and ($FF);
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := page + 1;
+    Inc(j);
+    bufferU[j] := $A0 + IfThen(i > $FFFF, addr17, 0);
+    Inc(j);
+    bufferU[j] := (i shr 8) and $FF;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end;
    for k := 0 to (page) - 1 do
    begin
-    bufferU[Inc(j)] := memEE[(i) + (k)];
+    bufferU[j] := memEE[i + k];
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(3);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($2D)) do
+   while (j < 64 - 1) and (bufferI[j] <> $2D) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) <> ($2D)) or ((bufferI[(j) + (1)]) >= ($FA)) then
-    i := (dim) + (10);
-   sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
+   if (bufferI[j] <> $2D) or (bufferI[j + 1] >= $FA) then
+    i := dim + 10;
+   sprintf(str, strings[S_CodeWriting2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -343,30 +453,35 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-   bufferU[Inc(j)] := $2D;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $A0;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $2D;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $A0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    ack := $FD;
    j := 0;
-   while ((ack) = ($FD)) and ((j) < (20)) do
+   while (ack = $FD) and (j < 20) do
    begin
     PacketIO(2);
     j := 0;
-    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($2D)) do
+    while (j < 64 - 1) and (bufferI[j] <> $2D) do
     begin
      Inc(j);
     end;
-    if ((bufferI[j]) <> ($2D)) or ((bufferI[(j) + (1)]) >= ($FA)) then
+    if (bufferI[j] <> $2D) or (bufferI[j + 1] >= $FA) then
      ack := $FD
     else
-     ack := bufferI[(j) + (1)];
+     ack := bufferI[j + 1];
     Inc(j);
    end;
    j := 0;
@@ -377,55 +492,66 @@ begin
   k := 0;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   if ((i) < ($10000)) and ((i) > (($10000) - ((64) - (4)))) then
-    inc := ($10000) - (i)
+   if (i < $10000) and (i > $10000 - 64 - 4) then
+    inc := $10000 - i
    else
-    inc := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
+    inc := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
    if not (addr) then
    begin
-    bufferU[Inc(j)] := $2C;
-    bufferU[Inc(j)] := inc;
-    bufferU[Inc(j)] := ($A0) + (((i) shr (7)) and ($0E));
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := $2C;
+    Inc(j);
+    bufferU[j] := inc;
+    Inc(j);
+    bufferU[j] := $A0 + (i shr 7) and $0E;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end
    else
    begin
-    bufferU[Inc(j)] := $2E;
-    bufferU[Inc(j)] := inc;
-    bufferU[Inc(j)] := ($A0) + (IfThen((i) > ($FFFF), addr17, 0));
-    bufferU[Inc(j)] := ((i) shr (8)) and ($FF);
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := $2E;
+    Inc(j);
+    bufferU[j] := inc;
+    Inc(j);
+    bufferU[j] := $A0 + IfThen(i > $FFFF, addr17, 0);
+    Inc(j);
+    bufferU[j] := (i shr 8) and $FF;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(8);
    j := 0;
-   while (((j) < ((64) - (1))) and ((bufferI[j]) <> ($2C))) and ((bufferI[j]) <> ($2E)) do
+   while (j < 64 - 1) and (bufferI[j] <> $2C) and (bufferI[j] <> $2E) do
    begin
     Inc(j);
    end;
-   if (((bufferI[j]) = ($2C)) or ((bufferI[j]) = ($2E))) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if ((bufferI[j] = $2C) or (bufferI[j] = $2E)) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     if (memEE[Inc(k)]) <> (bufferI[z]) then
+     if memEE[k] <> bufferI[z] then
+     Inc(k);
      begin
       PrintMessage('' + #13 + '' + NL + '');
-      sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[(k) - (1)], bufferI[z]);
+      sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k - 1], bufferI[z]);
       PrintMessage(str);
       Inc(err);
      end;
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeV2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -438,11 +564,11 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   if (err) >= (max_err) then
+   if err >= max_err then
     Break;
    Inc(i, inc);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -450,10 +576,13 @@ begin
   end;
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -461,7 +590,7 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, '');
-  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
+  sprintf(str, strings[S_EndErr], (stop - start) div 1000.0, err, IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
@@ -485,88 +614,110 @@ begin
   k := 0;
   z := 0;
   hvreg := 0;
-  if ((dim) > ($3000)) or ((dim) < (0)) then
+  if (dim > $3000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
   end;
-  if (na) > (13) then
+  if na > 13 then
    na := 13;
   if saveLog then
   begin
    OpenLogFile();
    fprintf(logfile, 'Read93x(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, na, options, dim, na);
   end;
-  x8 := (options) and (1);
+  x8 := options and 1;
   sizeEE := dim;
   if memEE then
    free(memEE);
   memEE := malloc(dim);
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $3B;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen(x8, $10, ($10) + ($20));
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $3B;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(x8, $10, $10 + $20);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(5);
   PrintMessage(strings[S_ReadEE]);
-  dim2 := IfThen(x8, dim, (dim) div (2));
+  dim2 := IfThen(x8, dim, dim div 2);
   i := 0;
-  while (i) < (dim2) do
+  while i < dim2 do
   begin
    j := 0;
-   while ((j) < ((64) - (14))) and ((i) < (dim2)) do
+   while (j < 64 - 14) and (i < dim2) do
    begin
-    bufferU[Inc(j)] := $3C;
-    bufferU[Inc(j)] := (na) + (3);
-    bufferU[Inc(j)] := ($C0) + (((i) shr ((na) - (5))) and ($1F));
-    bufferU[Inc(j)] := ((i) shl ((13) - (na))) and ($FF);
-    bufferU[Inc(j)] := $3D;
-    bufferU[Inc(j)] := IfThen(x8, 8, 16);
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen(x8, 0, $20);
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen(x8, $10, ($10) + ($20));
-    bufferU[Inc(j)] := 0;
+    bufferU[j] := $3C;
+    Inc(j);
+    bufferU[j] := na + 3;
+    Inc(j);
+    bufferU[j] := $C0 + (i shr (na - 5)) and $1F;
+    Inc(j);
+    bufferU[j] := (i shl (13 - na)) and $FF;
+    Inc(j);
+    bufferU[j] := $3D;
+    Inc(j);
+    bufferU[j] := IfThen(x8, 8, 16);
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(x8, 0, $20);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(x8, $10, $10 + $20);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
     Inc(i);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(2);
-   for z := 0 to ((64) - (3)) - 1 do
+   for z := 0 to (64 - 3) - 1 do
    begin
-    while ((bufferI[z]) <> ($3D)) and ((z) < ((64) - (3))) do
+    while (bufferI[z] <> $3D) and (z < 64 - 3) do
     begin
      Inc(z);
     end;
-    if (bufferI[z]) = ($3D) then
+    if bufferI[z] = $3D then
     begin
      if x8 then
-      memEE[Inc(k)] := bufferI[(z) + (2)]
+      memEE[k] := bufferI[z + 2];
+      Inc(k)
      else
      begin
-      memEE[(k) + (1)] := bufferI[(z) + (2)];
-      memEE[k] := bufferI[(z) + (3)];
+      memEE[k + 1] := bufferI[z + 2];
+      memEE[k] := bufferI[z + 3];
       k := k + 2;
      end;
      z := z + 3;
     end;
    end;
-   sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim2), i);
+   sprintf(str, strings[S_CodeReading2], (i * 100) div dim2, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -580,7 +731,7 @@ begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -589,13 +740,19 @@ begin
   end
   else
    PrintMessage(strings[S_Compl]);
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -609,9 +766,9 @@ begin
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', sum and $FFFF);
   PrintMessage(str);
-  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
+  sprintf(str, strings[S_End], (stop - start) div 1000.0);
   PrintMessage(str);
   if saveLog then
   begin
@@ -636,100 +793,161 @@ begin
   z := 0;
   err := 0;
   hvreg := 0;
-  if ((dim) > ($1000)) or ((dim) < (0)) then
+  if (dim > $1000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
   end;
-  if (na) > (13) then
+  if na > 13 then
    na := 13;
-  if (page) > (48) then
+  if page > 48 then
    page := 48;
   if saveLog then
   begin
    OpenLogFile();
    fprintf(logfile, 'Write93Sx(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, na, page, dim, na);
   end;
-  if (dim) > (sizeEE) then
+  if dim > sizeEE then
   begin
    i := sizeEE;
    memEE := realloc(memEE, dim);
-   while (i) < (dim) do
+   while i < dim do
    begin
     memEE[i] := $FF;
     Inc(i);
    end;
    sizeEE := dim;
   end;
-  if (dim) < (1) then
+  if dim < 1 then
   begin
    PrintMessage(strings[S_NoCode]);
    Exit;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3B;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := ($10) + ($20);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $98;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := $20;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (($10) + ($20)) + ($08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $98;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := ($20) + ($08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (($10) + ($20)) + ($08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $FF;
-  bufferU[Inc(j)] := $F0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := ($20) + ($08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := ($10) + ($20);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $98;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := $20;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (($10) + ($20)) + ($08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $C0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3D;
-  bufferU[Inc(j)] := 10;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := ($20) + ($08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3B;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $10 + $20;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $98;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $20;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $10 + $20 + $08;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $98;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $20 + $08;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $10 + $20 + $08;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $FF;
+  Inc(j);
+  bufferU[j] := $F0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $20 + $08;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $10 + $20;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $98;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $20;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $10 + $20 + $08;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $C0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3D;
+  Inc(j);
+  bufferU[j] := 10;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $20 + $08;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -739,39 +957,63 @@ begin
   addr := 0;
   i := 0;
   j := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := $20;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := ($10) + ($20);
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $3C;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := $E0;
-   bufferU[Inc(j)] := $3C;
-   bufferU[Inc(j)] := na;
-   bufferU[Inc(j)] := (addr) shr (8);
-   if (na) > (8) then
-    bufferU[Inc(j)] := (addr) and ($FF);
-   bufferU[Inc(j)] := $3C;
-   bufferU[Inc(j)] := (8) * (page);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := $20;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := $10 + $20;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $3C;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := $E0;
+   Inc(j);
+   bufferU[j] := $3C;
+   Inc(j);
+   bufferU[j] := na;
+   Inc(j);
+   bufferU[j] := addr shr 8;
+   Inc(j);
+   if na > 8 then
+    bufferU[j] := addr and $FF;
+    Inc(j);
+   bufferU[j] := $3C;
+   Inc(j);
+   bufferU[j] := 8 * page;
+   Inc(j);
    k := 0;
-   while (k) < (page) do
+   while k < page do
    begin
-    bufferU[Inc(j)] := memEE[((i) + (k)) + (1)];
-    bufferU[Inc(j)] := memEE[(i) + (k)];
+    bufferU[j] := memEE[i + k + 1];
+    Inc(j);
+    bufferU[j] := memEE[i + k];
+    Inc(j);
     Inc(k, 2);
    end;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := $20;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := ($10) + ($20);
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := $20;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := $10 + $20;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
@@ -779,36 +1021,39 @@ begin
    PacketIO(2);
    j := 0;
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3C)) do
+   while (j < 64 - 1) and (bufferI[j] <> $3C) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) <> ($3C)) or ((bufferI[(j) + (1)]) >= ($FA)) then
-    i := (dim) + (10);
-   bufferU[Inc(j)] := $3D;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   if (bufferI[j] <> $3C) or (bufferI[j + 1] >= $FA) then
+    i := dim + 10;
+   bufferU[j] := $3D;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    z := 0;
    k := 0;
-   while ((z) < (30)) and (not (k)) do
+   while (z < 30) and not (k) do
    begin
     PacketIO(2);
     j := 0;
-    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3D)) do
+    while (j < 64 - 1) and (bufferI[j] <> $3D) do
     begin
      Inc(j);
     end;
-    if (bufferI[j]) = ($3D) then
-     k := bufferI[(j) + (2)];
+    if bufferI[j] = $3D then
+     k := bufferI[j + 2];
     Inc(z);
    end;
    j := 0;
-   sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeWriting2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -821,63 +1066,74 @@ begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
    Inc(i, page);
-   Inc(addr, ((($10000) shr (na)) * (page)) div (2));
+   Inc(addr, (($10000 shr na) * page) div 2);
   end;
   PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   j := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := $10;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $C0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := $10;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $C0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(2);
   k := 0;
-  n := (64) - (2);
-  if (n) > (30) then
+  n := 64 - 2;
+  if n > 30 then
    n := 30;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $3D;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - (n)), (n) * (8), ((dim) - (i)) * (8));
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $3D;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - n, n * 8, (dim - i) * 8);
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(2);
    j := 0;
-   while ((bufferI[j]) <> ($3D)) and ((j) < ((64) - (1))) do
+   while (bufferI[j] <> $3D) and (j < 64 - 1) do
    begin
     Inc(j);
    end;
-   if (bufferI[j]) = ($3D) then
+   if bufferI[j] = $3D then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + ((bufferI[(j) + (1)]) div (8)))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1] div 8) and (z < 64) do
     begin
-     if (memEE[(k) + (1)]) <> (bufferI[z]) then
+     if memEE[k + 1] <> bufferI[z] then
      begin
       PrintMessage('' + #13 + '' + NL + '');
-      sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[(k) + (1)], bufferI[z]);
+      sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k + 1], bufferI[z]);
       PrintMessage(str);
       Inc(err);
      end;
-     if (memEE[k]) <> (bufferI[(z) + (1)]) then
+     if memEE[k] <> bufferI[z + 1] then
      begin
       PrintMessage('' + #13 + '' + NL + '');
-      sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[k], bufferI[(z) + (1)]);
+      sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k], bufferI[z + 1]);
       PrintMessage(str);
       Inc(err);
      end;
@@ -885,7 +1141,7 @@ begin
      Inc(k, 2);
     end;
    end;
-   sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeV2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -898,11 +1154,11 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   if (err) >= (max_err) then
+   if err >= max_err then
     Break;
    Inc(i, n);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -910,13 +1166,19 @@ begin
   end;
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -924,7 +1186,7 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, '');
-  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
+  sprintf(str, strings[S_EndErr], (stop - start) div 1000.0, err, IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
@@ -949,149 +1211,214 @@ begin
   z := 0;
   err := 0;
   hvreg := 0;
-  if ((dim) > ($1000)) or ((dim) < (0)) then
+  if (dim > $1000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
   end;
-  if (na) > (13) then
+  if na > 13 then
    na := 13;
   if saveLog then
   begin
    OpenLogFile();
    fprintf(logfile, 'Write93Cx(%d,%d,%d)    (0x%X,0x%X)' + NL + '', dim, na, options, dim, na);
   end;
-  if (dim) > (sizeEE) then
+  if dim > sizeEE then
   begin
    i := sizeEE;
    memEE := realloc(memEE, dim);
-   while (i) < (dim) do
+   while i < dim do
    begin
     memEE[i] := $FF;
     Inc(i);
    end;
    sizeEE := dim;
   end;
-  if (dim) < (1) then
+  if dim < 1 then
   begin
    PrintMessage(strings[S_NoCode]);
    Exit;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3B;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), (($10) + ($20)) + ($08), ($10) + ($08));
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $98;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), ($20) + ($08), $08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), (($10) + ($20)) + ($08), ($10) + ($08));
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3C;
-  bufferU[Inc(j)] := (na) + (3);
-  bufferU[Inc(j)] := $90;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), ($20) + ($08), $08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), (($10) + ($20)) + ($08), ($10) + ($08));
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $3D;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3B;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $10 + $20 + $08, $10 + $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $98;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $20 + $08, $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $10 + $20 + $08, $10 + $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3C;
+  Inc(j);
+  bufferU[j] := na + 3;
+  Inc(j);
+  bufferU[j] := $90;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $20 + $08, $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $10 + $20 + $08, $10 + $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $3D;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(5);
   j := 0;
-  bufferU[Inc(j)] := $3D;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $3D;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   i := 0;
   k := 0;
-  while ((i) < (30)) and (not (k)) do
+  while (i < 30) and not (k) do
   begin
    PacketIO(2);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3D)) do
+   while (j < 64 - 1) and (bufferI[j] <> $3D) do
    begin
     Inc(j);
    end;
-   if (bufferI[j]) = ($3D) then
-    k := bufferI[(j) + (2)];
+   if bufferI[j] = $3D then
+    k := bufferI[j + 2];
    Inc(i);
   end;
   PrintMessage(strings[S_EEAreaW]);
   addr := 0;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   if ((memEE[i]) < ($FF)) or (((options) = (0)) and ((memEE[(i) + (1)]) < ($FF))) then
+   if (memEE[i] < $FF) or (options = 0) and (memEE[i + 1] < $FF) then
    begin
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen((options) = (0), ($20) + ($08), $08);
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen((options) = (0), (($10) + ($20)) + ($08), ($10) + ($08));
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := $3C;
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := $A0;
-    bufferU[Inc(j)] := $3C;
-    bufferU[Inc(j)] := na;
-    bufferU[Inc(j)] := (addr) shr (8);
-    if (na) > (8) then
-     bufferU[Inc(j)] := (addr) and ($FF);
-    bufferU[Inc(j)] := $3C;
-    if (options) = (0) then
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, $20 + $08, $08);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, $10 + $20 + $08, $10 + $08);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := $3C;
+    Inc(j);
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := $A0;
+    Inc(j);
+    bufferU[j] := $3C;
+    Inc(j);
+    bufferU[j] := na;
+    Inc(j);
+    bufferU[j] := addr shr 8;
+    Inc(j);
+    if na > 8 then
+     bufferU[j] := addr and $FF;
+     Inc(j);
+    bufferU[j] := $3C;
+    Inc(j);
+    if options = 0 then
     begin
-     bufferU[Inc(j)] := 16;
-     bufferU[Inc(j)] := memEE[(i) + (1)];
-     bufferU[Inc(j)] := memEE[i];
+     bufferU[j] := 16;
+     Inc(j);
+     bufferU[j] := memEE[i + 1];
+     Inc(j);
+     bufferU[j] := memEE[i];
+     Inc(j);
     end
     else
     begin
-     bufferU[Inc(j)] := 8;
-     bufferU[Inc(j)] := memEE[i];
+     bufferU[j] := 8;
+     Inc(j);
+     bufferU[j] := memEE[i];
+     Inc(j);
     end;
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen((options) = (0), ($20) + ($08), $08);
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen((options) = (0), (($10) + ($20)) + ($08), ($10) + ($08));
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := $3D;
-    bufferU[Inc(j)] := 1;
-    bufferU[Inc(j)] := $04;
-    while (j) < (64) do
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, $20 + $08, $08);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, $10 + $20 + $08, $10 + $08);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := $3D;
+    Inc(j);
+    bufferU[j] := 1;
+    Inc(j);
+    bufferU[j] := $04;
+    Inc(j);
+    while j < 64 do
     begin
      bufferU[j] := $0;
      Inc(j);
     end;
     PacketIO(2);
-    sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
+    sprintf(str, strings[S_CodeWriting2], (i * 100) div dim, i);
     gtk_statusbar_push(status_bar, statusID, str);
     while gtk_events_pending() do
     begin
@@ -1104,35 +1431,38 @@ begin
     begin
      fprintf(logfile, strings[S_Log7], i, i, k, k);
     end;
-    bufferU[Inc(j)] := $3D;
-    bufferU[Inc(j)] := 1;
-    bufferU[Inc(j)] := $04;
-    while (j) < (64) do
+    bufferU[j] := $3D;
+    Inc(j);
+    bufferU[j] := 1;
+    Inc(j);
+    bufferU[j] := $04;
+    Inc(j);
+    while j < 64 do
     begin
      bufferU[j] := $0;
      Inc(j);
     end;
     z := 0;
     k := 0;
-    while ((z) < (30)) and (not (k)) do
+    while (z < 30) and not (k) do
     begin
      PacketIO(2);
      j := 0;
-     while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($3D)) do
+     while (j < 64 - 1) and (bufferI[j] <> $3D) do
      begin
       Inc(j);
      end;
-     if (bufferI[j]) = ($3D) then
-      k := bufferI[(j) + (2)];
+     if bufferI[j] = $3D then
+      k := bufferI[j + 2];
      Inc(z);
     end;
     j := 0;
    end;
-   Inc(i, IfThen((options) = (0), 2, 1));
-   Inc(addr, ($10000) shr (na));
+   Inc(i, IfThen(options = 0, 2, 1));
+   Inc(addr, $10000 shr na);
   end;
   msDelay(2);
-  if (i) <> (dim) then
+  if i <> dim then
   begin
    sprintf(str, strings[S_CodeWError4], i, dim);
    PrintMessage(str);
@@ -1141,62 +1471,82 @@ begin
    PrintMessage(strings[S_Compl]);
   PrintMessage(strings[S_EEV]);
   j := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), ($20) + ($08), $08);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := IfThen((options) = (0), (($10) + ($20)) + ($08), ($10) + ($08));
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $20 + $08, $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := IfThen(options = 0, $10 + $20 + $08, $10 + $08);
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(2);
   k := 0;
-  dim2 := IfThen((options) = (0), (dim) div (2), dim);
+  dim2 := IfThen(options = 0, dim div 2, dim);
   i := 0;
-  while (i) < (dim2) do
+  while i < dim2 do
   begin
    j := 0;
-   while ((j) < ((64) - (14))) and ((i) < (dim2)) do
+   while (j < 64 - 14) and (i < dim2) do
    begin
-    bufferU[Inc(j)] := $3C;
-    bufferU[Inc(j)] := (na) + (3);
-    bufferU[Inc(j)] := ($C0) + (((i) shr ((na) - (5))) and ($1F));
-    bufferU[Inc(j)] := ((i) shl ((13) - (na))) and ($FF);
-    bufferU[Inc(j)] := $3D;
-    bufferU[Inc(j)] := IfThen((options) = (0), 16, 8);
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen((options) = (0), $20, 0);
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := IfThen((options) = (0), ($10) + ($20), $10);
-    bufferU[Inc(j)] := 0;
+    bufferU[j] := $3C;
+    Inc(j);
+    bufferU[j] := na + 3;
+    Inc(j);
+    bufferU[j] := $C0 + (i shr (na - 5)) and $1F;
+    Inc(j);
+    bufferU[j] := (i shl (13 - na)) and $FF;
+    Inc(j);
+    bufferU[j] := $3D;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, 16, 8);
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, $20, 0);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := IfThen(options = 0, $10 + $20, $10);
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
     Inc(i);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(2);
-   for z := 0 to ((64) - (3)) - 1 do
+   for z := 0 to (64 - 3) - 1 do
    begin
-    while ((bufferI[z]) <> ($3D)) and ((z) < ((64) - (3))) do
+    while (bufferI[z] <> $3D) and (z < 64 - 3) do
     begin
      Inc(z);
     end;
-    if (bufferI[z]) = ($3D) then
+    if bufferI[z] = $3D then
     begin
-     if (options) = (1) then
+     if options = 1 then
      begin
-      if (memEE[k]) <> (bufferI[(z) + (2)]) then
+      if memEE[k] <> bufferI[z + 2] then
       begin
        PrintMessage('' + #13 + '' + NL + '');
-       sprintf(str, strings[S_CodeVError], k, k, memEE[k], bufferI[(z) + (2)]);
+       sprintf(str, strings[S_CodeVError], k, k, memEE[k], bufferI[z + 2]);
        PrintMessage(str);
        Inc(err);
       end;
@@ -1204,17 +1554,17 @@ begin
      end
      else
      begin
-      if (memEE[k]) <> (bufferI[(z) + (3)]) then
+      if memEE[k] <> bufferI[z + 3] then
       begin
        PrintMessage('' + #13 + '' + NL + '');
-       sprintf(str, strings[S_CodeVError], k, k, memEE[k], bufferI[(z) + (3)]);
+       sprintf(str, strings[S_CodeVError], k, k, memEE[k], bufferI[z + 3]);
        PrintMessage(str);
        Inc(err);
       end;
-      if (memEE[(k) + (1)]) <> (bufferI[(z) + (2)]) then
+      if memEE[k + 1] <> bufferI[z + 2] then
       begin
        PrintMessage('' + #13 + '' + NL + '');
-       sprintf(str, strings[S_CodeVError], (k) + (1), (k) + (1), memEE[(k) + (1)], bufferI[(z) + (2)]);
+       sprintf(str, strings[S_CodeVError], k + 1, k + 1, memEE[k + 1], bufferI[z + 2]);
        PrintMessage(str);
        Inc(err);
       end;
@@ -1223,7 +1573,7 @@ begin
      z := z + 3;
     end;
    end;
-   sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim2), i);
+   sprintf(str, strings[S_CodeV2], (i * 100) div dim2, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -1236,10 +1586,10 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   if (err) >= (max_err) then
+   if err >= max_err then
     Break;
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -1247,13 +1597,19 @@ begin
   end;
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -1261,7 +1617,7 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, '');
-  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
+  sprintf(str, strings[S_EndErr], (stop - start) div 1000.0, err, IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
@@ -1284,7 +1640,7 @@ begin
   k := 0;
   z := 0;
   hvreg := 0;
-  if ((dim) > ($1000000)) or ((dim) < (0)) then
+  if (dim > $1000000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -1300,66 +1656,103 @@ begin
   memEE := malloc(dim);
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $2F;
-  bufferU[Inc(j)] := 3;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $31;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $9F;
-  bufferU[Inc(j)] := $30;
-  bufferU[Inc(j)] := 3;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $31;
-  if (dim) > ($10000) then
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $2F;
+  Inc(j);
+  bufferU[j] := 3;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $9F;
+  Inc(j);
+  bufferU[j] := $30;
+  Inc(j);
+  bufferU[j] := 3;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  if dim > $10000 then
   begin
-   bufferU[Inc(j)] := 4;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := 4;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end
   else
-   if (dim) > ($200) then
+   if dim > $200 then
    begin
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := 0;
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
    end
    else
    begin
-    bufferU[Inc(j)] := 2;
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := 0;
+    bufferU[j] := 2;
+    Inc(j);
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
    end;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(5);
   z := 0;
-  while ((z) < ((64) - (4))) and ((bufferI[z]) <> ($30)) do
+  while (z < 64 - 4) and (bufferI[z] <> $30) do
   begin
    Inc(z);
   end;
-  ID := (((bufferI[(z) + (2)]) shl (16)) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  if ((ID) > (0)) and ((ID) <> ($FFFFFF)) then
+  ID := (bufferI[z + 2] shl 16) + (bufferI[z + 3] shl 8) + bufferI[z + 4];
+  if (ID > 0) and (ID <> $FFFFFF) then
   begin
    sprintf(str, 'DEVICE ID=0x%06X' + #13 + '' + NL + '', ID);
    PrintMessage(str);
@@ -1367,32 +1760,36 @@ begin
   PrintMessage(strings[S_ReadEE]);
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(4);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($30)) do
+   while (j < 64 - 1) and (bufferI[j] <> $30) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) = ($30)) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (bufferI[j] = $30) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     memEE[Inc(k)] := bufferI[z];
+     memEE[k] := bufferI[z];
+     Inc(k);
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeReading2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -1405,9 +1802,9 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-   Inc(i, (64) - (4));
+   Inc(i, 64 - 4);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -1416,13 +1813,19 @@ begin
   end
   else
    PrintMessage(strings[S_Compl]);
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -1436,9 +1839,9 @@ begin
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', sum and $FFFF);
   PrintMessage(str);
-  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
+  sprintf(str, strings[S_End], (stop - start) div 1000.0);
   PrintMessage(str);
   if saveLog then
   begin
@@ -1458,7 +1861,6 @@ var
   page: Integer;
   start: Cardinal;
   pp: Integer;
-  pp: Integer;
   i0: Integer;
   k2: Integer;
   valid: Integer;
@@ -1468,8 +1870,8 @@ begin
   z := 0;
   err := 0;
   hvreg := 0;
-  page := (options) and ($FFF);
-  if ((dim) > ($1000000)) or ((dim) < (0)) then
+  page := options and $FFF;
+  if (dim > $1000000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -1479,71 +1881,114 @@ begin
    OpenLogFile();
    fprintf(logfile, 'Write25xx(%d,%d)    (0x%X,0x%X)' + NL + '', dim, options, dim, options);
   end;
-  if (dim) > (sizeEE) then
+  if dim > sizeEE then
   begin
    i := sizeEE;
    memEE := realloc(memEE, dim);
-   while (i) < (dim) do
+   while i < dim do
    begin
     memEE[i] := $FF;
     Inc(i);
    end;
    sizeEE := dim;
   end;
-  if (dim) < (1) then
+  if dim < 1 then
   begin
    PrintMessage(strings[S_NoCode]);
    Exit;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $2F;
-  bufferU[Inc(j)] := 3;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $31;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $9F;
-  bufferU[Inc(j)] := $30;
-  bufferU[Inc(j)] := 3;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $31;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := 5;
-  bufferU[Inc(j)] := $30;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := $40;
-  if (options) and ($2000) then
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $2F;
+  Inc(j);
+  bufferU[j] := 3;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $9F;
+  Inc(j);
+  bufferU[j] := $30;
+  Inc(j);
+  bufferU[j] := 3;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := 5;
+  Inc(j);
+  bufferU[j] := $30;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  if options and $2000 then
   begin
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $35;
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $35;
+   Inc(j);
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
   end;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -1551,12 +1996,12 @@ begin
   PacketIO(5);
   j := 0;
   z := 0;
-  while ((z) < ((64) - (4))) and ((bufferI[z]) <> ($30)) do
+  while (z < 64 - 4) and (bufferI[z] <> $30) do
   begin
    Inc(z);
   end;
-  ID := (((bufferI[(z) + (2)]) shl (16)) + ((bufferI[(z) + (3)]) shl (8))) + (bufferI[(z) + (4)]);
-  if ((ID) > (0)) and ((ID) <> ($FFFFFF)) then
+  ID := (bufferI[z + 2] shl 16) + (bufferI[z + 3] shl 8) + bufferI[z + 4];
+  if (ID > 0) and (ID <> $FFFFFF) then
   begin
    sprintf(str, 'DEVICE ID=0x%06X' + #13 + '' + NL + '', ID);
    PrintMessage(str);
@@ -1564,140 +2009,229 @@ begin
     fprintf(logfile, 'DEVICE ID=0x%06X' + NL + '', ID);
   end;
   msDelay(10);
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $31;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := 6;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := $40;
-  if (options) and ($2000) then
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := 6;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  if options and $2000 then
   begin
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end
   else
   begin
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 2;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 2;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $31;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := 5;
-  bufferU[Inc(j)] := $30;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := (8) + (16);
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := 5;
+  Inc(j);
+  bufferU[j] := $30;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 8 + 16;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(5);
   j := 0;
-  if (options) and ($1000) then
+  if options and $1000 then
   begin
    PrintMessage(strings[S_StartErase]);
    if saveLog then
     fprintf(logfile, '%s' + NL + '', strings[S_StartErase]);
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 5;
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   if (options) and ($2000) then
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 5;
+   Inc(j);
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   if options and $2000 then
    begin
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := 16;
-    bufferU[Inc(j)] := $40;
-    bufferU[Inc(j)] := $31;
-    bufferU[Inc(j)] := 1;
-    bufferU[Inc(j)] := $35;
-    bufferU[Inc(j)] := $30;
-    bufferU[Inc(j)] := 1;
-    bufferU[Inc(j)] := $32;
-    bufferU[Inc(j)] := (8) + (16);
-    bufferU[Inc(j)] := $40;
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := 16;
+    Inc(j);
+    bufferU[j] := $40;
+    Inc(j);
+    bufferU[j] := $31;
+    Inc(j);
+    bufferU[j] := 1;
+    Inc(j);
+    bufferU[j] := $35;
+    Inc(j);
+    bufferU[j] := $30;
+    Inc(j);
+    bufferU[j] := 1;
+    Inc(j);
+    bufferU[j] := $32;
+    Inc(j);
+    bufferU[j] := 8 + 16;
+    Inc(j);
+    bufferU[j] := $40;
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 6;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $C7;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 6;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $C7;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(5);
    j := 0;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 5;
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 5;
+   Inc(j);
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    pp := 1;
    j := 0;
-   while (pp) and ((j) < (400)) do
+   while pp and (j < 400) do
    begin
     PacketIO(2);
     msDelay(100);
     z := 0;
-    while ((z) < ((64) - (1))) and ((bufferI[z]) <> ($30)) do
+    while (z < 64 - 1) and (bufferI[z] <> $30) do
     begin
      Inc(z);
     end;
-    pp := (bufferI[(z) + (2)]) and (1);
+    pp := bufferI[z + 2] and 1;
     sprintf(str, strings[S_StartErase], 0, 0);
     gtk_statusbar_push(status_bar, statusID, str);
     while gtk_events_pending() do
@@ -1707,7 +2241,7 @@ begin
     Inc(j);
    end;
    if saveLog then
-    fprintf(logfile, 'Erase time %d ms' + NL + '', (j) * (100));
+    fprintf(logfile, 'Erase time %d ms' + NL + '', j * 100);
    PrintMessage(strings[S_Compl]);
    sprintf(str, strings[S_Compl], 0, 0);
    gtk_statusbar_push(status_bar, statusID, str);
@@ -1721,139 +2255,195 @@ begin
    fprintf(logfile, '%s' + NL + '', strings[S_EEAreaW]);
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   if (options) and ($1000) then
+   if options and $1000 then
    begin
     k := page;
-    while ((k) = (page)) and ((i) < ((dim) - (page))) do
+    while (k = page) and (i < dim - page) do
     begin
      for k := 0 to (page) - 1 do
      begin
-      if (memEE[(i) + (k)]) < ($FF) then
+      if memEE[i + k] < $FF then
        k := page;
      end;
-     if (k) = (page) then
+     if k = page then
       i := i + page;
     end;
    end;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 6;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   if (dim) > ($10000) then
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 6;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   if dim > $10000 then
    begin
-    bufferU[Inc(j)] := 4;
-    bufferU[Inc(j)] := 2;
-    bufferU[Inc(j)] := (i) shr (16);
-    bufferU[Inc(j)] := ((i) shr (8)) and ($FF);
-    bufferU[Inc(j)] := (i) and ($FF);
+    bufferU[j] := 4;
+    Inc(j);
+    bufferU[j] := 2;
+    Inc(j);
+    bufferU[j] := i shr 16;
+    Inc(j);
+    bufferU[j] := (i shr 8) and $FF;
+    Inc(j);
+    bufferU[j] := i and $FF;
+    Inc(j);
    end
    else
-    if (dim) > ($200) then
+    if dim > $200 then
     begin
-     bufferU[Inc(j)] := 3;
-     bufferU[Inc(j)] := 2;
-     bufferU[Inc(j)] := (i) shr (8);
-     bufferU[Inc(j)] := (i) and ($FF);
+     bufferU[j] := 3;
+     Inc(j);
+     bufferU[j] := 2;
+     Inc(j);
+     bufferU[j] := i shr 8;
+     Inc(j);
+     bufferU[j] := i and $FF;
+     Inc(j);
     end
     else
     begin
-     bufferU[Inc(j)] := 2;
-     bufferU[Inc(j)] := (2) + (IfThen((i) and ($100), 8, 0));
-     bufferU[Inc(j)] := (i) and ($FF);
+     bufferU[j] := 2;
+     Inc(j);
+     bufferU[j] := 2 + IfThen(i and $100, 8, 0);
+     Inc(j);
+     bufferU[j] := i and $FF;
+     Inc(j);
     end;
-   pp := IfThen((page) < (((64) - (j)) - (4)), page, ((64) - (j)) - (4));
+   pp := IfThen(page < 64 - j - 4, page, 64 - j - 4);
    k := 0;
-   while (k) < (page) do
+   while k < page do
    begin
-    bufferU[Inc(j)] := $31;
-    bufferU[Inc(j)] := pp;
-    while ((k) < (page)) and (pp) do
+    bufferU[j] := $31;
+    Inc(j);
+    bufferU[j] := pp;
+    Inc(j);
+    while (k < page) and pp do
     begin
-     bufferU[Inc(j)] := memEE[(i) + (k)];
+     bufferU[j] := memEE[i + k];
+     Inc(j);
      Inc(k);
      Dec(pp);
     end;
-    bufferU[Inc(j)] := $04;
-    while (j) < (64) do
+    bufferU[j] := $04;
+    Inc(j);
+    while j < 64 do
     begin
      bufferU[j] := $0;
      Inc(j);
     end;
     PacketIO(2);
     z := 0;
-    while ((z) < ((64) - (1))) and ((bufferI[z]) <> ($31)) do
+    while (z < 64 - 1) and (bufferI[z] <> $31) do
     begin
      Inc(z);
     end;
-    if (bufferI[(z) + (1)]) >= ($FA) then
-     i := (dim) + (10); k := (dim) + (10);
-    pp := IfThen(((page) - (k)) < ((64) - (4)), (page) - (k), (64) - (4));
+    if bufferI[z + 1] >= $FA then
+     i := dim + 10; k := dim + 10;
+    pp := IfThen(page - k < 64 - 4, page - k, 64 - 4);
     j := 0;
    end;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 5;
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 5;
+   Inc(j);
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(2);
    j := 0;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := 16;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $31;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := 5;
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $32;
-   bufferU[Inc(j)] := (8) + (16);
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $31;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := 5;
+   Inc(j);
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $32;
+   Inc(j);
+   bufferU[j] := 8 + 16;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    pp := 1;
    j := 0;
-   while (pp) and ((j) < (50)) do
+   while pp and (j < 50) do
    begin
     PacketIO(2);
     z := 0;
-    while ((z) < ((64) - (1))) and ((bufferI[z]) <> ($30)) do
+    while (z < 64 - 1) and (bufferI[z] <> $30) do
     begin
      Inc(z);
     end;
-    pp := (bufferI[(z) + (2)]) and (1);
+    pp := bufferI[z + 2] and 1;
     Inc(j);
    end;
-   sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeWriting2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -1873,34 +2463,51 @@ begin
   if saveLog then
    fprintf(logfile, '%s' + NL + '', strings[S_EEV]);
   j := 0;
-  bufferU[Inc(j)] := $32;
-  bufferU[Inc(j)] := 16;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $31;
-  if (dim) > ($10000) then
+  bufferU[j] := $32;
+  Inc(j);
+  bufferU[j] := 16;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $31;
+  Inc(j);
+  if dim > $10000 then
   begin
-   bufferU[Inc(j)] := 4;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := 4;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end
   else
-   if (dim) > ($200) then
+   if dim > $200 then
    begin
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := 0;
-    bufferU[Inc(j)] := 0;
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
    end
    else
    begin
-    bufferU[Inc(j)] := 2;
-    bufferU[Inc(j)] := 3;
-    bufferU[Inc(j)] := 0;
+    bufferU[j] := 2;
+    Inc(j);
+    bufferU[j] := 3;
+    Inc(j);
+    bufferU[j] := 0;
+    Inc(j);
    end;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -1909,59 +2516,79 @@ begin
   k := 0;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   if (options) and ($1000) then
+   if options and $1000 then
    begin
     i0 := i;
     valid := 0;
-    while (not (valid)) and ((i) < (dim)) do
+    while not (valid) and (i < dim) do
     begin
      k2 := 0;
-     while (((k2) < ((64) - (4))) and (not (valid))) and (((i) + (k2)) < (dim)) do
+     while (k2 < 64 - 4) and not (valid) and (i + k2 < dim) do
      begin
-      if (memEE[(i) + (k2)]) < ($FF) then
+      if memEE[i + k2] < $FF then
        valid := 1;
       Inc(k2);
      end;
-     Inc(i, IfThen(valid, 0, (64) - (4)));
+     Inc(i, IfThen(valid, 0, 64 - 4));
     end;
-    if (i) >= (dim) then
+    if i >= dim then
      Break;
-    if (i) > (i0) then
+    if i > i0 then
     begin
      j := 0;
-     bufferU[Inc(j)] := $32;
-     bufferU[Inc(j)] := (8) + (16);
-     bufferU[Inc(j)] := $40;
-     bufferU[Inc(j)] := $32;
-     bufferU[Inc(j)] := 16;
-     bufferU[Inc(j)] := 0;
-     bufferU[Inc(j)] := $31;
-     if (dim) > ($10000) then
+     bufferU[j] := $32;
+     Inc(j);
+     bufferU[j] := 8 + 16;
+     Inc(j);
+     bufferU[j] := $40;
+     Inc(j);
+     bufferU[j] := $32;
+     Inc(j);
+     bufferU[j] := 16;
+     Inc(j);
+     bufferU[j] := 0;
+     Inc(j);
+     bufferU[j] := $31;
+     Inc(j);
+     if dim > $10000 then
      begin
-      bufferU[Inc(j)] := 4;
-      bufferU[Inc(j)] := 3;
-      bufferU[Inc(j)] := (i) shr (16);
-      bufferU[Inc(j)] := ((i) shr (8)) and ($FF);
-      bufferU[Inc(j)] := (i) and ($FF);
+      bufferU[j] := 4;
+      Inc(j);
+      bufferU[j] := 3;
+      Inc(j);
+      bufferU[j] := i shr 16;
+      Inc(j);
+      bufferU[j] := (i shr 8) and $FF;
+      Inc(j);
+      bufferU[j] := i and $FF;
+      Inc(j);
      end
      else
-      if (dim) > ($200) then
+      if dim > $200 then
       begin
-       bufferU[Inc(j)] := 3;
-       bufferU[Inc(j)] := 3;
-       bufferU[Inc(j)] := (i) shr (8);
-       bufferU[Inc(j)] := (i) and ($FF);
+       bufferU[j] := 3;
+       Inc(j);
+       bufferU[j] := 3;
+       Inc(j);
+       bufferU[j] := i shr 8;
+       Inc(j);
+       bufferU[j] := i and $FF;
+       Inc(j);
       end
       else
       begin
-       bufferU[Inc(j)] := 2;
-       bufferU[Inc(j)] := (3) + (IfThen((i) and ($100), 8, 0));
-       bufferU[Inc(j)] := (i) and ($FF);
+       bufferU[j] := 2;
+       Inc(j);
+       bufferU[j] := 3 + IfThen(i and $100, 8, 0);
+       Inc(j);
+       bufferU[j] := i and $FF;
+       Inc(j);
       end;
-     bufferU[Inc(j)] := $04;
-     while (j) < (64) do
+     bufferU[j] := $04;
+     Inc(j);
+     while j < 64 do
      begin
       bufferU[j] := $0;
       Inc(j);
@@ -1970,35 +2597,38 @@ begin
      j := 0;
     end;
    end;
-   bufferU[Inc(j)] := $30;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $30;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(4);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($30)) do
+   while (j < 64 - 1) and (bufferI[j] <> $30) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) = ($30)) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (bufferI[j] = $30) and (bufferI[j + 1] < $FA) then
    begin
     z := 0;
-    while ((z) < (bufferI[(j) + (1)])) and ((z) < (64)) do
+    while (z < bufferI[j + 1]) and (z < 64) do
     begin
-     if (memEE[(i) + (z)]) <> (bufferI[((z) + (j)) + (2)]) then
+     if memEE[i + z] <> bufferI[z + j + 2] then
      begin
-      sprintf(str, strings[S_CodeVError], (i) + (z), (i) + (z), memEE[(i) + (z)], bufferI[(z) + (3)]);
+      sprintf(str, strings[S_CodeVError], i + z, i + z, memEE[i + z], bufferI[z + 3]);
       PrintMessage(str);
       Inc(err);
      end;
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeV2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -2011,11 +2641,11 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   if (err) >= (max_err) then
+   if err >= max_err then
     Break;
-   Inc(i, (64) - (4));
+   Inc(i, 64 - 4);
   end;
-  if (i) < (dim) then
+  if i < dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, i);
@@ -2023,10 +2653,13 @@ begin
   end;
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2034,7 +2667,7 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, '');
-  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
+  sprintf(str, strings[S_EndErr], (stop - start) div 1000.0, err, IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
@@ -2048,9 +2681,9 @@ var
   s: array[0..64-1] of Char;
   i: Integer;
 begin
-  for i := 0 to ((SizeOf(OW_LIST)) div (SizeOf(OW_LIST[0]))) - 1 do
+  for i := 0 to (SizeOf(OW_LIST) div SizeOf(OW_LIST[0])) - 1 do
   begin
-   if (id) = (OW_LIST[i].id) then
+   if id = OW_LIST[i].id then
    begin
     sprintf(s, OW_LIST[i].device, id);
     PrintMessage(s);
@@ -2074,13 +2707,13 @@ begin
   k := 0;
   z := 0;
   hvreg := 0;
-  if (FWVersion) < ($800) then
+  if FWVersion < $800 then
   begin
    sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
-  if ((dim) > ($10000)) or ((dim) < (0)) then
+  if (dim > $10000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -2096,34 +2729,55 @@ begin
   memEE := malloc(dim);
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $3B;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $41;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $33;
-  bufferU[Inc(j)] := $42;
-  bufferU[Inc(j)] := 8;
-  if (dim) <= (32) then
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $3B;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $41;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $33;
+  Inc(j);
+  bufferU[j] := $42;
+  Inc(j);
+  bufferU[j] := 8;
+  Inc(j);
+  if dim <= 32 then
   begin
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := 2;
-   bufferU[Inc(j)] := $F0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := 2;
+   Inc(j);
+   bufferU[j] := $F0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end
   else
   begin
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := $F0;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := $F0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2131,17 +2785,20 @@ begin
   PacketIO(12);
   j := 0;
   z := 0;
-  while ((bufferI[z]) <> ($40)) and ((z) < (64)) do
+  while (bufferI[z] <> $40) and (z < 64) do
   begin
    Inc(z);
   end;
-  if ((bufferI[z]) = ($40)) and ((bufferI[(z) + (1)]) = (0)) then
+  if (bufferI[z] = $40) and (bufferI[z + 1] = 0) then
   begin
    PrintMessage(strings[S_ComErr]);
-   bufferU[Inc(j)] := $0E;
-   bufferU[Inc(j)] := $0;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $0E;
+   Inc(j);
+   bufferU[j] := $0;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
@@ -2149,50 +2806,54 @@ begin
    PacketIO(2);
    Exit;
   end;
-  while ((bufferI[z]) <> ($42)) and ((z) < (64)) do
+  while (bufferI[z] <> $42) and (z < 64) do
   begin
    Inc(z);
   end;
-  if ((bufferI[z]) = ($42)) and ((z) < ((64) - (9))) then
+  if (bufferI[z] = $42) and (z < 64 - 9) then
   begin
-   sprintf(str, 'Family code: 0x%02X ', bufferI[(z) + (2)]);
+   sprintf(str, 'Family code: 0x%02X ', bufferI[z + 2]);
    PrintMessage(str);
-   OW_ID(bufferI[(z) + (2)]);
-   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
+   OW_ID(bufferI[z + 2]);
+   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[z + 3], bufferI[z + 4], bufferI[z + 5]);
    PrintMessage(str);
-   sprintf(str, '%02X%02X%02X', bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
+   sprintf(str, '%02X%02X%02X', bufferI[z + 6], bufferI[z + 7], bufferI[z + 8]);
    PrintMessage(str);
-   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (9)]);
+   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[z + 9]);
    PrintMessage(str);
   end;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $42;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $42;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(37);
    j := 0;
-   while ((bufferI[j]) <> ($42)) and ((j) < (64)) do
+   while (bufferI[j] <> $42) and (j < 64) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) = ($42)) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (bufferI[j] = $42) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     memEE[Inc(k)] := bufferI[z];
+     memEE[k] := bufferI[z];
+     Inc(k);
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeReading2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -2205,28 +2866,45 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-   Inc(i, (64) - (4));
+   Inc(i, 64 - 4);
   end;
-  if (options) = (1) then
+  if options = 1 then
   begin
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := $CC;
-   bufferU[Inc(j)] := $66;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $42;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := $CC;
-   bufferU[Inc(j)] := $C3;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $42;
-   bufferU[Inc(j)] := 8;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := $CC;
+   Inc(j);
+   bufferU[j] := $66;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $42;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := $CC;
+   Inc(j);
+   bufferU[j] := $C3;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $42;
+   Inc(j);
+   bufferU[j] := 8;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
@@ -2234,23 +2912,23 @@ begin
    PacketIO(15);
    j := 0;
    z := 0;
-   while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (2))) do
+   while (bufferI[z] <> $42) and (z < 64 - 2) do
    begin
     Inc(z);
    end;
-   if (z) < ((64) - (2)) then
+   if z < 64 - 2 then
    begin
-    sprintf(str, 'Status register: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
+    sprintf(str, 'Status register: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2]);
     PrintMessage(str);
    end;
    z := 2;
-   while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (10))) do
+   while (bufferI[z] <> $42) and (z < 64 - 10) do
    begin
     Inc(z);
    end;
    PrintMessage('Application register: 0x');
-   i := (z) + (2);
-   while ((i) < ((z) + (10))) and ((i) < (64)) do
+   i := z + 2;
+   while (i < z + 10) and (i < 64) do
    begin
     sprintf(str, '%02X', bufferI[i]);
     PrintMessage(str);
@@ -2259,15 +2937,19 @@ begin
    PrintMessage('' + #13 + '' + NL + '');
   end
   else
-   if (options) = (2) then
+   if options = 2 then
    begin
-    bufferU[Inc(j)] := $42;
-    if (dim) = ($A00) then
-     bufferU[Inc(j)] := $24
+    bufferU[j] := $42;
+    Inc(j);
+    if dim = $A00 then
+     bufferU[j] := $24;
+     Inc(j)
     else
-     bufferU[Inc(j)] := 8;
-    bufferU[Inc(j)] := $04;
-    while (j) < (64) do
+     bufferU[j] := 8;
+     Inc(j);
+    bufferU[j] := $04;
+    Inc(j);
+    while j < 64 do
     begin
      bufferU[j] := $0;
      Inc(j);
@@ -2275,72 +2957,75 @@ begin
     PacketIO(25);
     j := 0;
     z := 0;
-    while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (2))) do
+    while (bufferI[z] <> $42) and (z < 64 - 2) do
     begin
      Inc(z);
     end;
-    if ((bufferI[z]) = ($42)) and ((bufferI[(z) + (1)]) < ($FA)) then
+    if (bufferI[z] = $42) and (bufferI[z + 1] < $FA) then
     begin
-     if (dim) = ($A00) then
+     if dim = $A00 then
      begin
       for i := 0 to (10) - 1 do
       begin
-       sprintf(str, 'Protection Control Byte Block %d: 0x%02X' + #13 + '' + NL + '', i, bufferI[((z) + (2)) + (i)]);
+       sprintf(str, 'Protection Control Byte Block %d: 0x%02X' + #13 + '' + NL + '', i, bufferI[z + 2 + i]);
        PrintMessage(str);
       end;
       PrintMessage('User EEPROM:' + #13 + '' + NL + '');
       for i := 0 to (10) - 1 do
       begin
-       sprintf(str, '%02X', bufferI[(((z) + (2)) + (i)) + (10)]);
+       sprintf(str, '%02X', bufferI[z + 2 + i + 10]);
        PrintMessage(str);
       end;
       PrintMessage('' + #13 + '' + NL + '');
       for i := 0 to (10) - 1 do
       begin
-       sprintf(str, '%02X', bufferI[(((z) + (2)) + (i)) + (20)]);
+       sprintf(str, '%02X', bufferI[z + 2 + i + 20]);
        PrintMessage(str);
       end;
-      sprintf(str, '' + #13 + '' + NL + 'Memory Block Lock: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (30)]);
+      sprintf(str, '' + #13 + '' + NL + 'Memory Block Lock: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 30]);
       PrintMessage(str);
-      sprintf(str, 'Register Page Lock: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (31)]);
+      sprintf(str, 'Register Page Lock: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 31]);
       PrintMessage(str);
-      sprintf(str, 'Factory Byte: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (32)]);
+      sprintf(str, 'Factory Byte: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 32]);
       PrintMessage(str);
-      sprintf(str, 'Factory Trim Bytes: 0x%02X%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (33)], bufferI[((z) + (2)) + (34)]);
+      sprintf(str, 'Factory Trim Bytes: 0x%02X%02X' + #13 + '' + NL + '', bufferI[z + 2 + 33], bufferI[z + 2 + 34]);
       PrintMessage(str);
-      sprintf(str, 'Manufacturer ID: 0x%02X%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (35)], bufferI[((z) + (2)) + (36)]);
+      sprintf(str, 'Manufacturer ID: 0x%02X%02X' + #13 + '' + NL + '', bufferI[z + 2 + 35], bufferI[z + 2 + 36]);
       PrintMessage(str);
      end
      else
      begin
-      sprintf(str, 'Protection Control Byte Page 0: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (2)]);
+      sprintf(str, 'Protection Control Byte Page 0: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2]);
       PrintMessage(str);
-      sprintf(str, 'Protection Control Byte Page 1: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (1)]);
+      sprintf(str, 'Protection Control Byte Page 1: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 1]);
       PrintMessage(str);
-      sprintf(str, 'Protection Control Byte Page 2: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (2)]);
+      sprintf(str, 'Protection Control Byte Page 2: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 2]);
       PrintMessage(str);
-      sprintf(str, 'Protection Control Byte Page 3: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (3)]);
+      sprintf(str, 'Protection Control Byte Page 3: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 3]);
       PrintMessage(str);
-      sprintf(str, 'Copy Protection Byte: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (4)]);
+      sprintf(str, 'Copy Protection Byte: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 4]);
       PrintMessage(str);
-      sprintf(str, 'Factory Byte: 0x%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (5)]);
+      sprintf(str, 'Factory Byte: 0x%02X' + #13 + '' + NL + '', bufferI[z + 2 + 5]);
       PrintMessage(str);
-      sprintf(str, 'User Bytes/Manufacturer ID: 0x%02X%02X' + #13 + '' + NL + '', bufferI[((z) + (2)) + (6)], bufferI[((z) + (2)) + (7)]);
+      sprintf(str, 'User Bytes/Manufacturer ID: 0x%02X%02X' + #13 + '' + NL + '', bufferI[z + 2 + 6], bufferI[z + 2 + 7]);
       PrintMessage(str);
      end;
     end;
    end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
    PrintMessage(str);
    sizeEE := k;
   end;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2354,9 +3039,9 @@ begin
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', sum and $FFFF);
   PrintMessage(str);
-  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
+  sprintf(str, strings[S_End], (stop - start) div 1000.0);
   PrintMessage(str);
   if saveLog then
   begin
@@ -2380,13 +3065,13 @@ begin
   z := 0;
   err := 0;
   hvreg := 0;
-  if (FWVersion) < ($800) then
+  if FWVersion < $800 then
   begin
    sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
-  if ((dim) > ($10000)) or ((dim) < (0)) then
+  if (dim > $10000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -2396,37 +3081,49 @@ begin
    OpenLogFile();
    fprintf(logfile, 'WriteOneWireMem(%d,%d)    (0x%X,0x%X)' + NL + '', dim, options, dim, options);
   end;
-  if (dim) > (sizeEE) then
+  if dim > sizeEE then
   begin
    i := sizeEE;
    memEE := realloc(memEE, dim);
-   while (i) < (dim) do
+   while i < dim do
    begin
     memEE[i] := $FF;
     Inc(i);
    end;
    sizeEE := dim;
   end;
-  if (dim) < (1) then
+  if dim < 1 then
   begin
    PrintMessage(strings[S_NoCode]);
    Exit;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $3B;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $41;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $33;
-  bufferU[Inc(j)] := $42;
-  bufferU[Inc(j)] := 8;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $3B;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $41;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $33;
+  Inc(j);
+  bufferU[j] := $42;
+  Inc(j);
+  bufferU[j] := 8;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2434,17 +3131,20 @@ begin
   PacketIO(12);
   j := 0;
   z := 0;
-  while ((bufferI[z]) <> ($40)) and ((z) < (64)) do
+  while (bufferI[z] <> $40) and (z < 64) do
   begin
    Inc(z);
   end;
-  if ((bufferI[z]) = ($40)) and ((bufferI[(z) + (1)]) = (0)) then
+  if (bufferI[z] = $40) and (bufferI[z + 1] = 0) then
   begin
    PrintMessage(strings[S_ComErr]);
-   bufferU[Inc(j)] := $0E;
-   bufferU[Inc(j)] := $0;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $0E;
+   Inc(j);
+   bufferU[j] := $0;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
@@ -2456,63 +3156,81 @@ begin
    Exit;
   end;
   z := 0;
-  while ((bufferI[z]) <> ($42)) and ((z) < (64)) do
+  while (bufferI[z] <> $42) and (z < 64) do
   begin
    Inc(z);
   end;
-  if (bufferI[z]) = ($42) then
+  if bufferI[z] = $42 then
   begin
-   sprintf(str, 'Family code: 0x%02X ', bufferI[(z) + (2)]);
+   sprintf(str, 'Family code: 0x%02X ', bufferI[z + 2]);
    PrintMessage(str);
-   OW_ID(bufferI[(z) + (2)]);
-   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
+   OW_ID(bufferI[z + 2]);
+   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[z + 3], bufferI[z + 4], bufferI[z + 5]);
    PrintMessage(str);
-   sprintf(str, '%02X%02X%02X', bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
+   sprintf(str, '%02X%02X%02X', bufferI[z + 6], bufferI[z + 7], bufferI[z + 8]);
    PrintMessage(str);
-   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (9)]);
+   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[z + 9]);
    PrintMessage(str);
   end;
   PrintMessage(strings[S_EEAreaW]);
-  page := IfThen((options) = (0), 8, 32);
+  page := IfThen(options = 0, 8, 32);
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := (page) + (IfThen((dim) <= (32), 3, 4));
-   bufferU[Inc(j)] := $CC;
-   bufferU[Inc(j)] := $0F;
-   bufferU[Inc(j)] := (i) and ($FF);
-   if (dim) > (32) then
-    bufferU[Inc(j)] := (i) shr (8);
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := page + IfThen(dim <= 32, 3, 4);
+   Inc(j);
+   bufferU[j] := $CC;
+   Inc(j);
+   bufferU[j] := $0F;
+   Inc(j);
+   bufferU[j] := i and $FF;
+   Inc(j);
+   if dim > 32 then
+    bufferU[j] := i shr 8;
+    Inc(j);
    for k := 0 to (page) - 1 do
    begin
-    bufferU[Inc(j)] := memEE[(i) + (k)];
+    bufferU[j] := memEE[i + k];
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $40;
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := IfThen((dim) <= (32), 3, 5);
-   bufferU[Inc(j)] := $CC;
-   bufferU[Inc(j)] := $55;
-   if (dim) <= (32) then
-    bufferU[Inc(j)] := $A5
+   bufferU[j] := $40;
+   Inc(j);
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := IfThen(dim <= 32, 3, 5);
+   Inc(j);
+   bufferU[j] := $CC;
+   Inc(j);
+   bufferU[j] := $55;
+   Inc(j);
+   if dim <= 32 then
+    bufferU[j] := $A5;
+    Inc(j)
    else
    begin
-    bufferU[Inc(j)] := (i) and ($FF);
-    bufferU[Inc(j)] := (i) shr (8);
-    bufferU[Inc(j)] := (page) - (1);
+    bufferU[j] := i and $FF;
+    Inc(j);
+    bufferU[j] := i shr 8;
+    Inc(j);
+    bufferU[j] := page - 1;
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
-   PacketIO((6) + ((0.8) * (page)));
+   PacketIO(6 + 0.8 * page);
    msDelay(10);
    j := 0;
-   sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeWriting2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -2531,27 +3249,41 @@ begin
   if saveLog then
    fprintf(logfile, '%s' + NL + '', strings[S_EEV]);
   k := 0;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $41;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $CC;
-  if (dim) <= (32) then
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $41;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $CC;
+  Inc(j);
+  if dim <= 32 then
   begin
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := 2;
-   bufferU[Inc(j)] := $F0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := 2;
+   Inc(j);
+   bufferU[j] := $F0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end
   else
   begin
-   bufferU[Inc(j)] := $41;
-   bufferU[Inc(j)] := 3;
-   bufferU[Inc(j)] := $F0;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := 0;
+   bufferU[j] := $41;
+   Inc(j);
+   bufferU[j] := 3;
+   Inc(j);
+   bufferU[j] := $F0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
   end;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2560,38 +3292,42 @@ begin
   j := 0;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $42;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $42;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(37);
    j := 0;
-   while ((bufferI[j]) <> ($42)) and ((j) < (64)) do
+   while (bufferI[j] <> $42) and (j < 64) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) = ($42)) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (bufferI[j] = $42) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     if (memEE[Inc(k)]) <> (bufferI[z]) then
+     if memEE[k] <> bufferI[z] then
+     Inc(k);
      begin
       PrintMessage('' + #13 + '' + NL + '');
-      sprintf(str, strings[S_CodeVError], ((i) + (z)) - ((j) + (2)), ((i) + (z)) - ((j) + (2)), memEE[(k) - (1)], bufferI[z]);
+      sprintf(str, strings[S_CodeVError], (i + z) - (j + 2), (i + z) - (j + 2), memEE[k - 1], bufferI[z]);
       PrintMessage(str);
       Inc(err);
      end;
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeV2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -2604,11 +3340,11 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   if (err) >= (max_err) then
+   if err >= max_err then
     Break;
-   Inc(i, (64) - (4));
+   Inc(i, 64 - 4);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -2617,10 +3353,13 @@ begin
   end;
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2628,7 +3367,7 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, '');
-  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
+  sprintf(str, strings[S_EndErr], (stop - start) div 1000.0, err, IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin
@@ -2649,7 +3388,7 @@ begin
   z := 0;
   TLSB := 0.5;
   hvreg := 0;
-  if (FWVersion) < ($800) then
+  if FWVersion < $800 then
   begin
    sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
@@ -2662,24 +3401,41 @@ begin
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $3B;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $41;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $33;
-  bufferU[Inc(j)] := $42;
-  bufferU[Inc(j)] := 8;
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $41;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := $CC;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $3B;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $41;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $33;
+  Inc(j);
+  bufferU[j] := $42;
+  Inc(j);
+  bufferU[j] := 8;
+  Inc(j);
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $41;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := $CC;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2687,17 +3443,20 @@ begin
   PacketIO(16);
   j := 0;
   z := 0;
-  while ((bufferI[z]) <> ($40)) and ((z) < (64)) do
+  while (bufferI[z] <> $40) and (z < 64) do
   begin
    Inc(z);
   end;
-  if ((bufferI[z]) = ($40)) and ((bufferI[(z) + (1)]) = (0)) then
+  if (bufferI[z] = $40) and (bufferI[z + 1] = 0) then
   begin
    PrintMessage(strings[S_ComErr]);
-   bufferU[Inc(j)] := $0E;
-   bufferU[Inc(j)] := $0;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $0E;
+   Inc(j);
+   bufferU[j] := $0;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
@@ -2708,37 +3467,45 @@ begin
    Exit;
   end;
   z := 0;
-  while ((bufferI[z]) <> ($42)) and ((z) < (64)) do
+  while (bufferI[z] <> $42) and (z < 64) do
   begin
    Inc(z);
   end;
-  if (z) < ((64) - (9)) then
+  if z < 64 - 9 then
   begin
-   sprintf(str, 'Family code: 0x%02X ', bufferI[(z) + (2)]);
+   sprintf(str, 'Family code: 0x%02X ', bufferI[z + 2]);
    PrintMessage(str);
-   OW_ID(bufferI[(z) + (2)]);
-   if (bufferI[(z) + (2)]) = ($10) then
+   OW_ID(bufferI[z + 2]);
+   if bufferI[z + 2] = $10 then
     TLSB := 0.5
    else
-    if (bufferI[(z) + (2)]) = ($28) then
+    if bufferI[z + 2] = $28 then
      TLSB := 0.0625;
-   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[(z) + (3)], bufferI[(z) + (4)], bufferI[(z) + (5)]);
+   sprintf(str, 'Serial ID: 0x%02X%02X%02X', bufferI[z + 3], bufferI[z + 4], bufferI[z + 5]);
    PrintMessage(str);
-   sprintf(str, '%02X%02X%02X', bufferI[(z) + (6)], bufferI[(z) + (7)], bufferI[(z) + (8)]);
+   sprintf(str, '%02X%02X%02X', bufferI[z + 6], bufferI[z + 7], bufferI[z + 8]);
    PrintMessage(str);
-   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[(z) + (9)]);
+   sprintf(str, '' + #13 + '' + NL + 'CRC: 0x%02X' + #13 + '' + NL + '', bufferI[z + 9]);
    PrintMessage(str);
   end;
   msDelay(800);
-  bufferU[Inc(j)] := $40;
-  bufferU[Inc(j)] := $41;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := $CC;
-  bufferU[Inc(j)] := $BE;
-  bufferU[Inc(j)] := $42;
-  bufferU[Inc(j)] := 8;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $40;
+  Inc(j);
+  bufferU[j] := $41;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := $CC;
+  Inc(j);
+  bufferU[j] := $BE;
+  Inc(j);
+  bufferU[j] := $42;
+  Inc(j);
+  bufferU[j] := 8;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2746,26 +3513,29 @@ begin
   PacketIO(10);
   j := 0;
   z := 0;
-  while ((bufferI[z]) <> ($42)) and ((z) < ((64) - (2))) do
+  while (bufferI[z] <> $42) and (z < 64 - 2) do
   begin
    Inc(z);
   end;
-  T := (bufferI[(z) + (2)]) + ((bufferI[(z) + (3)]) shl (8));
-  if (T) > ($F000) then
+  T := bufferI[z + 2] + (bufferI[z + 3] shl 8);
+  if T > $F000 then
    T := T or $FFFF0000;
-  sprintf(str, 'T=%.4f°C  (0x%04X)' + #13 + '' + NL + '', (T) * (TLSB), T);
+  sprintf(str, 'T=%.4f°C  (0x%04X)' + #13 + '' + NL + '', T * TLSB, T);
   PrintMessage(str);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(2);
   stop := GetTickCount();
-  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
+  sprintf(str, strings[S_End], (stop - start) div 1000.0);
   PrintMessage(str);
   if saveLog then
   begin
@@ -2787,13 +3557,13 @@ begin
   k := 0;
   z := 0;
   hvreg := 0;
-  if (FWVersion) < ($800) then
+  if FWVersion < $800 then
   begin
    sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
-  if ((dim) >= ($10000)) or ((dim) < (0)) then
+  if (dim >= $10000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -2809,17 +3579,27 @@ begin
   memEE := malloc(dim);
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $A0;
-  bufferU[Inc(j)] := $05;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $A0;
+  Inc(j);
+  bufferU[j] := $05;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2828,37 +3608,46 @@ begin
   PrintMessage(strings[S_ReadEE]);
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $44;
-   bufferU[Inc(j)] := 4;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - ((64) - (5))), (64) - (5), (dim) - (i));
-   bufferU[Inc(j)] := $A0;
-   bufferU[Inc(j)] := $03;
-   bufferU[Inc(j)] := (i) shr (8);
-   bufferU[Inc(j)] := (i) and ($FF);
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $44;
+   Inc(j);
+   bufferU[j] := 4;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - 64 - 5, 64 - 5, dim - i);
+   Inc(j);
+   bufferU[j] := $A0;
+   Inc(j);
+   bufferU[j] := $03;
+   Inc(j);
+   bufferU[j] := i shr 8;
+   Inc(j);
+   bufferU[j] := i and $FF;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(14);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
+   while (j < 64 - 1) and (bufferI[j] <> $44) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) = ($44)) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (bufferI[j] = $44) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     memEE[Inc(k)] := bufferI[z];
+     memEE[k] := bufferI[z];
+     Inc(k);
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeReading2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeReading2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -2871,9 +3660,9 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-   Inc(i, (64) - (5));
+   Inc(i, 64 - 5);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -2882,10 +3671,13 @@ begin
   end
   else
    PrintMessage(strings[S_Compl]);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -2899,9 +3691,9 @@ begin
   begin
    sum := sum + memEE[i];
   end;
-  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', (sum) and ($FFFF));
+  sprintf(str, 'Checksum: 0x%X' + #13 + '' + NL + '', sum and $FFFF);
   PrintMessage(str);
-  sprintf(str, strings[S_End], ((stop) - (start)) div (1000.0));
+  sprintf(str, strings[S_End], (stop - start) div 1000.0);
   PrintMessage(str);
   if saveLog then
   begin
@@ -2924,14 +3716,14 @@ begin
   k := 0;
   z := 0;
   err := 0;
-  if (FWVersion) < ($800) then
+  if FWVersion < $800 then
   begin
    sprintf(str, strings[S_FWver2old], '0.8.0');
    PrintMessage(str);
    Exit;
   end;
   hvreg := 0;
-  if ((dim) >= ($10000)) or ((dim) < (0)) then
+  if (dim >= $10000) or (dim < 0) then
   begin
    PrintMessage(strings[S_EELim]);
    Exit;
@@ -2941,102 +3733,148 @@ begin
    OpenLogFile();
    fprintf(logfile, 'Write11xx(%d,%d)    (0x%X,0x%X)' + NL + '', dim, page, dim, page);
   end;
-  if (dim) > (sizeEE) then
+  if dim > sizeEE then
   begin
    i := sizeEE;
    memEE := realloc(memEE, dim);
-   while (i) < (dim) do
+   while i < dim do
    begin
     memEE[i] := $FF;
     Inc(i);
    end;
    sizeEE := dim;
   end;
-  if (dim) < (1) then
+  if dim < 1 then
   begin
    PrintMessage(strings[S_NoCode]);
    Exit;
   end;
   start := GetTickCount();
   j := 0;
-  bufferU[Inc(j)] := $06;
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $1;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $43;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $A0;
-  bufferU[Inc(j)] := $96;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $A0;
-  bufferU[Inc(j)] := $05;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := 3;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $A0;
-  bufferU[Inc(j)] := $6E;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $0A;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := 1;
-  bufferU[Inc(j)] := $A0;
-  bufferU[Inc(j)] := $05;
-  bufferU[Inc(j)] := $44;
-  bufferU[Inc(j)] := 2;
-  bufferU[Inc(j)] := 0;
-  bufferU[Inc(j)] := $A0;
-  bufferU[Inc(j)] := $96;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $06;
+  Inc(j);
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $1;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $43;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $A0;
+  Inc(j);
+  bufferU[j] := $96;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $A0;
+  Inc(j);
+  bufferU[j] := $05;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := 3;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $A0;
+  Inc(j);
+  bufferU[j] := $6E;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $0A;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := 1;
+  Inc(j);
+  bufferU[j] := $A0;
+  Inc(j);
+  bufferU[j] := $05;
+  Inc(j);
+  bufferU[j] := $44;
+  Inc(j);
+  bufferU[j] := 2;
+  Inc(j);
+  bufferU[j] := 0;
+  Inc(j);
+  bufferU[j] := $A0;
+  Inc(j);
+  bufferU[j] := $96;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
   end;
   PacketIO(25);
   PrintMessage(strings[S_EEAreaW]);
-  while (page) >= ((64) - (8)) do
+  while page >= 64 - 8 do
   begin
    page := page shr 1;
   end;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $44;
-   bufferU[Inc(j)] := (4) + (page);
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $A0;
-   bufferU[Inc(j)] := $6C;
-   bufferU[Inc(j)] := (i) shr (8);
-   bufferU[Inc(j)] := (i) and ($FF);
+   bufferU[j] := $44;
+   Inc(j);
+   bufferU[j] := 4 + page;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $A0;
+   Inc(j);
+   bufferU[j] := $6C;
+   Inc(j);
+   bufferU[j] := i shr 8;
+   Inc(j);
+   bufferU[j] := i and $FF;
+   Inc(j);
    for k := 0 to (page) - 1 do
    begin
-    bufferU[Inc(j)] := memEE[(i) + (k)];
+    bufferU[j] := memEE[i + k];
+    Inc(j);
    end;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
-   PacketIO((((5) + (page)) * (0.2)) + (2));
+   PacketIO((5 + page) * 0.2 + 2);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
+   while (j < 64 - 1) and (bufferI[j] <> $44) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) <> ($44)) or ((bufferI[(j) + (1)]) >= ($FA)) then
-    i := (dim) + (10);
-   sprintf(str, strings[S_CodeWriting2], ((i) * (100)) div (dim), i);
+   if (bufferI[j] <> $44) or (bufferI[j + 1] >= $FA) then
+    i := dim + 10;
+   sprintf(str, strings[S_CodeWriting2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -3049,34 +3887,45 @@ begin
    begin
     fprintf(logfile, strings[S_Log7], i, i, k, k);
    end;
-   bufferU[Inc(j)] := $44;
-   bufferU[Inc(j)] := 2;
-   bufferU[Inc(j)] := 1;
-   bufferU[Inc(j)] := $A0;
-   bufferU[Inc(j)] := $05;
-   bufferU[Inc(j)] := $44;
-   bufferU[Inc(j)] := 2;
-   bufferU[Inc(j)] := 0;
-   bufferU[Inc(j)] := $A0;
-   bufferU[Inc(j)] := $96;
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $44;
+   Inc(j);
+   bufferU[j] := 2;
+   Inc(j);
+   bufferU[j] := 1;
+   Inc(j);
+   bufferU[j] := $A0;
+   Inc(j);
+   bufferU[j] := $05;
+   Inc(j);
+   bufferU[j] := $44;
+   Inc(j);
+   bufferU[j] := 2;
+   Inc(j);
+   bufferU[j] := 0;
+   Inc(j);
+   bufferU[j] := $A0;
+   Inc(j);
+   bufferU[j] := $96;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    status := 1;
    k := 0;
-   while (status) and ((k) < (20)) do
+   while status and (k < 20) do
    begin
     PacketIO(2);
     j := 0;
-    while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
+    while (j < 64 - 1) and (bufferI[j] <> $44) do
     begin
      Inc(j);
     end;
-    if (bufferI[j]) = ($44) then
-     status := (bufferI[(j) + (2)]) and (1);
+    if bufferI[j] = $44 then
+     status := bufferI[j + 2] and 1;
     Inc(k);
    end;
    j := 0;
@@ -3087,43 +3936,52 @@ begin
   k := 0;
   j := 0;
   i := 0;
-  while (i) < (dim) do
+  while i < dim do
   begin
-   bufferU[Inc(j)] := $44;
-   bufferU[Inc(j)] := 4;
-   bufferU[Inc(j)] := IfThen((i) < ((dim) - ((64) - (4))), (64) - (4), (dim) - (i));
-   bufferU[Inc(j)] := $A0;
-   bufferU[Inc(j)] := $03;
-   bufferU[Inc(j)] := (i) shr (8);
-   bufferU[Inc(j)] := (i) and ($FF);
-   bufferU[Inc(j)] := $04;
-   while (j) < (64) do
+   bufferU[j] := $44;
+   Inc(j);
+   bufferU[j] := 4;
+   Inc(j);
+   bufferU[j] := IfThen(i < dim - 64 - 4, 64 - 4, dim - i);
+   Inc(j);
+   bufferU[j] := $A0;
+   Inc(j);
+   bufferU[j] := $03;
+   Inc(j);
+   bufferU[j] := i shr 8;
+   Inc(j);
+   bufferU[j] := i and $FF;
+   Inc(j);
+   bufferU[j] := $04;
+   Inc(j);
+   while j < 64 do
    begin
     bufferU[j] := $0;
     Inc(j);
    end;
    PacketIO(14);
    j := 0;
-   while ((j) < ((64) - (1))) and ((bufferI[j]) <> ($44)) do
+   while (j < 64 - 1) and (bufferI[j] <> $44) do
    begin
     Inc(j);
    end;
-   if ((bufferI[j]) = ($44)) and ((bufferI[(j) + (1)]) < ($FA)) then
+   if (bufferI[j] = $44) and (bufferI[j + 1] < $FA) then
    begin
-    z := (j) + (2);
-    while ((z) < (((j) + (2)) + (bufferI[(j) + (1)]))) and ((z) < (64)) do
+    z := j + 2;
+    while (z < j + 2 + bufferI[j + 1]) and (z < 64) do
     begin
-     if (memEE[Inc(k)]) <> (bufferI[z]) then
+     if memEE[k] <> bufferI[z] then
+     Inc(k);
      begin
       PrintMessage('' + #13 + '' + NL + '');
-      sprintf(str, strings[S_CodeVError], ((i) + (z)) - (3), ((i) + (z)) - (3), memEE[(k) - (1)], bufferI[z]);
+      sprintf(str, strings[S_CodeVError], (i + z) - 3, (i + z) - 3, memEE[k - 1], bufferI[z]);
       PrintMessage(str);
       Inc(err);
      end;
      Inc(z);
     end;
    end;
-   sprintf(str, strings[S_CodeV2], ((i) * (100)) div (dim), i);
+   sprintf(str, strings[S_CodeV2], (i * 100) div dim, i);
    gtk_statusbar_push(status_bar, statusID, str);
    while gtk_events_pending() do
    begin
@@ -3136,11 +3994,11 @@ begin
    begin
     fprintf(logfile, strings[S_Log8], i, i, k, k, err);
    end;
-   if (err) >= (max_err) then
+   if err >= max_err then
     Break;
-   Inc(i, (64) - (4));
+   Inc(i, 64 - 4);
   end;
-  if (k) <> (dim) then
+  if k <> dim then
   begin
    PrintMessage('' + #13 + '' + NL + '');
    sprintf(str, strings[S_ReadEEErr], dim, k);
@@ -3148,10 +4006,13 @@ begin
   end;
   sprintf(str, strings[S_ComplErr], err);
   PrintMessage(str);
-  bufferU[Inc(j)] := $0E;
-  bufferU[Inc(j)] := $0;
-  bufferU[Inc(j)] := $04;
-  while (j) < (64) do
+  bufferU[j] := $0E;
+  Inc(j);
+  bufferU[j] := $0;
+  Inc(j);
+  bufferU[j] := $04;
+  Inc(j);
+  while j < 64 do
   begin
    bufferU[j] := $0;
    Inc(j);
@@ -3159,7 +4020,7 @@ begin
   PacketIO(2);
   stop := GetTickCount();
   gtk_statusbar_push(status_bar, statusID, '');
-  sprintf(str, strings[S_EndErr], ((stop) - (start)) div (1000.0), err, IfThen((err) <> (1), strings[S_ErrPlur], strings[S_ErrSing]));
+  sprintf(str, strings[S_EndErr], (stop - start) div 1000.0, err, IfThen(err <> 1, strings[S_ErrPlur], strings[S_ErrSing]));
   PrintMessage(str);
   if saveLog then
   begin

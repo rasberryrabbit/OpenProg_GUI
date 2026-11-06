@@ -11,6 +11,7 @@ type
   Tfd_set = record
     fds_bits: array[0..8-1] of Cardinal;
   end;
+  PTfd_set = ^Tfd_set;
   Tssize_t = LongInt;
   Tsize_t = Cardinal;
   Tpid_t = Integer;
